@@ -271,6 +271,58 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .alert-danger { background: var(--kirmizi-zemin); border-color: var(--kirmizi-zemin); color: var(--kirmizi); }
 .text-danger { color: var(--kirmizi) !important; }
 
+/* ---------- Menü (ürünler) sayfası ---------- */
+.menu-arac {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.menu-arama { display: flex; gap: 8px; flex: 1; max-width: 420px; }
+
+.btn-outline-dark { border-color: var(--cizgi); color: var(--yazi); background: var(--kart); }
+.btn-outline-dark:hover { background: var(--antrasit); border-color: var(--antrasit); color: var(--krem); }
+
+.kategori-haplari { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+
+.kategori-haplari a {
+    padding: 4px 11px;
+    border: 1px solid var(--cizgi);
+    border-radius: 999px;
+    background: var(--kart);
+    color: var(--yazi);
+    font-size: 12.5px;
+    text-decoration: none;
+}
+
+.kategori-haplari a:hover { border-color: var(--antrasit); }
+.kategori-haplari a.secili { background: var(--antrasit); border-color: var(--antrasit); color: var(--tereyagi); }
+
+.kategori-baslik { font-size: 16px; margin: 22px 0 8px; }
+.kategori-baslik span { color: var(--soluk-yazi); font-weight: 500; font-size: 13px; margin-left: 4px; }
+
+.menu-tablo td { vertical-align: middle; padding: 10px 14px; }
+.menu-tablo .icindekiler { color: var(--soluk-yazi); font-size: 12.5px; }
+.menu-tablo .fiyat { width: 150px; text-align: right; white-space: nowrap; font-weight: 600; }
+.menu-tablo .islemler { width: 190px; text-align: right; white-space: nowrap; }
+.menu-tablo tr.satista-degil td { opacity: .45; }
+.menu-tablo tr.satista-degil .islemler { opacity: 1; }
+
+.durum {
+    border: 1px solid var(--cizgi);
+    background: var(--zemin);
+    color: var(--soluk-yazi);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.durum.acik { background: var(--yesil-zemin); border-color: var(--yesil-zemin); color: var(--yesil); }
+
 /* Telefon genişliğinde menü üste geçer */
 @media (max-width: 700px) {
     .panel { grid-template-columns: 1fr; }

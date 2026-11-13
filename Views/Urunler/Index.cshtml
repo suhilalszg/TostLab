@@ -1,0 +1,81 @@
+@model MenuSayfasi
+@{
+    ViewData["Title"] = "Menü";
+}
+
+<div class="kutular">
+    <div class="kutu"><div class="etiket">Ürün</div><div class="deger">@Model.ToplamUrun</div></div>
+    <div class="kutu"><div class="etiket">Satışta</div><div class="deger">@Model.SatistakiUrun</div></div>
+    <div class="kutu @(Model.FiyatsizUrun > 0 ? "vurgulu" : "")"><div class="etiket">Fiyatı girilmemiş</div><div class="deger">@Model.FiyatsizUrun</div></div>
+</div>
+
+@if (TempData["Bildirim"] is string bildirim)
+{
+    <div class="alert alert-success">@bildirim</div>
+}
+
+<div class="menu-arac">
+    <form method="get" asp-action="Index" class="menu-arama">
+        @if (!string.IsNullOrEmpty(Model.SeciliKategori))
+        {
+            <input type="hidden" name="kategori" value="@Model.SeciliKategori" />
+        }
+        <input type="search" name="arama" value="@Model.Arama" class="form-control" placeholder="Ürün veya malzeme ara…" />
+        <button type="submit" class="btn btn-outline-dark">Ara</button>
+    </form>
+    <a class="btn btn-dark" asp-action="Ekle">+ Ürün ekle</a>
+</div>
+
+<div class="kategori-haplari">
+    <a asp-action="Index" asp-route-arama="@Model.Arama" class="@(string.IsNullOrEmpty(Model.SeciliKategori) ? "secili" : "")">Tümü</a>
+    @foreach (var kategori in Model.Kategoriler)
+    {
+        <a asp-action="Index" asp-route-kategori="@kategori" asp-route-arama="@Model.Arama" class="@(kategori == Model.SeciliKategori ? "secili" : "")">@kategori</a>
+    }
+</div>
+
+@if (Model.Urunler.Count == 0)
+{
+    <div class="kart" style="color: var(--soluk-yazi)">Bu aramaya uyan ürün yok.</div>
+}
+
+@foreach (var grup in Model.Urunler.GroupBy(urun => urun.Kategori))
+{
+    <h2 class="kategori-baslik">@grup.Key <span>@grup.Count()</span></h2>
+    <table class="table menu-tablo">
+        <tbody>
+            @foreach (var urun in grup)
+            {
+                <tr class="@(urun.SatistaMi ? "" : "satista-degil")">
+                    <td>
+                        <b>@urun.Ad</b>
+                        @if (!string.IsNullOrEmpty(urun.Icindekiler))
+                        {
+                            <div class="icindekiler">@urun.Icindekiler</div>
+                        }
+                    </td>
+                    <td class="fiyat">
+                        @if (urun.Fiyat == 0)
+                        {
+                            <span class="etiket-hap">Fiyat girilmedi</span>
+                        }
+                        else
+                        {
+                            @(urun.Fiyat.ToString("N2") + " ₺")
+                        }
+                    </td>
+                    <td class="islemler">
+                        <form asp-action="SatisDurumu" asp-route-id="@urun.Id" method="post" class="d-inline">
+                            <input type="hidden" name="kategori" value="@Model.SeciliKategori" />
+                            <input type="hidden" name="arama" value="@Model.Arama" />
+                            <button type="submit" class="durum @(urun.SatistaMi ? "acik" : "")" title="Satışa aç / kapat">
+                                @(urun.SatistaMi ? "Satışta" : "Kapalı")
+                            </button>
+                        </form>
+                        <a asp-action="Duzenle" asp-route-id="@urun.Id" class="btn btn-sm btn-link">Düzenle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

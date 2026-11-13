@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -13,6 +15,13 @@ builder.Services.AddControllersWithViews(options =>
     // Giriş yapmamış kimse hiçbir sayfayı açamasın (açık sayfalarda [AllowAnonymous] var)
     var girisZorunlu = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     options.Filters.Add(new AuthorizeFilter(girisZorunlu));
+
+    // Hazır İngilizce hata mesajlarını Türkçe yap
+    var mesajlar = options.ModelBindingMessageProvider;
+    mesajlar.SetAttemptedValueIsInvalidAccessor((deger, alan) => $"'{deger}' geçerli değil. {alan} için sayı yaz.");
+    mesajlar.SetValueIsInvalidAccessor(deger => $"'{deger}' geçerli değil.");
+    mesajlar.SetValueMustNotBeNullAccessor(alan => $"{alan} boş olamaz.");
+    mesajlar.SetMissingBindRequiredValueAccessor(alan => $"{alan} boş olamaz.");
 });
 
 // Veritabanı: SQLite, bağlantı bilgisi appsettings.json içinde
@@ -39,8 +48,21 @@ var app = builder.Build();
 // Program açılırken veritabanı yoksa oluştur, yeni migration varsa uygula
 using (var kapsam = app.Services.CreateScope())
 {
-    kapsam.ServiceProvider.GetRequiredService<TostLabDbContext>().Database.Migrate();
+    var veritabani = kapsam.ServiceProvider.GetRequiredService<TostLabDbContext>();
+    veritabani.Database.Migrate();
+    BaslangicMenusu.BossaYukle(veritabani);   // ürün yoksa abinin menüsünü yükle
 }
+
+// Türkçe biçim: fiyat "92,50" diye yazılır, tarih "13 Kasım" diye görünür
+var turkce = new CultureInfo("tr-TR");
+CultureInfo.DefaultThreadCurrentCulture = turkce;
+CultureInfo.DefaultThreadCurrentUICulture = turkce;
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(turkce),
+    SupportedCultures = new[] { turkce },
+    SupportedUICultures = new[] { turkce }
+});
 
 if (!app.Environment.IsDevelopment())
 {
