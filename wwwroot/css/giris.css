@@ -81,8 +81,8 @@ body {
 
 .giris-form input:focus {
     outline: none;
-    border-color: var(--safir);
-    box-shadow: 0 0 0 3px rgba(59, 80, 125, .18);
+    border-color: var(--fransiz-mavisi);
+    box-shadow: 0 0 0 3px rgba(62, 75, 142, .18);
 }
 
 .giris-form button {
@@ -92,13 +92,13 @@ body {
     font: inherit;
     font-weight: 700;
     background: var(--ana-renk);
-    color: var(--fildisi);
+    color: var(--bugday);
     border: 0;
     border-radius: 8px;
     cursor: pointer;
 }
 
-.giris-form button:hover { background: var(--lacivert); color: var(--sampanya); }
+.giris-form button:hover { background: var(--fransiz-mavisi); color: var(--deniz-kabugu); }
 
 .field-validation-error,
 .validation-summary-errors {

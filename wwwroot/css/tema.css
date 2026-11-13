@@ -35,12 +35,12 @@
 
 :root {
     /* Palet */
-    --lacivert: #112250;     /* Navy Blue: sol menü, yazılar */
-    --safir: #3B507D;        /* Sapphire: ana butonlar */
-    --vizon: #BEB7A7;        /* Warm Taupe: çizgiler, etiketler, pasif menü */
-    --sampanya: #E7E2CE;     /* Champagne: fiş kağıdı */
-    --fildisi: #F5F4F0;      /* Ivory: sayfa zemini */
-    --sari: #F2C230;         /* TOST LAB sarısı: sadece logo */
+    --gece-moru: #3D1534;       /* Midnight Violet: yazılar, ana butonlar, öne çıkan kutu */
+    --fransiz-mavisi: #3E4B8E;  /* French Blue: sol menü */
+    --toz-mavi: #A6BCC9;        /* Powder Blue: çizgiler, etiketler, pasif menü */
+    --bugday: #F6E0B6;          /* Wheat: fiş kağıdı, seçili menü, buton yazısı */
+    --deniz-kabugu: #FFF4EB;    /* Seashell: sayfa zemini */
+    --sari: #F2C230;            /* TOST LAB sarısı: sadece logo */
     --beyaz: #ffffff;
 
     /* Durum renkleri (palete uyumlu) */
@@ -50,14 +50,14 @@
     --yesil-zemin: #dcefe3;
 
     /* Görevlerine göre adlar: sayfalar bunları kullanır */
-    --zemin: var(--fildisi);
+    --zemin: var(--deniz-kabugu);
     --kart: var(--beyaz);
-    --yazi: var(--lacivert);
-    --soluk-yazi: #6d6a66;
-    --cizgi: #e2ded3;
-    --ana-renk: var(--safir);
-    --menu: var(--lacivert);
-    --fis: var(--sampanya);
+    --yazi: var(--gece-moru);
+    --soluk-yazi: #7a6274;
+    --cizgi: #ecdccf;
+    --ana-renk: var(--gece-moru);
+    --menu: var(--fransiz-mavisi);
+    --fis: var(--bugday);
 
     --yazi-tipi: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
     --fis-yazi-tipi: "JetBrains Mono", Consolas, monospace;
