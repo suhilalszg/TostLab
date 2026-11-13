@@ -9,7 +9,7 @@ body {
     background: var(--zemin);
     color: var(--yazi);
     font-family: var(--yazi-tipi);
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.5;
     /* Bootstrap'in kendi değişkenlerini temaya bağla */
     --bs-body-font-family: var(--yazi-tipi);
@@ -43,7 +43,7 @@ body {
     transform: rotate(180deg);
     font-weight: 800;
     font-size: 25px;
-    letter-spacing: .24em;
+    letter-spacing: .12em;
     white-space: nowrap;
     text-decoration: none;
     margin-bottom: 34px;
@@ -89,7 +89,7 @@ body {
     text-decoration: none;
     font-size: 13px;
     font-weight: 500;
-    letter-spacing: .14em;
+    letter-spacing: .06em;
     text-transform: uppercase;
     padding: 4px 0;
 }
