@@ -1,0 +1,35 @@
+@model GirisFormu
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Giriş - TOST LAB</title>
+    <link rel="stylesheet" href="~/css/giris.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="giris-kutu">
+        <div class="giris-serit"><span>TOST LAB°</span></div>
+
+        <form class="giris-form" asp-action="Index" asp-route-donusAdresi="@ViewData["DonusAdresi"]" method="post">
+            <h1>Giriş</h1>
+            <p class="aciklama">Adisyon paneline devam etmek için giriş yap.</p>
+
+            <div asp-validation-summary="ModelOnly"></div>
+
+            <label asp-for="KullaniciAdi"></label>
+            <input asp-for="KullaniciAdi" autocomplete="username" autofocus />
+            <span asp-validation-for="KullaniciAdi"></span>
+
+            <label asp-for="Sifre"></label>
+            <input asp-for="Sifre" autocomplete="current-password" />
+            <span asp-validation-for="Sifre"></span>
+
+            <button type="submit">Giriş yap</button>
+        </form>
+    </div>
+</body>
+</html>

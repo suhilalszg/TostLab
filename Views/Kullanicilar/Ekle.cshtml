@@ -1,0 +1,40 @@
+@model KullaniciFormu
+@{
+    ViewData["Title"] = "Kullanıcı ekle";
+}
+
+<h1>Kullanıcı ekle</h1>
+
+<form asp-action="Ekle" method="post" style="max-width: 420px">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="KullaniciAdi" class="form-label"></label>
+        <input asp-for="KullaniciAdi" class="form-control" autocomplete="off" />
+        <span asp-validation-for="KullaniciAdi" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Sifre" class="form-label"></label>
+        <input asp-for="Sifre" class="form-control" autocomplete="new-password" />
+        <span asp-validation-for="Sifre" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="SifreTekrar" class="form-label"></label>
+        <input asp-for="SifreTekrar" class="form-control" autocomplete="new-password" />
+        <span asp-validation-for="SifreTekrar" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Rol" class="form-label"></label>
+        <select asp-for="Rol" class="form-select">
+            <option value="@Roller.Calisan">Çalışan (sadece sipariş)</option>
+            <option value="@Roller.Yonetici">Yönetici (her şey)</option>
+        </select>
+        <span asp-validation-for="Rol" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-dark">Kaydet</button>
+    <a asp-action="Index" class="btn btn-link">Vazgeç</a>
+</form>

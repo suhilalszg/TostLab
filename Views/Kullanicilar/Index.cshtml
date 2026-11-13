@@ -1,0 +1,32 @@
+@model List<Kullanici>
+@{
+    ViewData["Title"] = "Kullanıcılar";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="m-0">Kullanıcılar</h1>
+    <a class="btn btn-dark" asp-action="Ekle">+ Kullanıcı ekle</a>
+</div>
+
+@if (TempData["Bildirim"] is string bildirim)
+{
+    <div class="alert alert-success">@bildirim</div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Kullanıcı adı</th>
+            <th>Rol</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var kullanici in Model)
+        {
+            <tr>
+                <td>@kullanici.KullaniciAdi</td>
+                <td>@(kullanici.Rol == Roller.Yonetici ? "Yönetici" : "Çalışan")</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,40 @@
+@model KullaniciFormu
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>İlk kurulum - TOST LAB</title>
+    <link rel="stylesheet" href="~/css/giris.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="giris-kutu">
+        <div class="giris-serit"><span>TOST LAB°</span></div>
+
+        <form class="giris-form" asp-action="Index" method="post">
+            <h1>İlk kurulum</h1>
+            <p class="aciklama">Program ilk kez açıldı. Yönetici hesabını oluştur: raporları ve ayarları bu hesap görür.</p>
+
+            <div asp-validation-summary="ModelOnly"></div>
+
+            <label asp-for="KullaniciAdi"></label>
+            <input asp-for="KullaniciAdi" autocomplete="username" autofocus />
+            <span asp-validation-for="KullaniciAdi"></span>
+
+            <label asp-for="Sifre"></label>
+            <input asp-for="Sifre" autocomplete="new-password" />
+            <span asp-validation-for="Sifre"></span>
+
+            <label asp-for="SifreTekrar"></label>
+            <input asp-for="SifreTekrar" autocomplete="new-password" />
+            <span asp-validation-for="SifreTekrar"></span>
+
+            <input type="hidden" asp-for="Rol" />
+            <button type="submit">Yönetici hesabını oluştur</button>
+        </form>
+    </div>
+</body>
+</html>

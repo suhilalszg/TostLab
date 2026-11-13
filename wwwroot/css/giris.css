@@ -1,0 +1,116 @@
+/* Giriş ve kurulum ekranı: v3 tasarımının renkleri */
+:root {
+    --sari: #f2c230;
+    --siyah: #151515;
+    --zemin: #f4f3ef;
+    --kart: #fff;
+    --yazi: #18181a;
+    --soluk: #77767a;
+    --cizgi: #e4e2dc;
+    --kirmizi: #d23b30;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: var(--zemin);
+    color: var(--yazi);
+    font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
+}
+
+.giris-kutu {
+    display: flex;
+    width: min(440px, calc(100vw - 32px));
+    background: var(--kart);
+    border: 1px solid var(--cizgi);
+    box-shadow: 6px 6px 0 var(--sari);
+}
+
+.giris-serit {
+    width: 64px;
+    background: var(--siyah);
+    color: var(--sari);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.giris-serit span {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: "Bahnschrift Condensed", "Bahnschrift", sans-serif;
+    font-size: 22px;
+    letter-spacing: .3em;
+}
+
+.giris-form {
+    flex: 1;
+    padding: 28px 26px;
+}
+
+.giris-form h1 {
+    margin: 0 0 4px;
+    font-family: "Bahnschrift Condensed", "Bahnschrift", sans-serif;
+    font-size: 28px;
+    letter-spacing: .04em;
+}
+
+.giris-form p.aciklama {
+    margin: 0 0 18px;
+    color: var(--soluk);
+    font-size: 13.5px;
+}
+
+.giris-form label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--soluk);
+    margin: 12px 0 4px;
+}
+
+.giris-form input {
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    border: 1.5px solid var(--cizgi);
+    background: #fff;
+}
+
+.giris-form input:focus {
+    outline: none;
+    border-color: var(--yazi);
+}
+
+.giris-form button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 11px;
+    font: inherit;
+    font-weight: 600;
+    background: var(--siyah);
+    color: var(--sari);
+    border: 0;
+    cursor: pointer;
+}
+
+.giris-form button:hover { background: #000; }
+
+.hata,
+.field-validation-error,
+.validation-summary-errors {
+    color: var(--kirmizi);
+    font-size: 13px;
+}
+
+.validation-summary-errors ul {
+    margin: 10px 0 0;
+    padding-left: 18px;
+}
+
+.validation-summary-valid { display: none; }
