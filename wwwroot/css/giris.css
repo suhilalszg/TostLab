@@ -34,8 +34,14 @@ body {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     font-weight: 800;
-    font-size: 21px;
-    letter-spacing: .22em;
+    font-size: 25px;
+    letter-spacing: .24em;
+    color: var(--sari);
+    background: linear-gradient(90deg, #C99A1E 0%, #F2C230 40%, #FBE38E 60%, #F2C230 80%, #C99A1E 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 6px rgba(242, 194, 48, .35));
 }
 
 .giris-form {
@@ -92,7 +98,7 @@ body {
     cursor: pointer;
 }
 
-.giris-form button:hover { background: var(--lacivert); color: var(--sari); }
+.giris-form button:hover { background: var(--lacivert); color: var(--sampanya); }
 
 .field-validation-error,
 .validation-summary-errors {

@@ -41,13 +41,38 @@ body {
 .yan-menu .logo {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    color: var(--sari);
     font-weight: 800;
-    font-size: 21px;
-    letter-spacing: .22em;
+    font-size: 25px;
+    letter-spacing: .24em;
+    white-space: nowrap;
     text-decoration: none;
-    margin-bottom: 30px;
+    margin-bottom: 34px;
+    padding: 14px 0;
+    position: relative;
+    /* Altın parıltılı yazı: arka planı yazının şekline kırpıyoruz */
+    color: var(--sari);
+    background: linear-gradient(90deg, #C99A1E 0%, #F2C230 40%, #FBE38E 60%, #F2C230 80%, #C99A1E 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 6px rgba(242, 194, 48, .35));
 }
+
+/* Logonun iki ucundaki ince altın çizgiler */
+.yan-menu .logo::before,
+.yan-menu .logo::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 1px;
+    height: 10px;
+    background: #F2C230;
+    opacity: .7;
+}
+.yan-menu .logo::before { top: 0; }
+.yan-menu .logo::after { bottom: 0; }
+
+.yan-menu .logo:hover { filter: drop-shadow(0 0 10px rgba(242, 194, 48, .6)); }
 
 .yan-menu nav {
     display: flex;
@@ -71,9 +96,9 @@ body {
 
 .yan-menu nav a:hover { color: var(--fildisi); }
 
-.yan-menu nav a.secili { color: var(--sari); }
+.yan-menu nav a.secili { color: var(--sampanya); }
 
-/* Seçili sayfanın yanındaki sarı şerit */
+/* Seçili sayfanın yanındaki şampanya rengi şerit */
 .yan-menu nav a.secili::after {
     content: "";
     position: absolute;
@@ -82,7 +107,7 @@ body {
     bottom: 0;
     width: 4px;
     border-radius: 2px;
-    background: var(--sari);
+    background: var(--sampanya);
 }
 
 .yan-menu .alt {
@@ -97,7 +122,7 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--sari);
+    background: var(--sampanya);
     color: var(--lacivert);
     display: grid;
     place-items: center;
@@ -114,7 +139,7 @@ body {
     cursor: pointer;
 }
 
-.yan-menu .cikis:hover { color: var(--sari); }
+.yan-menu .cikis:hover { color: var(--sampanya); }
 
 /* ---------- İçerik ---------- */
 .icerik {
@@ -173,7 +198,7 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .kutu .deger { font-size: 28px; font-weight: 700; line-height: 1.2; }
 .kutu.vurgulu { background: var(--lacivert); border-color: var(--lacivert); color: var(--fildisi); }
 .kutu.vurgulu .etiket { color: var(--vizon); }
-.kutu.vurgulu .deger { color: var(--sari); }
+.kutu.vurgulu .deger { color: var(--sampanya); }
 
 .fis {
     background: var(--fis);
@@ -206,7 +231,7 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .btn-dark:focus, .btn-primary:focus {
     background: var(--lacivert);
     border-color: var(--lacivert);
-    color: var(--sari);
+    color: var(--sampanya);
 }
 
 .btn-link { color: var(--safir); }
@@ -251,7 +276,8 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
     .panel { grid-template-columns: 1fr; }
     .yan-menu { flex-direction: row; height: auto; position: static; padding: 10px 16px; gap: 18px; }
     .yan-menu .logo, .yan-menu nav a { writing-mode: horizontal-tb; transform: none; }
-    .yan-menu .logo { margin: 0; font-size: 16px; }
+    .yan-menu .logo { margin: 0; font-size: 18px; white-space: nowrap; padding: 0; }
+    .yan-menu .logo::before, .yan-menu .logo::after { display: none; }
     .yan-menu nav { flex-direction: row; gap: 14px; }
     .yan-menu nav a.secili::after { left: 0; right: 0; top: auto; bottom: -6px; width: auto; height: 3px; }
     .yan-menu .alt { margin: 0 0 0 auto; flex-direction: row; }
