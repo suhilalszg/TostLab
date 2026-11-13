@@ -1,14 +1,4 @@
-/* Giriş ve kurulum ekranı: v3 tasarımının renkleri */
-:root {
-    --sari: #f2c230;
-    --siyah: #151515;
-    --zemin: #f4f3ef;
-    --kart: #fff;
-    --yazi: #18181a;
-    --soluk: #77767a;
-    --cizgi: #e4e2dc;
-    --kirmizi: #d23b30;
-}
+/* Giriş ve kurulum ekranı. Renkler ve yazı tipleri tema.css'ten gelir. */
 
 * { box-sizing: border-box; }
 
@@ -19,7 +9,7 @@ body {
     place-items: center;
     background: var(--zemin);
     color: var(--yazi);
-    font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
+    font: 15px/1.45 var(--yazi-tipi);
 }
 
 .giris-kutu {
@@ -27,12 +17,13 @@ body {
     width: min(440px, calc(100vw - 32px));
     background: var(--kart);
     border: 1px solid var(--cizgi);
-    box-shadow: 6px 6px 0 var(--sari);
+    border-radius: 14px;
+    overflow: hidden;
 }
 
 .giris-serit {
-    width: 64px;
-    background: var(--siyah);
+    width: 68px;
+    background: var(--menu);
     color: var(--sari);
     display: flex;
     align-items: center;
@@ -42,66 +33,67 @@ body {
 .giris-serit span {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    font-family: "Bahnschrift Condensed", "Bahnschrift", sans-serif;
-    font-size: 22px;
-    letter-spacing: .3em;
+    font-weight: 800;
+    font-size: 21px;
+    letter-spacing: .22em;
 }
 
 .giris-form {
     flex: 1;
-    padding: 28px 26px;
+    padding: 30px 28px;
 }
 
 .giris-form h1 {
     margin: 0 0 4px;
-    font-family: "Bahnschrift Condensed", "Bahnschrift", sans-serif;
     font-size: 28px;
-    letter-spacing: .04em;
+    font-weight: 700;
 }
 
 .giris-form p.aciklama {
     margin: 0 0 18px;
-    color: var(--soluk);
+    color: var(--soluk-yazi);
     font-size: 13.5px;
 }
 
 .giris-form label {
     display: block;
-    font-size: 12px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--soluk);
-    margin: 12px 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--soluk-yazi);
+    margin: 14px 0 5px;
 }
 
 .giris-form input {
     width: 100%;
     padding: 10px 12px;
     font: inherit;
+    color: var(--yazi);
     border: 1.5px solid var(--cizgi);
-    background: #fff;
+    border-radius: 8px;
+    background: var(--beyaz);
 }
 
 .giris-form input:focus {
     outline: none;
-    border-color: var(--yazi);
+    border-color: var(--safir);
+    box-shadow: 0 0 0 3px rgba(59, 80, 125, .18);
 }
 
 .giris-form button {
     width: 100%;
-    margin-top: 20px;
+    margin-top: 22px;
     padding: 11px;
     font: inherit;
-    font-weight: 600;
-    background: var(--siyah);
-    color: var(--sari);
+    font-weight: 700;
+    background: var(--ana-renk);
+    color: var(--fildisi);
     border: 0;
+    border-radius: 8px;
     cursor: pointer;
 }
 
-.giris-form button:hover { background: #000; }
+.giris-form button:hover { background: var(--lacivert); color: var(--sari); }
 
-.hata,
 .field-validation-error,
 .validation-summary-errors {
     color: var(--kirmizi);

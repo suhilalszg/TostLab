@@ -1,8 +1,26 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Bugün";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@* Şimdilik yer tutucu: gerçek rakamlar 09. adımda (Bugün ekranı) veritabanından gelecek *@
+<div class="kutular">
+    <div class="kutu vurgulu">
+        <div class="etiket">Sipariş</div>
+        <div class="deger">0</div>
+    </div>
+    <div class="kutu">
+        <div class="etiket">Ciro</div>
+        <div class="deger">0 ₺</div>
+    </div>
+    <div class="kutu">
+        <div class="etiket">İptal</div>
+        <div class="deger">0</div>
+    </div>
+</div>
+
+<div class="kart">
+    <h2 style="font-size: 18px; margin: 0 0 6px">Hoş geldin, @User.Identity?.Name</h2>
+    <p style="margin: 0; color: var(--soluk-yazi)">
+        Panel hazırlanıyor. Sipariş girişi, kayıtlar ve gün sonu raporu sırayla bu menüye eklenecek.
+    </p>
 </div>
