@@ -19,12 +19,14 @@
 }
 
 :root {
-    /* Palet */
-    --gece-moru: #6B2D5E;       /* Bordo (Midnight Violet'in açık hali): yazılar, ana butonlar, öne çıkan kutu */
-    --fransiz-mavisi: #3E4B8E;  /* French Blue: sol menü */
-    --toz-mavi: #A6BCC9;        /* Powder Blue: çizgiler, etiketler, pasif menü */
-    --bugday: #F6E0B6;          /* Wheat: fiş kağıdı, seçili menü, buton yazısı */
-    --deniz-kabugu: #FFF4EB;    /* Seashell: sayfa zemini */
+    /* Palet: siyah, krem, sarı (hepsi açık tonlarda) */
+    --antrasit: #3E3C39;        /* Yumuşak siyah: sol menü, yazılar */
+    --antrasit-acik: #4A4744;   /* Açık siyah: sol menü, ikincil yazılar */
+    --kum: #CFC7B8;             /* Kum rengi: çizgiler, pasif menü yazıları */
+    --tereyagi: #F5DC8A;        /* Açık sarı: butonlar, seçili menü, öne çıkan kutu */
+    --tereyagi-koyu: #EDCB62;   /* Butonun üzerine gelince */
+    --krem: #FBF7EE;            /* Krem: sayfa zemini */
+    --fis-krem: #F3EAD5;        /* Koyu krem: fiş kağıdı */
     --sari: #F2C230;            /* TOST LAB sarısı: sadece logo */
     --beyaz: #ffffff;
 
@@ -35,14 +37,14 @@
     --yesil-zemin: #dcefe3;
 
     /* Görevlerine göre adlar: sayfalar bunları kullanır */
-    --zemin: var(--deniz-kabugu);
+    --zemin: var(--krem);
     --kart: var(--beyaz);
-    --yazi: var(--gece-moru);
-    --soluk-yazi: #86707f;
-    --cizgi: #ecdccf;
-    --ana-renk: var(--gece-moru);
-    --menu: var(--fransiz-mavisi);
-    --fis: var(--bugday);
+    --yazi: var(--antrasit);
+    --soluk-yazi: #8a857b;
+    --cizgi: #ebe4d6;
+    --ana-renk: var(--antrasit);
+    --menu: var(--antrasit-acik);
+    --fis: var(--fis-krem);
 
     --yazi-tipi: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
     --fis-yazi-tipi: "Cascadia Code", "Cascadia Mono", Consolas, monospace;

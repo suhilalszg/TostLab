@@ -16,7 +16,7 @@ body {
     --bs-body-color: var(--yazi);
     --bs-body-bg: var(--zemin);
     --bs-border-color: var(--cizgi);
-    --bs-link-color-rgb: 62, 75, 142;
+    --bs-link-color-rgb: 90, 87, 81;
 }
 
 .panel {
@@ -28,7 +28,7 @@ body {
 /* ---------- Sol menü ---------- */
 .yan-menu {
     background: var(--menu);
-    color: var(--toz-mavi);
+    color: var(--kum);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -85,7 +85,7 @@ body {
     position: relative;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    color: var(--toz-mavi);
+    color: var(--kum);
     text-decoration: none;
     font-size: 13px;
     font-weight: 500;
@@ -94,9 +94,9 @@ body {
     padding: 4px 0;
 }
 
-.yan-menu nav a:hover { color: var(--deniz-kabugu); }
+.yan-menu nav a:hover { color: var(--krem); }
 
-.yan-menu nav a.secili { color: var(--bugday); }
+.yan-menu nav a.secili { color: var(--tereyagi); }
 
 /* Seçili sayfanın yanındaki şampanya rengi şerit */
 .yan-menu nav a.secili::after {
@@ -107,7 +107,7 @@ body {
     bottom: 0;
     width: 4px;
     border-radius: 2px;
-    background: var(--bugday);
+    background: var(--tereyagi);
 }
 
 .yan-menu .alt {
@@ -122,8 +122,8 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--bugday);
-    color: var(--gece-moru);
+    background: var(--tereyagi);
+    color: var(--antrasit);
     display: grid;
     place-items: center;
     font-weight: 700;
@@ -133,13 +133,13 @@ body {
 .yan-menu .cikis {
     background: none;
     border: 0;
-    color: var(--toz-mavi);
+    color: var(--kum);
     font: inherit;
     font-size: 12px;
     cursor: pointer;
 }
 
-.yan-menu .cikis:hover { color: var(--bugday); }
+.yan-menu .cikis:hover { color: var(--tereyagi); }
 
 /* ---------- İçerik ---------- */
 .icerik {
@@ -196,9 +196,9 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 
 .kutu .etiket { font-size: 12px; color: var(--soluk-yazi); text-transform: uppercase; letter-spacing: .08em; }
 .kutu .deger { font-size: 28px; font-weight: 700; line-height: 1.2; }
-.kutu.vurgulu { background: var(--gece-moru); border-color: var(--gece-moru); color: var(--deniz-kabugu); }
-.kutu.vurgulu .etiket { color: var(--toz-mavi); }
-.kutu.vurgulu .deger { color: var(--bugday); }
+.kutu.vurgulu { background: var(--tereyagi); border-color: var(--tereyagi); color: var(--antrasit); }
+.kutu.vurgulu .etiket { color: var(--antrasit-acik); }
+.kutu.vurgulu .deger { color: var(--antrasit); }
 
 .fis {
     background: var(--fis);
@@ -212,29 +212,29 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
     border-radius: 6px;
     font-size: 12px;
     font-weight: 500;
-    background: var(--toz-mavi);
-    color: var(--gece-moru);
+    background: var(--kum);
+    color: var(--antrasit);
 }
 
-.etiket-hap.mavi { background: var(--fransiz-mavisi); color: var(--deniz-kabugu); }
+.etiket-hap.mavi { background: var(--antrasit-acik); color: var(--krem); }
 
 /* ---------- Bootstrap parçalarını temaya uydur ---------- */
 .btn { border-radius: 8px; font-weight: 600; }
 
 .btn-dark, .btn-primary {
-    background: var(--ana-renk);
-    border-color: var(--ana-renk);
-    color: var(--bugday);
+    background: var(--tereyagi);
+    border-color: var(--tereyagi);
+    color: var(--antrasit);
 }
 
 .btn-dark:hover, .btn-primary:hover,
 .btn-dark:focus, .btn-primary:focus {
-    background: var(--fransiz-mavisi);
-    border-color: var(--fransiz-mavisi);
-    color: var(--deniz-kabugu);
+    background: var(--tereyagi-koyu);
+    border-color: var(--tereyagi-koyu);
+    color: var(--antrasit);
 }
 
-.btn-link { color: var(--fransiz-mavisi); }
+.btn-link { color: var(--antrasit-acik); }
 
 .form-control, .form-select {
     border-color: var(--cizgi);
@@ -244,8 +244,8 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: var(--fransiz-mavisi);
-    box-shadow: 0 0 0 3px rgba(62, 75, 142, .18);
+    border-color: var(--antrasit-acik);
+    box-shadow: 0 0 0 3px rgba(90, 87, 81, .18);
 }
 
 .form-label { font-size: 13px; font-weight: 600; color: var(--soluk-yazi); }
