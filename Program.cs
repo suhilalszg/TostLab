@@ -1,7 +1,14 @@
+﻿using Microsoft.EntityFrameworkCore;
+using TostLab.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Veritabanı: SQLite, bağlantı bilgisi appsettings.json içinde
+builder.Services.AddDbContext<TostLabDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("TostLab")));
 
 var app = builder.Build();
 

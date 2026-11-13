@@ -480,3 +480,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# TOST LAB veritabanı (gerçek veri GitHub'a gitmez)
+tostlab.db
+tostlab.db-shm
+tostlab.db-wal
