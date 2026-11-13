@@ -349,20 +349,49 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
     background: var(--kart);
     border: 1px solid var(--cizgi);
     border-radius: var(--kose);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     scroll-margin-top: 64px;
     overflow: hidden;
 }
 
 .kategori-baslik {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    margin: 0;
-    padding: 11px 16px;
-    background: var(--fis);
-    border-bottom: 1px solid var(--cizgi);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: background .15s;
 }
+.kategori-baslik::-webkit-details-marker { display: none; }
+.kategori-baslik:hover { background: var(--fis); }
+.kategori-baslik .ad { font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+.kategori-baslik .bilgi { margin-left: auto; color: var(--soluk-yazi); font-size: 12px; }
+.kategori-baslik .bilgi em { font-style: normal; background: var(--tereyagi); color: var(--antrasit); padding: 1px 7px; border-radius: 5px; margin-left: 6px; }
+
+/* Sağdaki ok: kapalıyken aşağı, açılınca yukarı döner */
+.kategori-baslik .ok {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--zemin);
+    display: grid;
+    place-items: center;
+    transition: transform .2s, background .15s;
+}
+.kategori-baslik .ok::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--yazi);
+    border-bottom: 2px solid var(--yazi);
+    transform: translateY(-2px) rotate(45deg);
+}
+.kategori-blok[open] > .kategori-baslik { background: var(--fis); border-bottom: 1px solid var(--cizgi); }
+.kategori-blok[open] > .kategori-baslik .ok { transform: rotate(180deg); background: var(--tereyagi); }
+
+.metin-dugme { border: 0; background: none; padding: 0; margin-left: 8px; font: inherit; color: var(--yazi); text-decoration: underline; cursor: pointer; }
 
 .urun-satir {
     display: grid;

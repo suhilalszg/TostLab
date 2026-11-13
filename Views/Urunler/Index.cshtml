@@ -37,12 +37,27 @@
             <a class="btn btn-dark" asp-action="Ekle">+ Ürün</a>
         </div>
 
-        <p class="ipucu">Fiyatı kutuya yaz, <kbd>Enter</kbd>'a bas: kaydedilir ve alttakine geçer.</p>
+        <p class="ipucu">
+            Kategoriye tıkla, açılsın. Fiyatı yaz, <kbd>Enter</kbd>'a bas: kaydedilir, alttakine geçer.
+            <button type="button" id="hepsini-ac" class="metin-dugme">Hepsini aç</button>
+        </p>
 
         @foreach (var grup in Model.Urunler.GroupBy(urun => urun.Kategori))
         {
-            <div class="kategori-blok" id="@MenuSayfasi.KategoriKimligi(grup.Key)">
-                <h2 class="kategori-baslik">@grup.Key</h2>
+            int fiyatsizSayisi = grup.Count(urun => urun.Fiyat == 0);
+            @* details/summary: tarayıcının hazır aç-kapa kutusu. Başlangıçta kapalı. *@
+            <details class="kategori-blok" id="@MenuSayfasi.KategoriKimligi(grup.Key)">
+                <summary class="kategori-baslik">
+                    <span class="ad">@grup.Key</span>
+                    <span class="bilgi">
+                        @grup.Count() ürün
+                        @if (fiyatsizSayisi > 0)
+                        {
+                            <em>@fiyatsizSayisi fiyatsız</em>
+                        }
+                    </span>
+                    <span class="ok" aria-hidden="true"></span>
+                </summary>
 
                 @foreach (var urun in grup)
                 {
@@ -74,7 +89,7 @@
                     <input type="text" name="fiyat" inputmode="decimal" placeholder="Fiyat" autocomplete="off" />
                     <button type="submit">Ekle</button>
                 </form>
-            </div>
+            </details>
         }
 
         <div class="kart bos-sonuc" hidden>Aramaya uyan ürün yok.</div>

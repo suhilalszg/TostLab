@@ -23,6 +23,37 @@
         eleman.classList.add(sinif);
     }
 
+    // Kategori başlığındaki "8 ürün · 3 fiyatsız" yazısını yenile
+    function kategoriBilgisiniYaz(blok) {
+        const kutular = [...blok.querySelectorAll('.fiyat-gir')];
+        const fiyatsiz = kutular.filter(kutu => kutu.value.trim() === '').length;
+        blok.querySelector('.bilgi').innerHTML =
+            `${kutular.length} ürün` + (fiyatsiz > 0 ? ` <em>${fiyatsiz} fiyatsız</em>` : '');
+    }
+
+    // ---------- Kategoriyi aç / kapat ----------
+    const bloklar = [...document.querySelectorAll('.kategori-blok')];
+    const hepsiniAcDugmesi = document.getElementById('hepsini-ac');
+
+    function hepsiniAcDugmesiniYaz() {
+        hepsiniAcDugmesi.textContent = bloklar.every(blok => blok.open) ? 'Hepsini kapat' : 'Hepsini aç';
+    }
+
+    hepsiniAcDugmesi.addEventListener('click', function () {
+        const hepsiAcik = bloklar.every(blok => blok.open);
+        bloklar.forEach(blok => blok.open = !hepsiAcik);
+        hepsiniAcDugmesiniYaz();
+    });
+    bloklar.forEach(blok => blok.addEventListener('toggle', hepsiniAcDugmesiniYaz));
+
+    // Soldaki kategori listesine tıklayınca o kategoriyi aç (sonra tarayıcı oraya kayar)
+    document.querySelectorAll('.kategori-listesi a').forEach(function (baglanti) {
+        baglanti.addEventListener('click', function () {
+            const blok = document.getElementById(baglanti.dataset.kategori);
+            if (blok) blok.open = true;
+        });
+    });
+
     // ---------- Fiyat: Enter'a basınca veya kutudan çıkınca kaydet ----------
     const fiyatKutulari = [...document.querySelectorAll('.fiyat-gir')];
 
@@ -42,6 +73,7 @@
                 document.getElementById('sayac-fiyatsiz').textContent = veri.fiyatsizUrun;
                 document.getElementById('fiyatsiz-suz').classList.toggle('uyari', veri.fiyatsizUrun > 0);
                 isaretle(kutu.parentElement, 'kaydedildi');
+                kategoriBilgisiniYaz(kutu.closest('.kategori-blok'));
             } catch (hata) {
                 kutu.title = hata.message;
                 isaretle(kutu.parentElement, 'hatali');
@@ -107,6 +139,7 @@
     const aramaKutusu = document.getElementById('menu-ara');
     const fiyatsizDugmesi = document.getElementById('fiyatsiz-suz');
     let sadeceFiyatsiz = false;
+    const oncekiDurumlar = {};   // arama başlamadan önce hangi kategori açıktı
 
     function suz() {
         const aranan = aramaKutusu.value.trim().toLocaleLowerCase('tr-TR');
@@ -123,6 +156,14 @@
             });
             const suzgecVar = aranan !== '' || sadeceFiyatsiz;
             blok.hidden = gorunenSatir === 0;
+            // Arama yapılırken sonuç olan kategorileri aç; arama silinince eski haline dön
+            if (suzgecVar) {
+                if (!(blok.id in oncekiDurumlar)) oncekiDurumlar[blok.id] = blok.open;
+                blok.open = gorunenSatir > 0;
+            } else if (blok.id in oncekiDurumlar) {
+                blok.open = oncekiDurumlar[blok.id];
+                delete oncekiDurumlar[blok.id];
+            }
             blok.querySelector('.hizli-ekle').hidden = suzgecVar;
             gorunenToplam += gorunenSatir;
 
@@ -144,6 +185,7 @@
     const yeniKimlik = new URLSearchParams(location.search).get('yeni');
     const yeniSatir = yeniKimlik && document.querySelector(`.urun-satir[data-id="${CSS.escape(yeniKimlik)}"]`);
     if (yeniSatir) {
+        yeniSatir.closest('.kategori-blok').open = true;
         yeniSatir.scrollIntoView({ block: 'center' });
         yeniSatir.classList.add('yeni');
         history.replaceState(null, '', '/Urunler');
