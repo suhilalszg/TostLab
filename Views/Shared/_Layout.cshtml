@@ -26,6 +26,7 @@
                 @if (yoneticiMi)
                 {
                     <a asp-controller="Urunler" asp-action="Index" class="@(aktifSayfa == "Urunler" ? "secili" : "")">Menü</a>
+                    <a asp-controller="Ayarlar" asp-action="Index" class="@(aktifSayfa == "Ayarlar" ? "secili" : "")">Ayarlar</a>
                     <a asp-controller="Kullanicilar" asp-action="Index" class="@(aktifSayfa == "Kullanicilar" ? "secili" : "")">Kullanıcılar</a>
                 }
             </nav>

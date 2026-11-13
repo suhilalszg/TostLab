@@ -1,0 +1,51 @@
+@model AyarlarSayfasi
+@{
+    ViewData["Title"] = "Ayarlar";
+
+    // İki liste de aynı görünümde: başlık, liste adı, ekle yazısı, kayıtlar
+    var listeler = new[]
+    {
+        (Baslik: "Masalar", Liste: "masa", EkleYazisi: "+ Masa ekle",
+            Kayitlar: Model.Masalar.Cast<IAdliKayit>().ToList()),
+        (Baslik: "Ödeme türleri", Liste: "odeme", EkleYazisi: "+ Ödeme türü ekle",
+            Kayitlar: Model.OdemeTurleri.Cast<IAdliKayit>().ToList())
+    };
+}
+
+@* ayarlar.js bu anahtarı her istekte gönderir *@
+@Html.AntiForgeryToken()
+
+<div class="ayarlar-izgara">
+    @foreach (var liste in listeler)
+    {
+        <section class="kategori-blok ayar-blok" data-liste="@liste.Liste">
+            <div class="kategori-baslik">
+                <span class="ad">@liste.Baslik</span>
+                <span class="bilgi"><b class="acik-sayisi">@liste.Kayitlar.Count(kayit => kayit.AktifMi)</b> açık</span>
+            </div>
+
+            @foreach (var kayit in liste.Kayitlar)
+            {
+                <div class="ayar-satir @(kayit.AktifMi ? "" : "kapali")" data-id="@kayit.Id">
+                    <input type="text" class="ad-gir" value="@kayit.Ad" maxlength="40" aria-label="@kayit.Ad adı" />
+                    <button type="button" class="anahtar @(kayit.AktifMi ? "acik" : "")"
+                            title="Aç / kapat" aria-label="@kayit.Ad açık mı"></button>
+                </div>
+            }
+
+            <div class="ekle-alani">
+                <button type="button" class="ekle-ac">@liste.EkleYazisi</button>
+                <form class="hizli-ekle tek" hidden>
+                    <input type="text" name="ad" placeholder="Ad" maxlength="40" autocomplete="off" />
+                    <button type="submit">Ekle</button>
+                </form>
+            </div>
+        </section>
+    }
+</div>
+
+<p class="ayar-not">Kapalı olanlar sipariş ekranında görünmez. Geçmiş siparişler bozulmasın diye silme yok.</p>
+
+@section Scripts {
+    <script src="~/js/ayarlar.js" asp-append-version="true"></script>
+}

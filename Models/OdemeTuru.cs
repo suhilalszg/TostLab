@@ -1,6 +1,6 @@
 ﻿namespace TostLab.Models;
 
-public class OdemeTuru
+public class OdemeTuru : IAdliKayit
 {
     public int Id { get; set; }
     public string Ad { get; set; } = "";

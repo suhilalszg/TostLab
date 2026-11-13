@@ -77,3 +77,10 @@ public class MenuSayfasi
         return fiyat % 1 == 0 ? fiyat.ToString("0") : fiyat.ToString("0.00");
     }
 }
+
+// Ayarlar sayfasının ekrana gönderdiği iki liste
+public class AyarlarSayfasi
+{
+    public List<Masa> Masalar { get; set; } = new();
+    public List<OdemeTuru> OdemeTurleri { get; set; } = new();
+}
