@@ -272,49 +272,6 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .text-danger { color: var(--kirmizi) !important; }
 
 /* ---------- Menü (ürünler) sayfası ---------- */
-.menu-duzen {
-    display: grid;
-    grid-template-columns: 210px 1fr;
-    gap: 26px;
-    align-items: start;
-}
-
-.kategori-listesi {
-    position: sticky;
-    top: 18px;
-    max-height: calc(100vh - 36px);
-    overflow-y: auto;
-}
-
-.kategori-listesi .ozet {
-    display: flex;
-    gap: 14px;
-    font-size: 12px;
-    color: var(--soluk-yazi);
-    padding: 0 10px 12px;
-    border-bottom: 1px solid var(--cizgi);
-    margin-bottom: 8px;
-}
-.kategori-listesi .ozet b { color: var(--yazi); font-size: 15px; }
-
-.kategori-listesi nav { display: flex; flex-direction: column; }
-
-.kategori-listesi a {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 6px 10px;
-    border-radius: 7px;
-    color: var(--yazi);
-    text-decoration: none;
-    font-size: 13px;
-    border-left: 3px solid transparent;
-}
-.kategori-listesi a small { color: var(--soluk-yazi); }
-.kategori-listesi a:hover { background: var(--kart); }
-.kategori-listesi a.secili { background: var(--kart); border-left-color: var(--tereyagi-koyu); font-weight: 700; }
-.kategori-listesi a.bos { opacity: .35; }
-
 .menu-arac {
     position: sticky;
     top: 0;
@@ -342,8 +299,6 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .suzgec.uyari b { background: var(--tereyagi); color: var(--antrasit); padding: 0 6px; border-radius: 5px; }
 .suzgec.secili { background: var(--antrasit); border-color: var(--antrasit); color: var(--krem); }
 
-.ipucu { font-size: 12px; color: var(--soluk-yazi); margin: 2px 0 6px; }
-.ipucu kbd { background: var(--kart); color: var(--yazi); border: 1px solid var(--cizgi); padding: 0 5px; font-size: 11px; }
 
 .kategori-blok {
     background: var(--kart);
@@ -391,11 +346,10 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .kategori-blok[open] > .kategori-baslik { background: var(--fis); border-bottom: 1px solid var(--cizgi); }
 .kategori-blok[open] > .kategori-baslik .ok { transform: rotate(180deg); background: var(--tereyagi); }
 
-.metin-dugme { border: 0; background: none; padding: 0; margin-left: 8px; font: inherit; color: var(--yazi); text-decoration: underline; cursor: pointer; }
 
 .urun-satir {
     display: grid;
-    grid-template-columns: 1fr 120px 42px 28px;
+    grid-template-columns: 1fr 120px 42px;
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
@@ -467,15 +421,35 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .anahtar.acik { background: var(--yesil); }
 .anahtar.acik::after { left: 19px; }
 
-.kalem { color: var(--soluk-yazi); text-decoration: none; font-size: 16px; text-align: center; }
-.kalem:hover { color: var(--yazi); }
+
+/* Menü sayfası okunaklı genişlikte kalsın */
+.menu-arac, .kategori-blok, .bos-sonuc, .yeni-kategori { max-width: 860px; }
+
+/* Ürün adı = düzenleme bağlantısı */
+a.urun-bilgi { color: inherit; text-decoration: none; }
+a.urun-bilgi:hover b { text-decoration: underline; }
+
+.ekle-alani { padding: 8px 16px; }
+.ekle-ac, .yeni-kategori {
+    border: 0;
+    background: none;
+    padding: 4px 0;
+    font: inherit;
+    font-size: 13px;
+    color: var(--soluk-yazi);
+    text-decoration: none;
+    cursor: pointer;
+}
+.ekle-ac:hover, .yeni-kategori:hover { color: var(--yazi); }
+.yeni-kategori { display: inline-block; margin-top: 4px; }
 
 .hizli-ekle {
+    padding: 0;
     display: grid;
     grid-template-columns: 1fr 120px auto;
     gap: 12px;
-    padding: 8px 16px;
 }
+.hizli-ekle[hidden] { display: none; }
 .hizli-ekle input {
     border: 1px dashed var(--cizgi);
     border-radius: 7px;
@@ -502,16 +476,9 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .btn-outline-danger { border-color: var(--kirmizi); color: var(--kirmizi); }
 .btn-outline-danger:hover { background: var(--kirmizi); border-color: var(--kirmizi); color: var(--beyaz); }
 
-@media (max-width: 900px) {
-    .menu-duzen { grid-template-columns: 1fr; }
-    .kategori-listesi { position: static; max-height: none; }
-    .kategori-listesi nav { flex-direction: row; overflow-x: auto; gap: 4px; scrollbar-width: none; }
-    .kategori-listesi a { white-space: nowrap; border-left: 0; }
-}
 
 @media (max-width: 560px) {
     .urun-satir { grid-template-columns: 1fr 96px 42px; }
-    .urun-satir .kalem { display: none; }
     .hizli-ekle { grid-template-columns: 1fr 80px auto; }
 }
 

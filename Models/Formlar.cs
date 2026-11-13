@@ -68,10 +68,7 @@ public class UrunFormu
 // Menü sayfasının ekrana gönderdiği her şey tek pakette
 public class MenuSayfasi
 {
-    public List<string> Kategoriler { get; set; } = new();
     public List<Urun> Urunler { get; set; } = new();
-    public int ToplamUrun { get; set; }
-    public int SatistakiUrun { get; set; }
     public int FiyatsizUrun { get; set; }
 
     // Fiyat kutusunda görünen yazı: 0 -> boş, 90 -> "90", 100,5 -> "100,50"
@@ -79,13 +76,5 @@ public class MenuSayfasi
     {
         if (fiyat == 0) return "";
         return fiyat % 1 == 0 ? fiyat.ToString("0") : fiyat.ToString("0.00");
-    }
-
-    // Kategori başlığına bağlantı vermek için: "Smash Burger" -> "k-smash-burger"
-    public static string KategoriKimligi(string kategori)
-    {
-        var harfler = kategori.ToLowerInvariant().Select(harf => char.IsLetterOrDigit(harf) ? harf : '-');
-        var parcalar = new string(harfler.ToArray()).Split('-', StringSplitOptions.RemoveEmptyEntries);
-        return "k-" + string.Join("-", parcalar);
     }
 }

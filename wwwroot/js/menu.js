@@ -31,29 +31,6 @@
             `${kutular.length} ürün` + (fiyatsiz > 0 ? ` <em>${fiyatsiz} fiyatsız</em>` : '');
     }
 
-    // ---------- Kategoriyi aç / kapat ----------
-    const bloklar = [...document.querySelectorAll('.kategori-blok')];
-    const hepsiniAcDugmesi = document.getElementById('hepsini-ac');
-
-    function hepsiniAcDugmesiniYaz() {
-        hepsiniAcDugmesi.textContent = bloklar.every(blok => blok.open) ? 'Hepsini kapat' : 'Hepsini aç';
-    }
-
-    hepsiniAcDugmesi.addEventListener('click', function () {
-        const hepsiAcik = bloklar.every(blok => blok.open);
-        bloklar.forEach(blok => blok.open = !hepsiAcik);
-        hepsiniAcDugmesiniYaz();
-    });
-    bloklar.forEach(blok => blok.addEventListener('toggle', hepsiniAcDugmesiniYaz));
-
-    // Soldaki kategori listesine tıklayınca o kategoriyi aç (sonra tarayıcı oraya kayar)
-    document.querySelectorAll('.kategori-listesi a').forEach(function (baglanti) {
-        baglanti.addEventListener('click', function () {
-            const blok = document.getElementById(baglanti.dataset.kategori);
-            if (blok) blok.open = true;
-        });
-    });
-
     // ---------- Fiyat: Enter'a basınca veya kutudan çıkınca kaydet ----------
     const fiyatKutulari = [...document.querySelectorAll('.fiyat-gir')];
 
@@ -108,7 +85,6 @@
                 const veri = await gonder('/Urunler/SatisDurumu', { id: satir.dataset.id });
                 dugme.classList.toggle('acik', veri.satistaMi);
                 satir.classList.toggle('kapali', !veri.satistaMi);
-                document.getElementById('sayac-satista').textContent = veri.satistakiUrun;
             } catch (hata) {
                 alert(hata.message);
             }
@@ -116,6 +92,27 @@
     });
 
     // ---------- Kategorinin altındaki hızlı ekleme ----------
+    // "+ Ürün ekle" yazısına basınca kutular açılır
+    document.querySelectorAll('.ekle-ac').forEach(function (dugme) {
+        dugme.addEventListener('click', function () {
+            const form = dugme.nextElementSibling;
+            dugme.hidden = true;
+            form.hidden = false;
+            form.ad.focus();
+        });
+    });
+
+    // Esc ile vazgeç
+    document.querySelectorAll('.hizli-ekle').forEach(function (form) {
+        form.addEventListener('keydown', function (olay) {
+            if (olay.key === 'Escape') {
+                form.reset();
+                form.hidden = true;
+                form.previousElementSibling.hidden = false;
+            }
+        });
+    });
+
     document.querySelectorAll('.hizli-ekle').forEach(function (form) {
         form.addEventListener('submit', async function (olay) {
             olay.preventDefault();
@@ -139,7 +136,7 @@
     const aramaKutusu = document.getElementById('menu-ara');
     const fiyatsizDugmesi = document.getElementById('fiyatsiz-suz');
     let sadeceFiyatsiz = false;
-    const oncekiDurumlar = {};   // arama başlamadan önce hangi kategori açıktı
+    const oncekiDurumlar = new Map();   // arama başlamadan önce hangi kategori açıktı
 
     function suz() {
         const aranan = aramaKutusu.value.trim().toLocaleLowerCase('tr-TR');
@@ -158,17 +155,14 @@
             blok.hidden = gorunenSatir === 0;
             // Arama yapılırken sonuç olan kategorileri aç; arama silinince eski haline dön
             if (suzgecVar) {
-                if (!(blok.id in oncekiDurumlar)) oncekiDurumlar[blok.id] = blok.open;
+                if (!oncekiDurumlar.has(blok)) oncekiDurumlar.set(blok, blok.open);
                 blok.open = gorunenSatir > 0;
-            } else if (blok.id in oncekiDurumlar) {
-                blok.open = oncekiDurumlar[blok.id];
-                delete oncekiDurumlar[blok.id];
+            } else if (oncekiDurumlar.has(blok)) {
+                blok.open = oncekiDurumlar.get(blok);
+                oncekiDurumlar.delete(blok);
             }
-            blok.querySelector('.hizli-ekle').hidden = suzgecVar;
+            blok.querySelector('.ekle-alani').hidden = suzgecVar;
             gorunenToplam += gorunenSatir;
-
-            const baglanti = document.querySelector(`.kategori-listesi a[data-kategori="${blok.id}"]`);
-            if (baglanti) baglanti.classList.toggle('bos', gorunenSatir === 0);
         });
 
         document.querySelector('.bos-sonuc').hidden = gorunenToplam > 0;
@@ -190,15 +184,4 @@
         yeniSatir.classList.add('yeni');
         history.replaceState(null, '', '/Urunler');
     }
-
-    // ---------- Kaydırdıkça soldaki kategoriyi işaretle ----------
-    const baglantilar = document.querySelectorAll('.kategori-listesi a');
-    const gozcu = new IntersectionObserver(function (girdiler) {
-        girdiler.forEach(function (girdi) {
-            if (girdi.isIntersecting) {
-                baglantilar.forEach(a => a.classList.toggle('secili', a.dataset.kategori === girdi.target.id));
-            }
-        });
-    }, { rootMargin: '-10% 0px -80% 0px' });
-    document.querySelectorAll('.kategori-blok').forEach(blok => gozcu.observe(blok));
 })();

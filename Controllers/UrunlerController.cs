@@ -25,11 +25,7 @@ public class UrunlerController : Controller
 
         var model = new MenuSayfasi
         {
-            // Kategoriler menüdeki sırasıyla (ilk eklenme sırası)
-            Kategoriler = tumUrunler.Select(urun => urun.Kategori).Distinct().ToList(),
-            Urunler = tumUrunler,
-            ToplamUrun = tumUrunler.Count,
-            SatistakiUrun = tumUrunler.Count(urun => urun.SatistaMi),
+            Urunler = tumUrunler,   // view bunları kategorilere ayırır (ilk eklenme sırasıyla)
             FiyatsizUrun = tumUrunler.Count(urun => urun.Fiyat == 0)
         };
         return View(model);
@@ -168,11 +164,7 @@ public class UrunlerController : Controller
         urun.SatistaMi = !urun.SatistaMi;
         await veritabani.SaveChangesAsync();
 
-        return Json(new
-        {
-            satistaMi = urun.SatistaMi,
-            satistakiUrun = await veritabani.Urunler.CountAsync(diger => diger.SatistaMi)
-        });
+        return Json(new { satistaMi = urun.SatistaMi });
     }
 
     [HttpPost]
