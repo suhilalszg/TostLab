@@ -17,20 +17,25 @@
 
     <div class="mb-3">
         <label asp-for="Fiyat" class="form-label"></label>
-        <input asp-for="Fiyat" class="form-control" inputmode="decimal" value="@(Model.Fiyat == 0 ? "" : Model.Fiyat.ToString("0.##"))" placeholder="örn. 90 veya 92,50" />
+        <input asp-for="Fiyat" class="form-control" inputmode="decimal" value="@MenuSayfasi.FiyatYazisi(Model.Fiyat)" placeholder="örn. 90 veya 92,50" />
         <span asp-validation-for="Fiyat" class="text-danger"></span>
         <div class="form-text">Kuruş için virgül kullan. Fiyat değişirse eski siparişler etkilenmez.</div>
     </div>
 
     <div class="mb-3">
         <label asp-for="Kategori" class="form-label"></label>
-        <input asp-for="Kategori" class="form-control" list="kategori-listesi" autocomplete="off" placeholder="Listeden seç ya da yeni yaz" />
-        <datalist id="kategori-listesi">
+        @{
+            bool yeniKategoriMi = !string.IsNullOrEmpty(Model.Kategori) && !kategoriler.Contains(Model.Kategori);
+        }
+        <select id="kategori-sec" class="form-select">
             @foreach (var kategori in kategoriler)
             {
-                <option value="@kategori"></option>
+                <option value="@kategori" selected="@(kategori == Model.Kategori)">@kategori</option>
             }
-        </datalist>
+            <option value="" selected="@yeniKategoriMi">+ Yeni kategori…</option>
+        </select>
+        @* Asıl gönderilen alan bu: listeden seçilince kendiliğinden dolar, "Yeni kategori" seçilince görünür *@
+        <input asp-for="Kategori" class="form-control mt-2" autocomplete="off" placeholder="Yeni kategori adı" hidden="@(!yeniKategoriMi)" />
         <span asp-validation-for="Kategori" class="text-danger"></span>
     </div>
 
@@ -51,6 +56,22 @@
 
 @section Scripts {
     <script>
+        // Kategori: listeden seçileni gizli kutuya yaz; "Yeni kategori" seçilince kutuyu göster
+        const kategoriSecimi = document.getElementById('kategori-sec');
+        const kategoriKutusu = document.getElementById('Kategori');
+        function kategoriyiAyarla() {
+            const yeniMi = kategoriSecimi.value === '';
+            kategoriKutusu.hidden = !yeniMi;
+            if (yeniMi) {
+                if (kategoriSecimi.querySelector(`option[value="${CSS.escape(kategoriKutusu.value)}"]`)) kategoriKutusu.value = '';
+                kategoriKutusu.focus();
+            } else {
+                kategoriKutusu.value = kategoriSecimi.value;
+            }
+        }
+        kategoriSecimi.addEventListener('change', kategoriyiAyarla);
+        if (!kategoriKutusu.value) kategoriKutusu.value = kategoriSecimi.value;
+
         // "92.50" yazılırsa Türkçe biçime çevir: "92,50" (yoksa 9250 diye okunur)
         document.querySelector('form.kart').addEventListener('submit', function () {
             const fiyatKutusu = document.getElementById('Fiyat');

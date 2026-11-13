@@ -17,39 +17,68 @@ public class UrunlerController : Controller
         this.veritabani = veritabani;
     }
 
-    // GET /Urunler?kategori=Klasikler&arama=kızıl
+    // GET /Urunler : tüm menü tek sayfada. Arama ve süzme tarayıcıda (menu.js) yapılır.
     [HttpGet]
-    public async Task<IActionResult> Index(string? kategori, string? arama)
+    public async Task<IActionResult> Index()
     {
         var tumUrunler = await veritabani.Urunler.OrderBy(urun => urun.Id).ToListAsync();
 
-        // Kategorileri menüdeki sırasıyla (ilk eklenme sırası) çıkar
-        var kategoriler = tumUrunler.Select(urun => urun.Kategori).Distinct().ToList();
-
-        var gosterilecekler = tumUrunler.AsEnumerable();
-        if (!string.IsNullOrWhiteSpace(kategori))
-        {
-            gosterilecekler = gosterilecekler.Where(urun => urun.Kategori == kategori);
-        }
-        if (!string.IsNullOrWhiteSpace(arama))
-        {
-            string aranan = arama.Trim();
-            gosterilecekler = gosterilecekler.Where(urun =>
-                urun.Ad.Contains(aranan, StringComparison.CurrentCultureIgnoreCase) ||
-                (urun.Icindekiler ?? "").Contains(aranan, StringComparison.CurrentCultureIgnoreCase));
-        }
-
         var model = new MenuSayfasi
         {
-            Kategoriler = kategoriler,
-            SeciliKategori = kategori,
-            Arama = arama,
-            Urunler = gosterilecekler.ToList(),
+            // Kategoriler menüdeki sırasıyla (ilk eklenme sırası)
+            Kategoriler = tumUrunler.Select(urun => urun.Kategori).Distinct().ToList(),
+            Urunler = tumUrunler,
             ToplamUrun = tumUrunler.Count,
             SatistakiUrun = tumUrunler.Count(urun => urun.SatistaMi),
             FiyatsizUrun = tumUrunler.Count(urun => urun.Fiyat == 0)
         };
         return View(model);
+    }
+
+    // Listede fiyat kutusuna yazıp Enter'a basınca buraya gelir (sayfa yenilenmez)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> FiyatKaydet(int id, string? fiyat)
+    {
+        var urun = await veritabani.Urunler.FindAsync(id);
+        if (urun == null)
+        {
+            return NotFound();
+        }
+
+        if (!FiyatiOku(fiyat, out decimal yeniFiyat))
+        {
+            return BadRequest(new { hata = "Fiyat sayı olmalı (örn. 90 veya 92,50)." });
+        }
+
+        urun.Fiyat = yeniFiyat;
+        await veritabani.SaveChangesAsync();
+
+        return Json(new
+        {
+            fiyat = MenuSayfasi.FiyatYazisi(urun.Fiyat),
+            fiyatsizUrun = await veritabani.Urunler.CountAsync(diger => diger.Fiyat == 0)
+        });
+    }
+
+    // Her kategorinin altındaki "hızlı ekle" satırı
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> HizliEkle(string? kategori, string? ad, string? fiyat)
+    {
+        if (string.IsNullOrWhiteSpace(ad) || string.IsNullOrWhiteSpace(kategori))
+        {
+            return BadRequest(new { hata = "Ürün adı boş olamaz." });
+        }
+        if (!FiyatiOku(fiyat, out decimal yeniFiyat))
+        {
+            return BadRequest(new { hata = "Fiyat sayı olmalı (örn. 90 veya 92,50)." });
+        }
+
+        var urun = new Urun { Ad = ad.Trim(), Kategori = kategori.Trim(), Fiyat = yeniFiyat };
+        veritabani.Urunler.Add(urun);
+        await veritabani.SaveChangesAsync();
+        return Json(new { id = urun.Id });
     }
 
     [HttpGet]
@@ -75,7 +104,7 @@ public class UrunlerController : Controller
         await veritabani.SaveChangesAsync();
 
         TempData["Bildirim"] = $"{urun.Ad} menüye eklendi.";
-        return RedirectToAction("Index", new { kategori = urun.Kategori });
+        return RedirectToAction("Index", new { yeni = urun.Id });   // listede bu ürüne kay
     }
 
     [HttpGet]
@@ -122,21 +151,28 @@ public class UrunlerController : Controller
         await veritabani.SaveChangesAsync();
 
         TempData["Bildirim"] = $"{urun.Ad} güncellendi.";
-        return RedirectToAction("Index", new { kategori = urun.Kategori });
+        return RedirectToAction("Index", new { yeni = urun.Id });   // listede bu ürüne kay
     }
 
-    // Listedeki anahtar: satışa aç / kapat
+    // Listedeki anahtar: satışa aç / kapat (sayfa yenilenmez)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SatisDurumu(int id, string? kategori, string? arama)
+    public async Task<IActionResult> SatisDurumu(int id)
     {
         var urun = await veritabani.Urunler.FindAsync(id);
-        if (urun != null)
+        if (urun == null)
         {
-            urun.SatistaMi = !urun.SatistaMi;
-            await veritabani.SaveChangesAsync();
+            return NotFound();
         }
-        return RedirectToAction("Index", new { kategori, arama });
+
+        urun.SatistaMi = !urun.SatistaMi;
+        await veritabani.SaveChangesAsync();
+
+        return Json(new
+        {
+            satistaMi = urun.SatistaMi,
+            satistakiUrun = await veritabani.Urunler.CountAsync(diger => diger.SatistaMi)
+        });
     }
 
     [HttpPost]
@@ -163,7 +199,7 @@ public class UrunlerController : Controller
             await veritabani.SaveChangesAsync();
             TempData["Bildirim"] = $"{urun.Ad} menüden silindi.";
         }
-        return RedirectToAction("Index", new { kategori = urun.Kategori });
+        return RedirectToAction("Index");
     }
 
     private async Task<List<string>> KategorileriGetirAsync()
@@ -173,6 +209,21 @@ public class UrunlerController : Controller
             .Select(urun => urun.Kategori)
             .ToListAsync();
         return kategoriler.Distinct().ToList();
+    }
+
+    // "92,50", "92.50", "92" hepsini kabul et; boş bırakılırsa 0 (fiyat girilmedi)
+    private static bool FiyatiOku(string? yazi, out decimal fiyat)
+    {
+        fiyat = 0;
+        if (string.IsNullOrWhiteSpace(yazi))
+        {
+            return true;
+        }
+
+        string temiz = yazi.Replace("₺", "").Trim().Replace('.', ',');
+        return decimal.TryParse(temiz, System.Globalization.NumberStyles.Number,
+                   new System.Globalization.CultureInfo("tr-TR"), out fiyat)
+               && fiyat >= 0 && fiyat <= 100000;
     }
 
     private static void FormdanUrune(UrunFormu form, Urun urun)
