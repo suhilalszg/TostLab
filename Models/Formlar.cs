@@ -69,7 +69,6 @@ public class UrunFormu
 public class MenuSayfasi
 {
     public List<Urun> Urunler { get; set; } = new();
-    public int FiyatsizUrun { get; set; }
 
     // Fiyat kutusunda görünen yazı: 0 -> boş, 90 -> "90", 100,5 -> "100,50"
     public static string FiyatYazisi(decimal fiyat)

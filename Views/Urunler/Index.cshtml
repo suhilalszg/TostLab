@@ -13,25 +13,15 @@
 
 <div class="menu-arac">
     <input type="search" id="menu-ara" class="form-control" placeholder="Ara: ürün veya malzeme" autocomplete="off" />
-    <button type="button" id="fiyatsiz-suz" class="suzgec @(Model.FiyatsizUrun > 0 ? "uyari" : "")">
-        Fiyatsız <b id="sayac-fiyatsiz">@Model.FiyatsizUrun</b>
-    </button>
 </div>
 
 @foreach (var grup in Model.Urunler.GroupBy(urun => urun.Kategori))
 {
-    int fiyatsizSayisi = grup.Count(urun => urun.Fiyat == 0);
     @* details/summary: tarayıcının hazır aç-kapa kutusu. Başlangıçta kapalı. *@
     <details class="kategori-blok">
         <summary class="kategori-baslik">
             <span class="ad">@grup.Key</span>
-            <span class="bilgi">
-                @grup.Count() ürün
-                @if (fiyatsizSayisi > 0)
-                {
-                    <em>@fiyatsizSayisi fiyatsız</em>
-                }
-            </span>
+            <span class="bilgi">@grup.Count() ürün</span>
             <span class="ok" aria-hidden="true"></span>
         </summary>
 

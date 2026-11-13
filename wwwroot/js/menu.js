@@ -23,14 +23,6 @@
         eleman.classList.add(sinif);
     }
 
-    // Kategori başlığındaki "8 ürün · 3 fiyatsız" yazısını yenile
-    function kategoriBilgisiniYaz(blok) {
-        const kutular = [...blok.querySelectorAll('.fiyat-gir')];
-        const fiyatsiz = kutular.filter(kutu => kutu.value.trim() === '').length;
-        blok.querySelector('.bilgi').innerHTML =
-            `${kutular.length} ürün` + (fiyatsiz > 0 ? ` <em>${fiyatsiz} fiyatsız</em>` : '');
-    }
-
     // ---------- Fiyat: Enter'a basınca veya kutudan çıkınca kaydet ----------
     const fiyatKutulari = [...document.querySelectorAll('.fiyat-gir')];
 
@@ -47,10 +39,7 @@
                 kutu.value = veri.fiyat;
                 kutu.dataset.kayitli = veri.fiyat;
                 kutu.title = '';
-                document.getElementById('sayac-fiyatsiz').textContent = veri.fiyatsizUrun;
-                document.getElementById('fiyatsiz-suz').classList.toggle('uyari', veri.fiyatsizUrun > 0);
                 isaretle(kutu.parentElement, 'kaydedildi');
-                kategoriBilgisiniYaz(kutu.closest('.kategori-blok'));
             } catch (hata) {
                 kutu.title = hata.message;
                 isaretle(kutu.parentElement, 'hatali');
@@ -132,10 +121,8 @@
         });
     });
 
-    // ---------- Arama ve "sadece fiyatsız" süzgeci ----------
+    // ---------- Arama ----------
     const aramaKutusu = document.getElementById('menu-ara');
-    const fiyatsizDugmesi = document.getElementById('fiyatsiz-suz');
-    let sadeceFiyatsiz = false;
     const oncekiDurumlar = new Map();   // arama başlamadan önce hangi kategori açıktı
 
     function suz() {
@@ -145,13 +132,11 @@
         document.querySelectorAll('.kategori-blok').forEach(function (blok) {
             let gorunenSatir = 0;
             blok.querySelectorAll('.urun-satir').forEach(function (satir) {
-                const metinUyuyor = satir.dataset.ara.toLocaleLowerCase('tr-TR').includes(aranan);
-                const fiyatUyuyor = !sadeceFiyatsiz || satir.querySelector('.fiyat-gir').value.trim() === '';
-                const goster = metinUyuyor && fiyatUyuyor;
+                const goster = satir.dataset.ara.toLocaleLowerCase('tr-TR').includes(aranan);
                 satir.hidden = !goster;
                 if (goster) gorunenSatir++;
             });
-            const suzgecVar = aranan !== '' || sadeceFiyatsiz;
+            const suzgecVar = aranan !== '';
             blok.hidden = gorunenSatir === 0;
             // Arama yapılırken sonuç olan kategorileri aç; arama silinince eski haline dön
             if (suzgecVar) {
@@ -169,11 +154,6 @@
     }
 
     aramaKutusu.addEventListener('input', suz);
-    fiyatsizDugmesi.addEventListener('click', function () {
-        sadeceFiyatsiz = !sadeceFiyatsiz;
-        fiyatsizDugmesi.classList.toggle('secili', sadeceFiyatsiz);
-        suz();
-    });
 
     // ---------- Az önce eklenen ürünü göster ----------
     const yeniKimlik = new URLSearchParams(location.search).get('yeni');

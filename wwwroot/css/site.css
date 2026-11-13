@@ -284,22 +284,6 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 }
 .menu-arac .form-control { flex: 1; }
 
-.suzgec {
-    border: 1px solid var(--cizgi);
-    background: var(--kart);
-    color: var(--yazi);
-    border-radius: 8px;
-    padding: 6px 12px;
-    font: inherit;
-    font-size: 13px;
-    white-space: nowrap;
-    cursor: pointer;
-}
-.suzgec b { margin-left: 4px; }
-.suzgec.uyari b { background: var(--tereyagi); color: var(--antrasit); padding: 0 6px; border-radius: 5px; }
-.suzgec.secili { background: var(--antrasit); border-color: var(--antrasit); color: var(--krem); }
-
-
 .kategori-blok {
     background: var(--kart);
     border: 1px solid var(--cizgi);
@@ -323,7 +307,6 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 .kategori-baslik:hover { background: var(--fis); }
 .kategori-baslik .ad { font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
 .kategori-baslik .bilgi { margin-left: auto; color: var(--soluk-yazi); font-size: 12px; }
-.kategori-baslik .bilgi em { font-style: normal; background: var(--tereyagi); color: var(--antrasit); padding: 1px 7px; border-radius: 5px; margin-left: 6px; }
 
 /* Sağdaki ok: kapalıyken aşağı, açılınca yukarı döner */
 .kategori-baslik .ok {

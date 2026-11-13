@@ -25,8 +25,7 @@ public class UrunlerController : Controller
 
         var model = new MenuSayfasi
         {
-            Urunler = tumUrunler,   // view bunları kategorilere ayırır (ilk eklenme sırasıyla)
-            FiyatsizUrun = tumUrunler.Count(urun => urun.Fiyat == 0)
+            Urunler = tumUrunler   // view bunları kategorilere ayırır (ilk eklenme sırasıyla)
         };
         return View(model);
     }
@@ -50,11 +49,7 @@ public class UrunlerController : Controller
         urun.Fiyat = yeniFiyat;
         await veritabani.SaveChangesAsync();
 
-        return Json(new
-        {
-            fiyat = MenuSayfasi.FiyatYazisi(urun.Fiyat),
-            fiyatsizUrun = await veritabani.Urunler.CountAsync(diger => diger.Fiyat == 0)
-        });
+        return Json(new { fiyat = MenuSayfasi.FiyatYazisi(urun.Fiyat) });
     }
 
     // Her kategorinin altındaki "hızlı ekle" satırı
