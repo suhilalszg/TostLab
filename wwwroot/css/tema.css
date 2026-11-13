@@ -20,8 +20,8 @@
 
 :root {
     /* Palet: siyah, krem, sarı (hepsi açık tonlarda) */
-    --antrasit: #3E3C39;        /* Yumuşak siyah: sol menü, yazılar */
-    --antrasit-acik: #4A4744;   /* Açık siyah: sol menü, ikincil yazılar */
+    --antrasit: #1C1C1C;        /* Siyah: yazılar */
+    --antrasit-acik: #161616;   /* Siyah: sol menü */
     --kum: #CFC7B8;             /* Kum rengi: çizgiler, pasif menü yazıları */
     --tereyagi: #F5DC8A;        /* Açık sarı: butonlar, seçili menü, öne çıkan kutu */
     --tereyagi-koyu: #EDCB62;   /* Butonun üzerine gelince */
