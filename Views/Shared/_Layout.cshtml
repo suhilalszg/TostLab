@@ -22,6 +22,7 @@
             <a class="logo" asp-controller="Home" asp-action="Index">TOST LAB°</a>
 
             <nav>
+                <a asp-controller="Siparis" asp-action="Index" class="@(aktifSayfa == "Siparis" ? "secili" : "")">Sipariş</a>
                 <a asp-controller="Home" asp-action="Index" class="@(aktifSayfa == "Home" ? "secili" : "")">Bugün</a>
                 @if (yoneticiMi)
                 {

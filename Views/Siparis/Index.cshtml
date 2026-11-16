@@ -1,0 +1,96 @@
+@model SiparisSayfasi
+@using System.Globalization
+@{
+    ViewData["Title"] = "Sipariş";
+}
+
+@* siparis.js bu anahtarı kaydederken gönderir *@
+@Html.AntiForgeryToken()
+
+<div class="siparis-duzen">
+    @* ---------- Sol: ürünler ---------- *@
+    <section class="siparis-urunler">
+        <div class="menu-arac">
+            <input type="search" id="urun-ara" class="form-control" placeholder="Ara: ürün" autocomplete="off" />
+        </div>
+
+        @{ bool ilkKategori = true; }
+        @foreach (var grup in Model.Urunler.GroupBy(urun => urun.Kategori))
+        {
+            <details class="kategori-blok" open="@ilkKategori">
+                <summary class="kategori-baslik">
+                    <span class="ad">@grup.Key</span>
+                    <span class="bilgi">@grup.Count() ürün</span>
+                    <span class="ok" aria-hidden="true"></span>
+                </summary>
+                <div class="urun-izgara">
+                    @foreach (var urun in grup)
+                    {
+                        bool fiyatVar = urun.Fiyat > 0;
+                        <button type="button" class="urun-kart" disabled="@(!fiyatVar)"
+                                data-id="@urun.Id" data-ad="@urun.Ad"
+                                data-fiyat="@urun.Fiyat.ToString(CultureInfo.InvariantCulture)">
+                            <span class="urun-ad">@urun.Ad</span>
+                            <span class="urun-fiyat">@(fiyatVar ? urun.Fiyat.ToString("N2") + " ₺" : "fiyat yok")</span>
+                        </button>
+                    }
+                </div>
+            </details>
+            ilkKategori = false;
+        }
+
+        @if (Model.Urunler.Count == 0)
+        {
+            <div class="kart">Satışta ürün yok. Yönetici Menü sayfasından ürün açmalı.</div>
+        }
+        <div class="kart bos-sonuc" hidden>Aramaya uyan ürün yok.</div>
+    </section>
+
+    @* ---------- Sağ: fiş ---------- *@
+    <aside class="fis-panel">
+        <div class="fis-bolum">
+            <div class="fis-etiket">Nereden?</div>
+            <div class="secenekler" id="kaynak-secimi">
+                @foreach (var kaynak in Kaynaklar.Hepsi)
+                {
+                    <button type="button" class="secenek" data-deger="@kaynak">@kaynak</button>
+                }
+            </div>
+            <div class="secenekler masalar" id="masa-secimi" hidden>
+                @foreach (var masa in Model.Masalar)
+                {
+                    <button type="button" class="secenek" data-deger="@masa.Id">@masa.Ad</button>
+                }
+            </div>
+        </div>
+
+        <div class="fis-satirlar" id="fis-satirlar">
+            <p class="fis-bos">Ürüne tıkla, fişe eklensin.</p>
+        </div>
+
+        <div class="fis-toplam">
+            <span>Toplam</span>
+            <b id="fis-toplam">0,00 ₺</b>
+        </div>
+
+        <div class="fis-bolum">
+            <div class="fis-etiket">Ödeme</div>
+            <div class="secenekler" id="odeme-secimi">
+                @foreach (var odeme in Model.OdemeTurleri)
+                {
+                    <button type="button" class="secenek" data-deger="@odeme.Id">@odeme.Ad</button>
+                }
+            </div>
+        </div>
+
+        <p class="fis-uyari" id="fis-uyari"></p>
+        <button type="button" class="kaydet-dugme" id="kaydet" disabled>Siparişi kaydet</button>
+        <button type="button" class="temizle-dugme" id="temizle">Fişi temizle</button>
+    </aside>
+</div>
+
+<div class="bildirim-kutu" id="bildirim" hidden></div>
+
+@section Scripts {
+    <script src="~/js/siparis.js" asp-append-version="true"></script>
+}
