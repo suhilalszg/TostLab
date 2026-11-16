@@ -22,7 +22,7 @@ public class AdisyonServisi
         // Açık adisyonları tek sorguda al (Durum + MasaId indeksi bunu hızlandırır)
         var acikAdisyonlar = await veritabani.Siparisler
             .Where(siparis => siparis.Durum == AdisyonDurumu.Acik || siparis.Durum == AdisyonDurumu.HesapIstendi)
-            .Select(siparis => new { siparis.Id, siparis.MasaId, siparis.Kaynak, siparis.Durum, siparis.Toplam, siparis.Tarih })
+            .Select(siparis => new { siparis.Id, siparis.MasaId, siparis.Kaynak, siparis.Durum, siparis.Toplam, siparis.Tarih, siparis.KisiSayisi })
             .ToListAsync();
 
         var masalar = await veritabani.Masalar.Where(masa => masa.AktifMi).OrderBy(masa => masa.Id).ToListAsync();
@@ -32,10 +32,10 @@ public class AdisyonServisi
             var adisyon = acikAdisyonlar.FirstOrDefault(acik => acik.MasaId == masa.Id);
             if (adisyon == null)
             {
-                return new MasaBilgisi(masa.Id, masa.Ad, "bos", null, 0, null);
+                return new MasaBilgisi(masa.Id, masa.Ad, "bos", null, 0, null, null);
             }
             string durum = adisyon.Durum == AdisyonDurumu.HesapIstendi ? "hesap" : "dolu";
-            return new MasaBilgisi(masa.Id, masa.Ad, durum, adisyon.Id, adisyon.Toplam, adisyon.Tarih);
+            return new MasaBilgisi(masa.Id, masa.Ad, durum, adisyon.Id, adisyon.Toplam, adisyon.Tarih, adisyon.KisiSayisi);
         }).ToList();
 
         var paketler = acikAdisyonlar
@@ -133,6 +133,19 @@ public class AdisyonServisi
     {
         var adisyon = await AcikAdisyonuYukleAsync(istek.AdisyonId, zorunlu: true);
         adisyon!.Durum = istek.Istendi ? AdisyonDurumu.HesapIstendi : AdisyonDurumu.Acik;
+        await veritabani.SaveChangesAsync();
+        return Bilgiye(adisyon);
+    }
+
+    // Masadaki kişi sayısı: 1–50 arası
+    public async Task<AdisyonBilgisi> KisiDegistirAsync(KisiIstegi istek)
+    {
+        if (istek.Kisi < 1 || istek.Kisi > 50)
+        {
+            throw new AdisyonHatasi("Kişi sayısı 1 ile 50 arasında olmalı.");
+        }
+        var adisyon = await AcikAdisyonuYukleAsync(istek.AdisyonId, zorunlu: true);
+        adisyon!.KisiSayisi = istek.Kisi;
         await veritabani.SaveChangesAsync();
         return Bilgiye(adisyon);
     }
@@ -248,6 +261,6 @@ public class AdisyonServisi
             .OrderBy(satir => satir.Id == 0 ? int.MaxValue : satir.Id)   // yeni eklenen en altta
             .Select(satir => new SatirBilgisi(satir.Id, satir.UrunId, satir.Urun.Ad, satir.Adet, satir.BirimFiyat, satir.Tutar))
             .ToList();
-        return new AdisyonBilgisi(adisyon.Id, adisyon.Kaynak, adisyon.MasaId, baslik, durum, adisyon.Tarih, adisyon.Toplam, satirlar);
+        return new AdisyonBilgisi(adisyon.Id, adisyon.Kaynak, adisyon.MasaId, baslik, durum, adisyon.Tarih, adisyon.Toplam, adisyon.KisiSayisi, satirlar);
     }
 }

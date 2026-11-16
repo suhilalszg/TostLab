@@ -15,6 +15,7 @@ public record AdisyonBilgisi(
     string Durum,           // "acik" | "hesap"
     DateTime Acilis,
     decimal Toplam,
+    int? KisiSayisi,
     List<SatirBilgisi> Satirlar);
 
 public record MasaBilgisi(
@@ -23,7 +24,8 @@ public record MasaBilgisi(
     string Durum,           // "bos" (yeşil) | "dolu" (kırmızı) | "hesap" (sarı)
     int? AdisyonId,
     decimal Toplam,
-    DateTime? Acilis);
+    DateTime? Acilis,
+    int? KisiSayisi);
 
 public record PaketBilgisi(int AdisyonId, string Baslik, string Kaynak, string Durum, decimal Toplam, DateTime Acilis);
 
@@ -40,6 +42,7 @@ public record AdetIstegi(int AdisyonId, int SatirId, int Adet);
 public record HesapIstegi(int AdisyonId, bool Istendi);
 public record OdemeIstegi(int AdisyonId, int OdemeTuruId);
 public record IptalIstegi(int AdisyonId, string? Neden);
+public record KisiIstegi(int AdisyonId, int Kisi);
 
 // Kurallara uymayan istek: mesajı kullanıcıya aynen gösterilir
 public class AdisyonHatasi(string mesaj) : Exception(mesaj);

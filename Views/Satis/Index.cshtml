@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Satış";
     ViewData["TamEkran"] = true;
+    ViewData["BootstrapYok"] = true;
 
     // Sunucudaki veriyi ekrana JSON olarak gömüyoruz: sayfa açılır açılmaz hazır, ekstra istek yok.
     // JsonSerializer < > karakterlerini kaçırır, yani ürün adı ne olursa olsun güvenli.
@@ -12,172 +13,314 @@
         odemeTurleri = ViewData["OdemeTurleri"],
         ekran = ViewData["Ekran"]
     }, jsonAyari);
+
 }
 
 @section Stiller {
-    <link rel="stylesheet" href="~/css/satis.css" asp-append-version="true" />
+    <style>
+        @@font-face { font-family: 'Inter'; font-style: normal; font-weight: 100 900; font-display: swap;
+            src: url('/fonts/inter-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+        @@font-face { font-family: 'Inter'; font-style: normal; font-weight: 100 900; font-display: swap;
+            src: url('/fonts/inter-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+        [x-cloak] { display: none !important; }
+        .kaydirma-yok::-webkit-scrollbar { display: none; }
+        .kaydirma-yok { scrollbar-width: none; }
+    </style>
+    @* Tailwind: internetsiz çalışsın diye yerel kopya (wwwroot/lib/tailwindcss) *@
+    <script src="~/lib/tailwindcss/tailwind.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['selector', '[data-tema="koyu"]'],
+            theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'] } } }
+        };
+    </script>
 }
 
 @Html.AntiForgeryToken()
 <script type="application/json" id="satis-verisi">@Html.Raw(baslangicVerisi)</script>
 
-<div class="pos" x-data="satisEkrani" x-cloak @@keydown.escape.window="geriDon()">
+<div class="h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased"
+     x-data="satisEkrani" x-cloak @@keydown.escape.window="geriDon()" data-pos>
 
     @* ===================== 1) MASA PLANI ===================== *@
-    <section class="plan" x-show="gorunum === 'plan'">
-        <header class="plan-ust">
-            <h1>Masalar</h1>
-            <div class="lejant">
-                <span><i class="nokta bos"></i>Boş</span>
-                <span><i class="nokta dolu"></i>Dolu</span>
-                <span><i class="nokta hesap"></i>Hesap istendi</span>
+    <section class="flex-1 min-h-0 overflow-y-auto p-6 space-y-8" x-show="gorunum === 'plan'">
+        <header class="flex flex-wrap items-center gap-4">
+            <h1 class="text-2xl font-bold tracking-tight">Masalar</h1>
+            <span class="text-slate-400" x-show="planYukleniyor">@DonenSimge("h-5 w-5")</span>
+            <div class="flex flex-wrap gap-2 text-sm">
+                <span class="inline-flex items-center gap-2 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 px-3 py-1.5">
+                    <i class="h-2.5 w-2.5 rounded-full bg-emerald-500"></i>Boş
+                </span>
+                <span class="inline-flex items-center gap-2 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 px-3 py-1.5">
+                    <i class="h-2.5 w-2.5 rounded-full bg-amber-500"></i>Dolu
+                </span>
+                <span class="inline-flex items-center gap-2 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 px-3 py-1.5">
+                    <i class="h-2.5 w-2.5 rounded-full bg-rose-500"></i>Hesap istendi
+                </span>
+            </div>
+            <div class="ml-auto text-right">
+                <div class="text-xs uppercase tracking-wide text-slate-400">Açık adisyon</div>
+                <div class="text-lg font-bold tabular-nums">
+                    <span x-text="acikAdisyonSayisi"></span> · <span x-text="para(acikToplam)"></span>
+                </div>
             </div>
         </header>
 
-        <div class="masa-izgara">
+        <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(170px,1fr))]">
             <template x-for="masa in ekran.masalar" :key="masa.id">
-                <button type="button" class="masa" :class="masa.durum" @@click="masaAc(masa)">
-                    <span class="masa-ad" x-text="masa.ad"></span>
+                <button type="button" @@click="masaAc(masa)"
+                        class="text-left rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 border p-4 min-h-[124px] flex flex-col justify-between cursor-pointer select-none active:scale-95"
+                        :class="masaRengi(masa.durum)">
+                    <div class="flex items-start justify-between gap-2">
+                        <span class="text-lg font-bold" x-text="masa.ad"></span>
+                        <span class="inline-flex items-center gap-1 rounded-full bg-white/70 dark:bg-slate-900/60 px-2 py-0.5 text-xs font-semibold"
+                              x-show="masa.kisiSayisi" title="Kişi sayısı">
+                            @KisiSimgesi("h-3.5 w-3.5")<span x-text="masa.kisiSayisi"></span>
+                        </span>
+                    </div>
                     <template x-if="masa.durum === 'bos'">
-                        <span class="masa-alt">Boş</span>
+                        <span class="text-sm opacity-80">Boş · dokun, aç</span>
                     </template>
                     <template x-if="masa.durum !== 'bos'">
-                        <span class="masa-alt">
-                            <b x-text="para(masa.toplam)"></b>
-                            <span x-text="gecenSure(masa.acilis)"></span>
-                        </span>
+                        <div>
+                            <div class="text-xl font-extrabold tabular-nums" x-text="para(masa.toplam)"></div>
+                            <div class="flex items-center gap-1 text-sm opacity-80">
+                                @SaatSimgesi("h-3.5 w-3.5")<span x-text="gecenSure(masa.acilis)"></span>
+                                <span x-show="masa.durum === 'hesap'" class="ml-auto font-semibold">Hesap</span>
+                            </div>
+                        </div>
                     </template>
                 </button>
             </template>
         </div>
 
-        <h2 class="plan-baslik">Paket ve online</h2>
-        <div class="paket-dugmeleri">
-            <template x-for="kaynak in paketKaynaklari" :key="kaynak">
-                <button type="button" class="paket-yeni" @@click="paketAc(kaynak)">
-                    <span>+</span> <span x-text="kaynak"></span>
-                </button>
-            </template>
-        </div>
+        <div class="space-y-4">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Paket ve online</h2>
+            <div class="flex flex-wrap gap-3">
+                <template x-for="kaynak in paketKaynaklari" :key="kaynak">
+                    <button type="button" @@click="paketAc(kaynak)"
+                            class="inline-flex items-center gap-2 rounded-xl py-3 px-5 font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer select-none active:scale-95"
+                            :class="platformDugmeRengi(kaynak)">
+                        <span class="text-lg leading-none">+</span><span x-text="kaynak"></span>
+                    </button>
+                </template>
+            </div>
 
-        <div class="masa-izgara" x-show="ekran.paketler.length">
-            <template x-for="paket in ekran.paketler" :key="paket.adisyonId">
-                <button type="button" class="masa" :class="paket.durum === 'hesap' ? 'hesap' : 'dolu'" @@click="adisyonAc(paket.adisyonId, paket.baslik, paket.kaynak)">
-                    <span class="masa-ad" x-text="paket.baslik"></span>
-                    <span class="masa-alt">
-                        <b x-text="para(paket.toplam)"></b>
-                        <span x-text="gecenSure(paket.acilis)"></span>
-                    </span>
-                </button>
-            </template>
+            <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]" x-show="ekran.paketler.length">
+                <template x-for="paket in ekran.paketler" :key="paket.adisyonId">
+                    <button type="button" @@click="adisyonAc(paket.adisyonId, paket.baslik, paket.kaynak)"
+                            class="text-left bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-slate-800 p-4 flex flex-col gap-2 cursor-pointer select-none active:scale-95"
+                            :class="paket.durum === 'hesap' ? 'ring-2 ring-rose-300 dark:ring-rose-800' : ''">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" :class="platformRozetRengi(paket.kaynak)" x-text="paket.kaynak"></span>
+                            <span class="text-xs text-slate-400" x-text="'#' + paket.adisyonId"></span>
+                        </div>
+                        <div class="text-xl font-extrabold tabular-nums" x-text="para(paket.toplam)"></div>
+                        <div class="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+                            @SaatSimgesi("h-3.5 w-3.5")<span x-text="gecenSure(paket.acilis)"></span>
+                            <span x-show="paket.durum === 'hesap'" class="ml-auto font-semibold text-rose-600 dark:text-rose-400">Hesap</span>
+                        </div>
+                    </button>
+                </template>
+            </div>
         </div>
     </section>
 
     @* ===================== 2) SATIŞ (tek ekran) ===================== *@
-    <section class="satis" x-show="gorunum === 'satis'">
+    <section class="flex-1 min-h-0 flex flex-col" x-show="gorunum === 'satis'">
 
-        @* Üst şerit: geri, hangi masa, masalar arası hızlı geçiş *@
-        <header class="satis-ust">
-            <button type="button" class="geri" @@click="geriDon()" title="Masalara dön (Esc)">← Masalar</button>
-            <div class="hizli-masalar">
+        @* Üst şerit: geri + masalar arası hızlı geçiş *@
+        <header class="flex items-center gap-3 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2">
+            <button type="button" @@click="geriDon()" title="Masalara dön (Esc)"
+                    class="shrink-0 rounded-xl py-3 px-4 font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer select-none active:scale-95 transition-transform">
+                ← Masalar
+            </button>
+            <div class="flex gap-2 overflow-x-auto kaydirma-yok">
                 <template x-for="masa in ekran.masalar" :key="masa.id">
-                    <button type="button" class="hizli-masa" :class="[masa.durum, secili.masaId === masa.id ? 'aktif' : '']"
-                            @@click="masaAc(masa)" x-text="masa.ad"></button>
+                    <button type="button" @@click="masaAc(masa)" x-text="masa.ad"
+                            class="shrink-0 rounded-xl py-3 px-4 text-sm font-semibold border cursor-pointer select-none active:scale-95 transition-transform"
+                            :class="[masaRengi(masa.durum), secili.masaId === masa.id ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900' : '']"></button>
                 </template>
             </div>
         </header>
 
-        <div class="satis-govde">
-            @* Kategoriler *@
-            <nav class="kategoriler">
-                <template x-for="kategori in kategoriler" :key="kategori">
-                    <button type="button" :class="{ secili: kategori === seciliKategori && !arama }"
-                            @@click="seciliKategori = kategori; arama = ''" x-text="kategori"></button>
-                </template>
-            </nav>
-
-            @* Ürünler *@
-            <div class="urunler">
-                <input type="search" class="urun-ara" placeholder="Ürün ara…" x-model="arama" x-ref="arama" autocomplete="off" />
-                <div class="urun-izgara">
-                    <template x-for="urun in gorunenUrunler" :key="urun.id">
-                        <button type="button" class="urun" :disabled="urun.fiyat <= 0" @@click="urunEkle(urun)">
-                            <span class="urun-ad" x-text="urun.ad"></span>
-                            <span class="urun-fiyat" x-text="urun.fiyat > 0 ? para(urun.fiyat) : 'fiyat yok'"></span>
-                            <span class="urun-rozet" x-show="adisyondakiAdet(urun.id)" x-text="adisyondakiAdet(urun.id)"></span>
-                        </button>
-                    </template>
-                </div>
-                <p class="bos-yazi" x-show="!gorunenUrunler.length">Ürün bulunamadı.</p>
-            </div>
-
-            @* Adisyon *@
-            <aside class="adisyon" :class="{ 'hesap-istendi': adisyon?.durum === 'hesap' }">
-                <div class="adisyon-ust">
-                    <div>
-                        <b class="adisyon-baslik" x-text="secili.baslik"></b>
-                        <span class="adisyon-alt" x-text="adisyon ? 'Açılış ' + saat(adisyon.acilis) : 'Yeni adisyon'"></span>
-                    </div>
-                    <span class="durum-hap" x-show="adisyon?.durum === 'hesap'">Hesap istendi</span>
+        <div class="flex-1 min-h-0 flex">
+            @* ---- Sol: kategoriler + ürünler ---- *@
+            <div class="flex-1 min-w-0 flex flex-col">
+                <div class="flex items-center gap-3 px-4 pt-4">
+                    <nav class="flex-1 min-w-0 flex gap-2 overflow-x-auto kaydirma-yok pb-1">
+                        <template x-for="kategori in kategoriler" :key="kategori">
+                            <button type="button" @@click="seciliKategori = kategori; arama = ''" x-text="kategori"
+                                    class="shrink-0 rounded-full py-3 px-5 text-sm font-semibold border transition-all duration-200 cursor-pointer select-none active:scale-95"
+                                    :class="kategori === seciliKategori && !arama
+                                        ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white'
+                                        : 'bg-white text-slate-600 border-gray-200 hover:border-slate-400 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700'"></button>
+                        </template>
+                    </nav>
+                    <input type="search" placeholder="Ürün ara…" x-model="arama" autocomplete="off"
+                           class="w-48 shrink-0 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-3 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                 </div>
 
-                <div class="satirlar">
-                    <template x-for="satir in satirlar" :key="satir.anahtar">
-                        <div class="satir" :class="{ bekliyor: !satir.id }">
-                            <span class="satir-ad" x-text="satir.ad"></span>
-                            <div class="adet">
-                                <button type="button" @@click="azalt(satir)" :disabled="!satir.id" aria-label="Azalt">−</button>
-                                <b x-text="satir.adet"></b>
-                                <button type="button" @@click="arttir(satir)" aria-label="Arttır">+</button>
-                            </div>
-                            <span class="satir-tutar" x-text="para(satir.adet * satir.birimFiyat)"></span>
-                            <button type="button" class="sil" @@click="sil(satir)" :disabled="!satir.id" title="Satırı sil" aria-label="Satırı sil">×</button>
-                        </div>
-                    </template>
-                    <p class="bos-yazi" x-show="!satirlar.length">Ürüne dokun, buraya eklensin.</p>
-                </div>
-
-                <div class="toplam">
-                    <span>Toplam</span>
-                    <b x-text="para(toplam)"></b>
-                </div>
-
-                @* Ödeme: türe dokunmak = ödendi (2 dokunuş) *@
-                <div class="odeme" x-show="odemeAcik" x-transition.opacity>
-                    <div class="odeme-baslik">
-                        <span>Ödeme türü</span>
-                        <button type="button" class="kapat" @@click="odemeAcik = false">Vazgeç</button>
-                    </div>
-                    <div class="odeme-izgara">
-                        <template x-for="odeme in odemeTurleri" :key="odeme.id">
-                            <button type="button" @@click="ode(odeme)" x-text="odeme.ad"></button>
+                <div class="flex-1 min-h-0 overflow-y-auto p-4">
+                    <div class="grid gap-3 grid-cols-[repeat(auto-fill,minmax(150px,1fr))]">
+                        <template x-for="urun in gorunenUrunler" :key="urun.id">
+                            <button type="button" @@click="urunEkle(urun)" :disabled="urun.fiyat <= 0"
+                                    class="relative text-left bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-slate-800 p-4 min-h-[96px] flex flex-col justify-between gap-2 cursor-pointer select-none active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                                    :class="adisyondakiAdet(urun.id) ? 'border-indigo-200 dark:border-indigo-800' : ''">
+                                <span class="font-medium leading-snug" x-text="urun.ad"></span>
+                                <span class="font-bold tabular-nums" x-text="urun.fiyat > 0 ? para(urun.fiyat) : 'fiyat yok'"></span>
+                                <span x-show="adisyondakiAdet(urun.id)" x-text="adisyondakiAdet(urun.id)"
+                                      class="absolute -top-2 -right-2 min-w-7 h-7 px-1.5 rounded-full bg-indigo-600 text-white text-sm font-bold grid place-items-center shadow"></span>
+                            </button>
                         </template>
                     </div>
+                    <p class="py-12 text-center text-slate-400" x-show="!gorunenUrunler.length">Ürün bulunamadı.</p>
+                </div>
+            </div>
+
+            @* ---- Sağ: adisyon (sepet) ---- *@
+            <aside class="w-[380px] shrink-0 flex flex-col border-l border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div class="p-4 border-b border-gray-100 dark:border-slate-800 space-y-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-xl font-bold truncate" x-text="secili.baslik"></h2>
+                                <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold" x-show="secili.kaynak !== 'Masa'"
+                                      :class="platformRozetRengi(secili.kaynak)" x-text="secili.kaynak"></span>
+                            </div>
+                            <div class="text-sm text-slate-500 dark:text-slate-400"
+                                 x-text="adisyon ? 'Açılış ' + saat(adisyon.acilis) + ' · ' + gecenSure(adisyon.acilis) : 'Yeni adisyon'"></div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-indigo-500" x-show="bekleyenIstek > 0" title="Kaydediliyor">@DonenSimge("h-5 w-5")</span>
+                            <span class="rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800 px-2.5 py-1 text-xs font-semibold"
+                                  x-show="adisyon?.durum === 'hesap'">Hesap istendi</span>
+                        </div>
+                    </div>
+
+                    @* Kişi sayısı *@
+                    <div class="flex items-center gap-3" x-show="secili.kaynak === 'Masa'">
+                        <span class="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">@KisiSimgesi("h-4 w-4") Kişi</span>
+                        <div class="inline-flex items-center rounded-xl bg-slate-100 dark:bg-slate-800">
+                            <button type="button" @@click="kisiDegistir(-1)" aria-label="Kişi azalt"
+                                    class="h-10 w-10 rounded-xl text-lg font-bold cursor-pointer select-none active:scale-95 transition-transform hover:bg-slate-200 dark:hover:bg-slate-700">−</button>
+                            <b class="w-8 text-center tabular-nums" x-text="adisyon?.kisiSayisi ?? '–'"></b>
+                            <button type="button" @@click="kisiDegistir(1)" aria-label="Kişi arttır"
+                                    class="h-10 w-10 rounded-xl text-lg font-bold cursor-pointer select-none active:scale-95 transition-transform hover:bg-slate-200 dark:hover:bg-slate-700">+</button>
+                        </div>
+                    </div>
                 </div>
 
-                @* İptal: neden zorunlu *@
-                <form class="iptal" x-show="iptalAcik" x-transition.opacity @@submit.prevent="iptalEt()">
-                    <label>İptal nedeni</label>
-                    <input type="text" x-model="iptalNedeni" x-ref="iptalNedeni" maxlength="200" placeholder="örn. müşteri vazgeçti" />
-                    <div class="iptal-dugmeler">
-                        <button type="button" @@click="iptalAcik = false">Vazgeç</button>
-                        <button type="submit" class="tehlike" :disabled="!iptalNedeni.trim()">Adisyonu iptal et</button>
+                @* Satırlar *@
+                <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-2">
+                    <div class="flex items-center justify-center gap-3 py-12 text-slate-400" x-show="adisyonYukleniyor">
+                        @DonenSimge("h-6 w-6") <span>Adisyon yükleniyor…</span>
                     </div>
-                </form>
+                    <template x-for="satir in satirlar" :key="satir.anahtar">
+                        <div class="flex items-center gap-3 py-3 border-b border-gray-100 dark:border-slate-800 last:border-0 transition-opacity"
+                             :class="{ 'opacity-60': !satir.id }">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium leading-snug break-words" x-text="satir.ad"></div>
+                                <div class="text-xs text-slate-400 tabular-nums" x-text="para(satir.birimFiyat)"></div>
+                            </div>
+                            <div class="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800">
+                                <button type="button" @@click="azalt(satir)" :disabled="!satir.id" aria-label="Azalt"
+                                        class="h-11 w-11 rounded-xl text-xl font-bold cursor-pointer select-none active:scale-95 transition-transform hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40">−</button>
+                                <b class="w-7 text-center tabular-nums" x-text="satir.adet"></b>
+                                <button type="button" @@click="arttir(satir)" aria-label="Arttır"
+                                        class="h-11 w-11 rounded-xl text-xl font-bold cursor-pointer select-none active:scale-95 transition-transform hover:bg-slate-200 dark:hover:bg-slate-700">+</button>
+                            </div>
+                            <b class="w-20 text-right tabular-nums" x-text="para(satir.adet * satir.birimFiyat)"></b>
+                            <button type="button" @@click="sil(satir)" :disabled="!satir.id" title="Satırı sil" aria-label="Satırı sil"
+                                    class="h-11 w-9 rounded-xl text-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 cursor-pointer select-none active:scale-95 transition-transform disabled:opacity-40">×</button>
+                        </div>
+                    </template>
+                    <div class="py-12 text-center text-slate-400" x-show="!satirlar.length && !adisyonYukleniyor">
+                        <div class="text-3xl mb-2">🧾</div>
+                        Sepet boş. Soldan ürüne dokun.
+                    </div>
+                </div>
 
-                <div class="eylemler" x-show="!odemeAcik && !iptalAcik">
-                    <button type="button" class="hesap" :disabled="!adisyon" @@click="hesapIste()"
-                            x-text="adisyon?.durum === 'hesap' ? 'Hesabı geri al' : 'Hesap iste'"></button>
-                    <button type="button" class="ode" :disabled="!adisyon" @@click="odemeAcik = true">Öde</button>
-                    <button type="button" class="iptal-ac" :disabled="!adisyon" @@click="iptalAc()">Adisyonu iptal et</button>
+                @* Alt kısım: toplam + düğmeler (hep altta sabit) *@
+                <div class="border-t border-gray-100 dark:border-slate-800 p-4 space-y-3 bg-white dark:bg-slate-900">
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-slate-500 dark:text-slate-400">Toplam</span>
+                        <b class="text-3xl font-extrabold tabular-nums" x-text="para(toplam)"></b>
+                    </div>
+
+                    @* Ödeme türü seçimi: türe dokunmak = ödendi *@
+                    <div class="space-y-3" x-show="odemeAcik" x-transition.opacity>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-semibold">Ödeme türü</span>
+                            <button type="button" @@click="odemeAcik = false" :disabled="odeniyor"
+                                    class="rounded-lg py-2 px-3 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer select-none">Vazgeç</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <template x-for="odeme in odemeTurleri" :key="odeme.id">
+                                <button type="button" @@click="ode(odeme)" :disabled="odeniyor"
+                                        class="inline-flex items-center justify-center gap-2 rounded-xl py-4 px-4 font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 cursor-pointer select-none active:scale-95 transition-transform disabled:opacity-60">
+                                    <span x-show="odeniyor === odeme.id">@DonenSimge("h-5 w-5")</span>
+                                    <span x-text="odeme.ad"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    @* İptal: neden zorunlu *@
+                    <form class="space-y-2" x-show="iptalAcik" x-transition.opacity @@submit.prevent="iptalEt()">
+                        <label class="text-sm font-semibold">İptal nedeni</label>
+                        <input type="text" x-model="iptalNedeni" x-ref="iptalNedeni" maxlength="200" placeholder="örn. müşteri vazgeçti"
+                               class="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-3 px-4 outline-none focus:ring-2 focus:ring-rose-400" />
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" @@click="iptalAcik = false"
+                                    class="rounded-xl py-3 px-4 font-semibold bg-slate-100 dark:bg-slate-800 cursor-pointer select-none active:scale-95 transition-transform">Vazgeç</button>
+                            <button type="submit"
+                                    class="rounded-xl py-3 px-4 font-semibold bg-rose-600 text-white hover:bg-rose-700 cursor-pointer select-none active:scale-95 transition-transform">İptal et</button>
+                        </div>
+                    </form>
+
+                    <div class="space-y-2" x-show="!odemeAcik && !iptalAcik">
+                        <div class="grid grid-cols-5 gap-2">
+                            <button type="button" @@click="hesapIste()"
+                                    class="col-span-2 rounded-xl py-4 px-4 font-semibold cursor-pointer select-none active:scale-95 transition-all duration-200"
+                                    :class="adisyon?.durum === 'hesap'
+                                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800'
+                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'"
+                                    x-text="adisyon?.durum === 'hesap' ? 'Hesabı geri al' : 'Hesap İste'"></button>
+                            <button type="button" @@click="odemeyiAc()"
+                                    class="col-span-3 rounded-xl py-4 px-4 text-lg font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer select-none active:scale-95 transition-all duration-200">
+                                Öde <span class="tabular-nums" x-show="toplam > 0" x-text="'· ' + para(toplam)"></span>
+                            </button>
+                        </div>
+                        <button type="button" @@click="iptalAc()"
+                                class="w-full rounded-xl py-3 px-4 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 cursor-pointer select-none active:scale-95 transition-transform">
+                            Adisyonu iptal et
+                        </button>
+                    </div>
                 </div>
             </aside>
         </div>
     </section>
 
     @* Kısa bildirim (sağ alt) *@
-    <div class="toast" :class="toast.tur" x-show="toast.yazi" x-transition x-text="toast.yazi"></div>
+    <div class="fixed bottom-6 right-6 z-50 max-w-sm rounded-2xl px-5 py-4 shadow-lg font-medium text-white"
+         :class="toastRengi" x-show="toast.yazi" x-transition x-text="toast.yazi" role="status"></div>
 </div>
+
+@functions {
+    // Küçük çizgi simgeler (SVG): ayrı bir simge kütüphanesine gerek kalmasın
+    // Dönen yükleniyor simgesi (spinner)
+    private static Microsoft.AspNetCore.Html.HtmlString DonenSimge(string sinif) => new(
+        $"<svg class=\"animate-spin {sinif}\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"/><path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z\"/></svg>");
+
+    private static Microsoft.AspNetCore.Html.HtmlString KisiSimgesi(string sinif) => new(
+        $"<svg class=\"{sinif}\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 4-6 8-6s8 2 8 6\"/></svg>");
+
+    private static Microsoft.AspNetCore.Html.HtmlString SaatSimgesi(string sinif) => new(
+        $"<svg class=\"{sinif}\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>");
+}
 
 @section Scripts {
     <script src="~/js/satis.js" asp-append-version="true"></script>

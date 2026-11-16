@@ -23,6 +23,9 @@ public class Siparis
     public OdemeTuru? OdemeTuru { get; set; }
     public DateTime? KapanisSaati { get; set; }
 
+    // Masadaki kişi sayısı (isteğe bağlı)
+    public int? KisiSayisi { get; set; }
+
     // Satırların toplamı; her değişiklikte yeniden hesaplanır
     public decimal Toplam { get; set; }
 

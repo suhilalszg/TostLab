@@ -6,6 +6,8 @@
     bool yoneticiMi = User.IsInRole(Roller.Yonetici);
     // Satış ekranı gibi sayfalar başlık çubuğunu istemez: tüm yükseklik onlara kalsın
     bool tamEkran = ViewData["TamEkran"] as bool? ?? false;
+    // Tailwind kullanan sayfa Bootstrap istemez: ikisinin aynı adlı sınıfları (p-4, border...) çakışır
+    bool bootstrapYok = ViewData["BootstrapYok"] as bool? ?? false;
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -15,9 +17,18 @@
     <title>@ViewData["Title"] - TOST LAB</title>
     @* Tema, sayfa çizilmeden önce seçilsin (yoksa bir an beyaz yanıp söner) *@
     <script>
-        try { const tema = localStorage.getItem('tema'); if (tema) document.documentElement.dataset.tema = tema; } catch (e) { }
+        // Kayıtlı seçim yoksa bilgisayarın temasına uy
+        (function () {
+            let tema = null;
+            try { tema = localStorage.getItem('tema'); } catch (e) { }
+            if (!tema) tema = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'koyu' : 'acik';
+            document.documentElement.dataset.tema = tema;
+        })();
     </script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @if (!bootstrapYok)
+    {
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    }
     <link rel="stylesheet" href="~/css/tema.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Stiller", required: false)
@@ -70,7 +81,10 @@
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @if (!bootstrapYok)
+    {
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    }
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

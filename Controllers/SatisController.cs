@@ -65,6 +65,10 @@ public class SatisController : Controller
         Calistir(async () => await adisyonServisi.HesapIsteAsync(istek));
 
     [HttpPost, ValidateAntiForgeryToken]
+    public Task<IActionResult> Kisi([FromBody] KisiIstegi istek) =>
+        Calistir(async () => await adisyonServisi.KisiDegistirAsync(istek));
+
+    [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> Ode([FromBody] OdemeIstegi istek) =>
         Calistir(async () => { await adisyonServisi.OdeAsync(istek); return null; });
 

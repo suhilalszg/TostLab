@@ -180,6 +180,9 @@ namespace TostLab.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("KisiSayisi")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("MasaId")
                         .HasColumnType("INTEGER");
 
