@@ -25,6 +25,7 @@
     <div class="kutu"><div class="etiket">Adisyon</div><div class="deger">@ozet.OdenenSayisi</div></div>
     <div class="kutu"><div class="etiket">Ortalama</div><div class="deger">@Model.OrtalamaAdisyon.ToString("N2") ₺</div></div>
     <div class="kutu"><div class="etiket">İptal</div><div class="deger">@ozet.IptalSayisi <small>· @ozet.IptalTutari.ToString("N2") ₺</small></div></div>
+    @await Html.PartialAsync("_IadeIkramKutulari", (ozet, true))
 </div>
 
 <div class="bugun-izgara">

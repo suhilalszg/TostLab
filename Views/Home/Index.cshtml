@@ -27,6 +27,7 @@
         <div class="etiket">İptal</div>
         <div class="deger">@ozet.IptalSayisi @if (yoneticiMi) { <small>· @ozet.IptalTutari.ToString("N2") ₺</small> }</div>
     </div>
+    @await Html.PartialAsync("_IadeIkramKutulari", (ozet, yoneticiMi))
 </div>
 
 <div class="bugun-izgara">

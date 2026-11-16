@@ -1,0 +1,13 @@
+@model (GunOzeti Ozet, bool TutarGoster)
+@* İade ve ikram kutuları: sadece olduysa çizilir. Çalışan için tutar gizlenir (TutarGoster = false). *@
+@{
+    var ozet = Model.Ozet;
+}
+@if (ozet.IadeSayisi > 0)
+{
+    <div class="kutu"><div class="etiket">İade</div><div class="deger">@ozet.IadeSayisi @if (Model.TutarGoster) { <small>· @ozet.IadeTutari.ToString("N2") ₺</small> }</div></div>
+}
+@if (ozet.IkramAdedi > 0)
+{
+    <div class="kutu"><div class="etiket">İkram</div><div class="deger">@ozet.IkramAdedi @if (Model.TutarGoster) { <small>· @ozet.IkramTutari.ToString("N2") ₺</small> }</div></div>
+}
