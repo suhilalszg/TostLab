@@ -11,8 +11,7 @@ public record AdisyonBilgisi(
     int Id,
     string Kaynak,
     int? MasaId,
-    string Baslik,          // "İç 2" ya da "Yemeksepeti #14"
-    string Durum,           // "acik" | "hesap"
+    string Baslik,          // "İç 2" ya da "Yemeksepeti 14:05"
     DateTime Acilis,
     decimal Toplam,
     int? KisiSayisi,
@@ -21,13 +20,13 @@ public record AdisyonBilgisi(
 public record MasaBilgisi(
     int Id,
     string Ad,
-    string Durum,           // "bos" (yeşil) | "dolu" (kırmızı) | "hesap" (sarı)
+    bool DoluMu,            // false: yeşil (boş), true: amber (dolu)
     int? AdisyonId,
     decimal Toplam,
     DateTime? Acilis,
     int? KisiSayisi);
 
-public record PaketBilgisi(int AdisyonId, string Baslik, string Kaynak, string Durum, decimal Toplam, DateTime Acilis);
+public record PaketBilgisi(int AdisyonId, string Baslik, string Kaynak, decimal Toplam, DateTime Acilis);
 
 // Masa planının tamamı: her değişiklikten sonra ekran bunu yeniden çizer
 public record EkranDurumu(List<MasaBilgisi> Masalar, List<PaketBilgisi> Paketler);
@@ -37,10 +36,10 @@ public record IslemSonucu(AdisyonBilgisi? Adisyon, EkranDurumu Ekran);
 
 // ---------- Ekrandan sunucuya ----------
 
-public record UrunEkleIstegi(int? AdisyonId, string Kaynak, int? MasaId, int UrunId, int Adet);
+// KisiSayisi: masa açılırken önceden girildiyse ilk ürünle birlikte gelir
+public record UrunEkleIstegi(int? AdisyonId, string Kaynak, int? MasaId, int UrunId, int Adet, int? KisiSayisi);
 public record AdetIstegi(int AdisyonId, int SatirId, int Adet);
-public record HesapIstegi(int AdisyonId, bool Istendi);
-public record OdemeIstegi(int AdisyonId, int OdemeTuruId);
+public record OdemeIstegi(int AdisyonId, int? OdemeTuruId);   // platform siparişinde boş
 public record IptalIstegi(int AdisyonId, string? Neden);
 public record KisiIstegi(int AdisyonId, int Kisi);
 

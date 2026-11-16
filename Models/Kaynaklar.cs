@@ -6,8 +6,10 @@ public static class Kaynaklar
     public const string Masa = "Masa";
     public const string Paket = "Paket";
 
-    public static readonly string[] Hepsi =
-    {
-        Masa, Paket, "Yemeksepeti", "Getir", "Trendyol", "Migros"
-    };
+    // Parası uygulamada (online) ödenen siparişler: kasada ödeme türü sorulmaz
+    public static readonly string[] Platformlar = { "Yemeksepeti", "Getir", "Trendyol", "Migros" };
+
+    public static readonly string[] Hepsi = [Masa, Paket, .. Platformlar];
+
+    public static bool PlatformMu(string kaynak) => Platformlar.Contains(kaynak);
 }

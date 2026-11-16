@@ -38,5 +38,5 @@ public class Siparis
     public Kullanici? IptalEdenKullanici { get; set; }
 
     // Hâlâ masada mı (ödenmedi, iptal edilmedi)?
-    public bool AcikMi => Durum == AdisyonDurumu.Acik || Durum == AdisyonDurumu.HesapIstendi;
+    public bool AcikMi => Durum == AdisyonDurumu.Acik;
 }

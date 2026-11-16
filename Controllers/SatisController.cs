@@ -38,6 +38,7 @@ public class SatisController : Controller
         ViewData["Urunler"] = urunler;
         ViewData["OdemeTurleri"] = odemeTurleri;
         ViewData["Ekran"] = await adisyonServisi.EkranDurumuAsync();
+        ViewData["Platformlar"] = Kaynaklar.Platformlar;
         return View();
     }
 
@@ -59,10 +60,6 @@ public class SatisController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> Adet([FromBody] AdetIstegi istek) =>
         Calistir(() => adisyonServisi.AdetDegistirAsync(istek));
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public Task<IActionResult> Hesap([FromBody] HesapIstegi istek) =>
-        Calistir(async () => await adisyonServisi.HesapIsteAsync(istek));
 
     [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> Kisi([FromBody] KisiIstegi istek) =>

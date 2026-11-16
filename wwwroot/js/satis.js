@@ -16,8 +16,7 @@ document.addEventListener('alpine:init', () => {
     // ---------- Renkler (Tailwind sınıfları) ----------
     const masaRenkleri = {
         bos: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
-        dolu: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
-        hesap: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+        dolu: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
     };
     const platformDugmeRenkleri = {
         Paket: 'bg-slate-700 hover:bg-slate-800',
@@ -45,10 +44,12 @@ document.addEventListener('alpine:init', () => {
         urunler: veri.urunler,
         odemeTurleri: veri.odemeTurleri,
         ekran: veri.ekran,                 // { masalar: [...], paketler: [...] }
-        paketKaynaklari: ['Paket', 'Yemeksepeti', 'Getir', 'Trendyol', 'Migros'],
+        platformlar: veri.platformlar,     // parası uygulamada ödenen kaynaklar
+        paketKaynaklari: ['Paket', ...veri.platformlar],
 
         gorunum: 'plan',                   // 'plan' | 'satis'
-        secili: { kaynak: null, masaId: null, adisyonId: null, baslik: '' },
+        // kisi: adisyon açılmadan girilen kişi sayısı (ilk ürünle sunucuya gider)
+        secili: { kaynak: null, masaId: null, adisyonId: null, baslik: '', kisi: null },
         adisyon: null,                     // sunucudan gelen son adisyon (yoksa null)
         yerelSatirlar: [],                 // ekranda görünen satırlar (iyimser)
 
@@ -73,7 +74,8 @@ document.addEventListener('alpine:init', () => {
             this.seciliKategori = this.kategoriler[0] ?? null;
             // Masa planı arada bir yenilensin (başka cihaz da kullanırsa) ve süreler ilerlesin
             setInterval(() => this.simdi = Date.now(), 30000);
-            setInterval(() => { if (this.gorunum === 'plan' && !this.bekleyenIstek) this.planiYenile(); }, 15000);
+            // Satış ekranındayken de yenilenir: üstteki masa şeridi güncel kalsın
+            setInterval(() => { if (!this.bekleyenIstek) this.planiYenile(); }, 15000);
         },
 
         // ---------- Türetilen değerler ----------
@@ -96,8 +98,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         get acikAdisyonSayisi() {
-            return this.ekran.masalar.filter(masa => masa.durum !== 'bos').length + this.ekran.paketler.length;
+            return this.ekran.masalar.filter(masa => masa.doluMu).length + this.ekran.paketler.length;
         },
+
+        get platformMu() { return this.platformlar.includes(this.secili.kaynak); },
+
+        get kisiSayisi() { return this.adisyon?.kisiSayisi ?? this.secili.kisi; },
 
         get acikToplam() {
             return this.ekran.masalar.reduce((toplam, masa) => toplam + masa.toplam, 0)
@@ -110,7 +116,7 @@ document.addEventListener('alpine:init', () => {
             return this.yerelSatirlar.filter(satir => satir.urunId === urunId).reduce((adet, satir) => adet + satir.adet, 0);
         },
 
-        masaRengi(durum) { return masaRenkleri[durum] ?? masaRenkleri.bos; },
+        masaRengi(doluMu) { return doluMu ? masaRenkleri.dolu : masaRenkleri.bos; },
         platformDugmeRengi(kaynak) { return platformDugmeRenkleri[kaynak] ?? platformDugmeRenkleri.Paket; },
         platformRozetRengi(kaynak) { return platformRozetRenkleri[kaynak] ?? platformRozetRenkleri.Paket; },
 
@@ -125,15 +131,15 @@ document.addEventListener('alpine:init', () => {
 
         // ---------- Ekranlar arası geçiş ----------
         masaAc(masa) {
-            this.adisyonaGec({ kaynak: 'Masa', masaId: masa.id, adisyonId: masa.adisyonId, baslik: masa.ad });
+            this.adisyonaGec({ kaynak: 'Masa', masaId: masa.id, adisyonId: masa.adisyonId, baslik: masa.ad, kisi: null });
         },
 
         paketAc(kaynak) {
-            this.adisyonaGec({ kaynak, masaId: null, adisyonId: null, baslik: `${kaynak} (yeni)` });
+            this.adisyonaGec({ kaynak, masaId: null, adisyonId: null, baslik: `${kaynak} (yeni)`, kisi: null });
         },
 
         adisyonAc(adisyonId, baslik, kaynak) {
-            this.adisyonaGec({ kaynak, masaId: null, adisyonId, baslik });
+            this.adisyonaGec({ kaynak, masaId: null, adisyonId, baslik, kisi: null });
         },
 
         async adisyonaGec(yeniSecim) {
@@ -199,7 +205,8 @@ document.addEventListener('alpine:init', () => {
             // 2) Sunucuya sırayla gönder (ilk üründe adisyon sunucuda açılır)
             const secim = this.secili;
             this.istekGonder('/Satis/UrunEkle', () => ({
-                adisyonId: secim.adisyonId, kaynak: secim.kaynak, masaId: secim.masaId, urunId: urun.id, adet: 1
+                adisyonId: secim.adisyonId, kaynak: secim.kaynak, masaId: secim.masaId, urunId: urun.id, adet: 1,
+                kisiSayisi: secim.adisyonId ? null : secim.kisi   // önceden girilen kişi sayısı ilk ürünle gider
             }));
         },
 
@@ -224,16 +231,25 @@ document.addEventListener('alpine:init', () => {
         },
 
         // ---------- Kişi sayısı ----------
+        // Garson önce müşteriyi oturtur, sonra sipariş alır: kişi sayısı ürün eklemeden de girilebilir.
         async kisiDegistir(fark) {
-            if (!(await this.adisyonHazirMi('Kişi sayısı için önce ürün ekle.'))) return;
-            const yeni = Math.min(50, Math.max(1, (this.adisyon.kisiSayisi ?? 0) + fark));
-            if (yeni === this.adisyon.kisiSayisi) return;
+            if (this.secili.kaynak !== 'Masa') return;   // kişi sayısı sadece masada anlamlı
+            if (this.adisyonYukleniyor) await this.yukleme;
+            if (!this.adisyon && this.yerelSatirlar.length) await this.kuyruk;   // ilk ürün yolda: adisyon açılsın
+
+            const yeni = Math.min(50, Math.max(1, (this.kisiSayisi ?? 0) + fark));
+            if (yeni === this.kisiSayisi) return;
+
+            if (!this.adisyon) {
+                this.secili.kisi = yeni;   // adisyon yok: ilk ürünle birlikte gönderilecek
+                return;
+            }
             this.adisyon.kisiSayisi = yeni;
             const secim = this.secili;
             this.istekGonder('/Satis/Kisi', () => ({ adisyonId: secim.adisyonId, kisi: yeni }));
         },
 
-        // ---------- Hesap / ödeme / iptal ----------
+        // ---------- Ödeme / iptal ----------
         // Sepet boşsa nazik uyarı; ilk ürün hâlâ yoldaysa adisyon açılana kadar bekle
         async adisyonHazirMi(bosMesaji) {
             if (this.adisyonYukleniyor) await this.yukleme;
@@ -249,21 +265,15 @@ document.addEventListener('alpine:init', () => {
             return true;
         },
 
-        async hesapIste() {
-            if (!(await this.adisyonHazirMi('Sepet boş — hesap istemek için önce ürün ekle.'))) return;
-            const istendi = this.adisyon.durum !== 'hesap';
-            this.adisyon.durum = istendi ? 'hesap' : 'acik';
-            const secim = this.secili;
-            this.istekGonder('/Satis/Hesap', () => ({ adisyonId: secim.adisyonId, istendi }));
-            if (istendi) {
-                this.bildir(`${secim.baslik}: hesap istendi`);
-                this.gorunum = 'plan';   // garson masaya döner; masa kırmızı görünür
-            }
-        },
-
         async odemeyiAc() {
+            if (this.odeniyor) return;
             if (!(await this.adisyonHazirMi('Sepet boş — ödeme alınacak bir şey yok.'))) return;
             this.iptalAcik = false;
+            if (this.platformMu) {
+                // Getir/Trendyol/Yemeksepeti/Migros: para uygulamada ödendi, tür sorma, kapat
+                await this.ode({ id: null, ad: this.secili.kaynak });
+                return;
+            }
             this.odemeAcik = true;
         },
 
@@ -274,7 +284,7 @@ document.addEventListener('alpine:init', () => {
             const tutar = this.toplam;
             let basariliMi = false;
 
-            this.odeniyor = odeme.id;
+            this.odeniyor = odeme.id ?? 'platform';
             await this.istekGonder('/Satis/Ode', () => ({ adisyonId: secim.adisyonId, odemeTuruId: odeme.id }), () => basariliMi = true);
             this.odeniyor = null;
 

@@ -21,8 +21,8 @@ public class AdisyonServisi
     {
         // Açık adisyonları tek sorguda al (Durum + MasaId indeksi bunu hızlandırır)
         var acikAdisyonlar = await veritabani.Siparisler
-            .Where(siparis => siparis.Durum == AdisyonDurumu.Acik || siparis.Durum == AdisyonDurumu.HesapIstendi)
-            .Select(siparis => new { siparis.Id, siparis.MasaId, siparis.Kaynak, siparis.Durum, siparis.Toplam, siparis.Tarih, siparis.KisiSayisi })
+            .Where(siparis => siparis.Durum == AdisyonDurumu.Acik)
+            .Select(siparis => new { siparis.Id, siparis.MasaId, siparis.Kaynak, siparis.Toplam, siparis.Tarih, siparis.KisiSayisi })
             .ToListAsync();
 
         var masalar = await veritabani.Masalar.Where(masa => masa.AktifMi).OrderBy(masa => masa.Id).ToListAsync();
@@ -30,24 +30,15 @@ public class AdisyonServisi
         var masaBilgileri = masalar.Select(masa =>
         {
             var adisyon = acikAdisyonlar.FirstOrDefault(acik => acik.MasaId == masa.Id);
-            if (adisyon == null)
-            {
-                return new MasaBilgisi(masa.Id, masa.Ad, "bos", null, 0, null, null);
-            }
-            string durum = adisyon.Durum == AdisyonDurumu.HesapIstendi ? "hesap" : "dolu";
-            return new MasaBilgisi(masa.Id, masa.Ad, durum, adisyon.Id, adisyon.Toplam, adisyon.Tarih, adisyon.KisiSayisi);
+            return adisyon == null
+                ? new MasaBilgisi(masa.Id, masa.Ad, false, null, 0, null, null)
+                : new MasaBilgisi(masa.Id, masa.Ad, true, adisyon.Id, adisyon.Toplam, adisyon.Tarih, adisyon.KisiSayisi);
         }).ToList();
 
         var paketler = acikAdisyonlar
             .Where(adisyon => adisyon.MasaId == null)
             .OrderBy(adisyon => adisyon.Tarih)
-            .Select(adisyon => new PaketBilgisi(
-                adisyon.Id,
-                $"{adisyon.Kaynak} #{adisyon.Id}",
-                adisyon.Kaynak,
-                adisyon.Durum == AdisyonDurumu.HesapIstendi ? "hesap" : "acik",
-                adisyon.Toplam,
-                adisyon.Tarih))
+            .Select(adisyon => new PaketBilgisi(adisyon.Id, PaketBasligi(adisyon.Kaynak, adisyon.Tarih), adisyon.Kaynak, adisyon.Toplam, adisyon.Tarih))
             .ToList();
 
         return new EkranDurumu(masaBilgileri, paketler);
@@ -80,9 +71,10 @@ public class AdisyonServisi
             ? await AcikAdisyonuYukleAsync(adisyonId, zorunlu: true) ?? throw new AdisyonHatasi("Adisyon bulunamadı.")
             : await YeniAdisyonAsync(istek.Kaynak, istek.MasaId);
 
-        if (adisyon.Durum == AdisyonDurumu.HesapIstendi)
+        // Masa açılırken kişi sayısı önceden girildiyse ilk ürünle birlikte gelir
+        if (istek.KisiSayisi is int kisi && adisyon.KisiSayisi == null && adisyon.MasaId != null)
         {
-            adisyon.Durum = AdisyonDurumu.Acik;   // hesap istendikten sonra ürün eklendiyse masa yeniden "dolu"
+            adisyon.KisiSayisi = KisiyiDenetle(kisi);
         }
 
         // Aynı ürün aynı fiyatla zaten varsa yeni satır açma, adedi arttır
@@ -129,38 +121,40 @@ public class AdisyonServisi
         return Bilgiye(adisyon);
     }
 
-    public async Task<AdisyonBilgisi> HesapIsteAsync(HesapIstegi istek)
-    {
-        var adisyon = await AcikAdisyonuYukleAsync(istek.AdisyonId, zorunlu: true);
-        adisyon!.Durum = istek.Istendi ? AdisyonDurumu.HesapIstendi : AdisyonDurumu.Acik;
-        await veritabani.SaveChangesAsync();
-        return Bilgiye(adisyon);
-    }
-
     // Masadaki kişi sayısı: 1–50 arası
     public async Task<AdisyonBilgisi> KisiDegistirAsync(KisiIstegi istek)
     {
-        if (istek.Kisi < 1 || istek.Kisi > 50)
-        {
-            throw new AdisyonHatasi("Kişi sayısı 1 ile 50 arasında olmalı.");
-        }
         var adisyon = await AcikAdisyonuYukleAsync(istek.AdisyonId, zorunlu: true);
-        adisyon!.KisiSayisi = istek.Kisi;
+        if (adisyon!.MasaId == null)
+        {
+            throw new AdisyonHatasi("Kişi sayısı sadece masa için girilir.");
+        }
+        adisyon.KisiSayisi = KisiyiDenetle(istek.Kisi);
         await veritabani.SaveChangesAsync();
         return Bilgiye(adisyon);
     }
 
+    // Masa ve telefon paketinde ödeme türü seçilir.
+    // Yemeksepeti/Getir/Trendyol/Migros'ta para uygulamada ödenmiştir: ödeme türü sorulmaz, sadece kapanır.
     public async Task OdeAsync(OdemeIstegi istek)
     {
         var adisyon = await AcikAdisyonuYukleAsync(istek.AdisyonId, zorunlu: true);
-        bool odemeVar = await veritabani.OdemeTurleri.AnyAsync(odeme => odeme.Id == istek.OdemeTuruId && odeme.AktifMi);
-        if (!odemeVar)
+
+        if (Kaynaklar.PlatformMu(adisyon!.Kaynak))
         {
-            throw new AdisyonHatasi("Ödeme türünü seç.");
+            adisyon.OdemeTuruId = null;
+        }
+        else
+        {
+            bool odemeVar = await veritabani.OdemeTurleri.AnyAsync(odeme => odeme.Id == istek.OdemeTuruId && odeme.AktifMi);
+            if (!odemeVar)
+            {
+                throw new AdisyonHatasi("Ödeme türünü seç.");
+            }
+            adisyon.OdemeTuruId = istek.OdemeTuruId;
         }
 
-        ToplamiHesapla(adisyon!);
-        adisyon!.OdemeTuruId = istek.OdemeTuruId;
+        ToplamiHesapla(adisyon);
         adisyon.Durum = AdisyonDurumu.Odendi;
         adisyon.KapanisSaati = DateTime.Now;
         await veritabani.SaveChangesAsync();
@@ -203,8 +197,7 @@ public class AdisyonServisi
             var acikOlan = await veritabani.Siparisler
                 .Include(siparis => siparis.Satirlar).ThenInclude(satir => satir.Urun)
                 .Include(siparis => siparis.Masa)
-                .FirstOrDefaultAsync(siparis => siparis.MasaId == masaId &&
-                    (siparis.Durum == AdisyonDurumu.Acik || siparis.Durum == AdisyonDurumu.HesapIstendi));
+                .FirstOrDefaultAsync(siparis => siparis.MasaId == masaId && siparis.Durum == AdisyonDurumu.Acik);
             if (acikOlan != null)
             {
                 return acikOlan;
@@ -248,19 +241,30 @@ public class AdisyonServisi
         return adisyon;
     }
 
+    private static int KisiyiDenetle(int kisi)
+    {
+        if (kisi < 1 || kisi > 50)
+        {
+            throw new AdisyonHatasi("Kişi sayısı 1 ile 50 arasında olmalı.");
+        }
+        return kisi;
+    }
+
     private static void ToplamiHesapla(Siparis adisyon)
     {
         adisyon.Toplam = adisyon.Satirlar.Sum(satir => satir.Tutar);
     }
 
+    // "Getir 14:05": kasada hangi sipariş olduğu saatle daha kolay anlaşılır
+    private static string PaketBasligi(string kaynak, DateTime acilis) => $"{kaynak} {acilis:HH:mm}";
+
     private static AdisyonBilgisi Bilgiye(Siparis adisyon)
     {
-        string baslik = adisyon.Masa?.Ad ?? $"{adisyon.Kaynak} #{adisyon.Id}";
-        string durum = adisyon.Durum == AdisyonDurumu.HesapIstendi ? "hesap" : "acik";
+        string baslik = adisyon.Masa?.Ad ?? PaketBasligi(adisyon.Kaynak, adisyon.Tarih);
         var satirlar = adisyon.Satirlar
             .OrderBy(satir => satir.Id == 0 ? int.MaxValue : satir.Id)   // yeni eklenen en altta
             .Select(satir => new SatirBilgisi(satir.Id, satir.UrunId, satir.Urun.Ad, satir.Adet, satir.BirimFiyat, satir.Tutar))
             .ToList();
-        return new AdisyonBilgisi(adisyon.Id, adisyon.Kaynak, adisyon.MasaId, baslik, durum, adisyon.Tarih, adisyon.Toplam, adisyon.KisiSayisi, satirlar);
+        return new AdisyonBilgisi(adisyon.Id, adisyon.Kaynak, adisyon.MasaId, baslik, adisyon.Tarih, adisyon.Toplam, adisyon.KisiSayisi, satirlar);
     }
 }
