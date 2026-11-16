@@ -18,6 +18,7 @@ public class TostLabDbContext : DbContext
     public DbSet<SiparisSatiri> SiparisSatirlari => Set<SiparisSatiri>();
     public DbSet<SilinenSatir> SilinenSatirlar => Set<SilinenSatir>();
     public DbSet<PlatformKomisyonu> PlatformKomisyonlari => Set<PlatformKomisyonu>();
+    public DbSet<GonderilenRapor> GonderilenRaporlar => Set<GonderilenRapor>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,6 +35,11 @@ public class TostLabDbContext : DbContext
 
         modelBuilder.Entity<Siparis>()
             .HasOne(siparis => siparis.IptalEdenKullanici)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Siparis>()
+            .HasOne(siparis => siparis.IndirimYapanKullanici)
             .WithMany()
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -63,6 +69,10 @@ public class TostLabDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<SilinenSatir>().HasIndex(iz => iz.Saat);
         modelBuilder.Entity<SilinenSatir>().HasIndex(iz => iz.SiparisId);
+
+        // Zamanlayıcı "bu ayın raporu gitti mi" diye sık sorar
+        modelBuilder.Entity<GonderilenRapor>()
+            .HasIndex(rapor => new { rapor.Yil, rapor.Ay });
 
         // Aynı kullanıcı adı iki kez kullanılamasın
         modelBuilder.Entity<Kullanici>()

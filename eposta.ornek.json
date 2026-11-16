@@ -1,0 +1,9 @@
+{
+  "Eposta": {
+    "SmtpSunucu": "smtp.gmail.com",
+    "Port": 587,
+    "KullaniciAdi": "gonderen.hesap@gmail.com",
+    "Sifre": "gmail-uygulama-sifresi",
+    "Alici": "raporun.gidecegi.adres@gmail.com"
+  }
+}

@@ -10,7 +10,7 @@ gün sonunda raporu hazırlar ve WhatsApp'a gönderilecek metni çıkarır.
 
 | Ekran | Ne yapar | Kim görür |
 |---|---|---|
-| **Satış** | Masa planı (boş / dolu), kategori → ürün → adisyon tek ekranda. Masa, telefonla paket ve Yemeksepeti / Getir / Trendyol / Migros siparişleri. Kişi sayısı, adet değiştirme, iptal (nedeni yazılır), ödeme türü seçerek kapatma. | Herkes |
+| **Satış** | Masa planı (boş / dolu), kategori → ürün → adisyon tek ekranda. Masa, telefonla paket ve Yemeksepeti / Getir / Trendyol / Migros siparişleri. Kişi sayısı, adet değiştirme, indirim (%5–20 tek dokunuş ya da yazılan % / ₺), iptal (nedeni yazılır), ödeme türü seçerek kapatma. | Herkes |
 | **Bugün** | Günün özeti: ciro, ortalama adisyon, ödeme türüne ve kaynağa göre dağılım, en çok satan ürünler, saatlere göre yoğunluk. | Yönetici her şeyi, çalışan sadece adetleri |
 | **Kayıtlar** | Geçmiş adisyonlar: gün / durum / kaynak / ödeme türüne göre süzme, fiş görünümünde detay (ÖDENDİ / İPTAL damgası), adisyondan silinen ürünlerin izi. | Yönetici |
 | **Gün sonu** | Seçilen günün raporu ve aylık özet; platform komisyonu düşülmüş net kazanç; WhatsApp'ta açılacak hazır metin, yazdırma. | Yönetici |
@@ -35,6 +35,9 @@ Services/      İş kuralları burada
   AdisyonServisi   adisyon açma, ürün ekleme, adet, ödeme, iptal (yazan tek yer)
   RaporServisi     Kayıtlar, Bugün, Gün sonu, Aylık hesapları (sadece okur)
   RaporMetni       raporu WhatsApp düz metnine çevirir
+  RaporEpostasi    aylık raporu HTML e-postaya çevirir
+  RaporGondermeServisi + AySonuZamanlayici
+                   ay bitince geçen ayın raporunu e-postayla gönderir (arka plan servisi)
 Models/        Veritabanı sınıfları + ekrana giden küçük kayıtlar (DTO / record)
 Data/          DbContext, ilişkiler, indeksler, başlangıç verisi
 Migrations/    Veritabanı şemasının adım adım geçmişi
@@ -64,6 +67,18 @@ Tarayıcıda `http://localhost:5050` açılır. İlk açılışta veritabanı ke
 
 Visual Studio ile: `TostLab.slnx` dosyasını açıp **Ctrl+F5**.
 
+### Aylık rapor e-postası
+
+Her ayın 1'inde (bilgisayar o an kapalıysa açıldığı ilk yarım saatte) geçen ayın raporu e-postayla gider.
+Aynı ay iki kez gönderilmez. Açmak için `eposta.ornek.json` dosyasını `eposta.json` adıyla kopyalayıp doldur:
+
+- `KullaniciAdi`: raporu gönderecek Gmail adresi
+- `Sifre`: o hesabın **uygulama şifresi** (Google Hesabı → Güvenlik → 2 adımlı doğrulama → Uygulama şifreleri), normal şifre değil
+- `Alici`: raporun gideceği adres
+
+`eposta.json` git'e girmez. Dosya yoksa program normal çalışır, sadece e-posta gitmez.
+Aylık özet sayfasındaki **Şimdi e-postayla gönder** düğmesiyle ayarı denemek mümkün.
+
 Veritabanında değişiklik yaparken (geliştirici için):
 
 ```bash
@@ -79,6 +94,6 @@ Yeni migration uygulama açılırken kendiliğinden uygulanır.
 - [x] Menü, masalar, ödeme türleri
 - [x] Satış ekranı (masa planı, paket ve platform siparişleri, iptal)
 - [x] Kayıtlar, Bugün, Gün sonu ve aylık özet, platform komisyonu
-- [ ] Gün sonu raporunun gece 12'de kendiliğinden telefona gönderilmesi
-- [ ] İndirim
+- [x] Ay sonunda aylık raporun kendiliğinden e-postayla gönderilmesi
+- [x] İndirim (yüzde ya da tutar, kim yaptı kaydedilir; platform siparişinde yok)
 - [ ] Dükkanda gerçek kullanım ve geri bildirimle düzeltmeler

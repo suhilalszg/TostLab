@@ -26,8 +26,21 @@ public class Siparis
     // Masadaki kişi sayısı (isteğe bağlı)
     public int? KisiSayisi { get; set; }
 
-    // Satırların toplamı; her değişiklikte yeniden hesaplanır
+    // Ödenecek tutar = satırların toplamı - indirim; her değişiklikte yeniden hesaplanır
     public decimal Toplam { get; set; }
+
+    // İndirim: kasada girilen değer. YuzdeMi ise 10 = %10, değilse 10 = 10 ₺.
+    // Yüzde indirim ürün eklenince yeniden hesaplanır; tutar indirim satır toplamını geçemez.
+    public bool IndirimYuzdeMi { get; set; }
+    public decimal IndirimDegeri { get; set; }
+    // Değerden hesaplanan ₺ karşılığı (raporlar bunu toplar)
+    public decimal IndirimTutari { get; set; }
+    public string? IndirimNedeni { get; set; }
+    public int? IndirimYapanKullaniciId { get; set; }
+    public Kullanici? IndirimYapanKullanici { get; set; }
+
+    // İndirimden önceki tutar
+    public decimal AraToplam => Toplam + IndirimTutari;
 
     // Platformun kestiği yüzde, ödeme anında yazılır (masa ve telefon paketinde 0)
     public decimal KomisyonOrani { get; set; }

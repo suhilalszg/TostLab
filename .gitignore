@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 tostlab.db
 tostlab.db-shm
 tostlab.db-wal
+
+# E-posta şifresi: sadece dükkan bilgisayarında durur
+eposta.json

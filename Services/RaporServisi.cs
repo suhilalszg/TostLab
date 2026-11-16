@@ -82,6 +82,7 @@ public class RaporServisi
             .Include(siparis => siparis.Masa)
             .Include(siparis => siparis.OdemeTuru)
             .Include(siparis => siparis.IptalEdenKullanici)
+            .Include(siparis => siparis.IndirimYapanKullanici)
             .FirstOrDefaultAsync(siparis => siparis.Id == adisyonId);
         if (adisyon == null)
         {
@@ -106,7 +107,20 @@ public class RaporServisi
             satirlar,
             adisyon.IptalNedeni,
             adisyon.IptalEdenKullanici?.KullaniciAdi,
-            await SilinenleriGetirAsync(iz => iz.SiparisId == adisyonId));
+            await SilinenleriGetirAsync(iz => iz.SiparisId == adisyonId),
+            adisyon.IndirimTutari,
+            IndirimAciklamasi(adisyon),
+            adisyon.IndirimYapanKullanici?.KullaniciAdi);
+    }
+
+    private static string? IndirimAciklamasi(Siparis adisyon)
+    {
+        if (adisyon.IndirimDegeri <= 0)
+        {
+            return null;
+        }
+        string deger = adisyon.IndirimYuzdeMi ? $"%{adisyon.IndirimDegeri:0.##}" : $"{adisyon.IndirimDegeri:N2} ₺";
+        return adisyon.IndirimNedeni == null ? deger : $"{deger} · {adisyon.IndirimNedeni}";
     }
 
     // ===================== GÜN RAPORU (Bugün sayfası, ileride Gün sonu) =====================
@@ -198,7 +212,8 @@ public class RaporServisi
                 siparis.OdemeTuru != null ? siparis.OdemeTuru.Ad : null,
                 siparis.Tarih,
                 siparis.Toplam,
-                siparis.KomisyonOrani))
+                siparis.KomisyonOrani,
+                siparis.IndirimTutari))
             .ToListAsync();
 
     private static GunOzeti OzetHesapla(List<AdisyonOzeti> gununHepsi, List<SilinenBilgisi> silinenler)
@@ -213,11 +228,12 @@ public class RaporServisi
             AcikSayisi: gununHepsi.Count(adisyon => adisyon.Durum == AdisyonDurumu.Acik),
             SilinenUrunAdedi: silinenler.Sum(iz => iz.Adet),
             SilinenTutar: silinenler.Sum(iz => iz.Tutar),
-            Komisyon: odenenler.Sum(adisyon => adisyon.Komisyon));
+            Komisyon: odenenler.Sum(adisyon => adisyon.Komisyon),
+            IndirimToplami: odenenler.Sum(adisyon => adisyon.IndirimTutari));
     }
 
     private record AdisyonOzeti(AdisyonDurumu Durum, string Kaynak, string? OdemeTuru, DateTime Tarih,
-        decimal Toplam, decimal KomisyonOrani)
+        decimal Toplam, decimal KomisyonOrani, decimal IndirimTutari)
     {
         // Siparis.Komisyon ile aynı hesap
         public decimal Komisyon => Math.Round(Toplam * KomisyonOrani / 100, 2);

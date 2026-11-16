@@ -26,6 +26,18 @@
             </div>
         }
 
+        @if (Model.IndirimTutari > 0)
+        {
+            <div class="fis-satir ara">
+                <span>Ara toplam</span>
+                <span>@Model.AraToplam.ToString("N2")</span>
+            </div>
+            <div class="fis-satir">
+                <span>İndirim @Model.IndirimAciklamasi</span>
+                <span>−@Model.IndirimTutari.ToString("N2")</span>
+            </div>
+        }
+
         <div class="fis-satir toplam">
             <span>TOPLAM</span>
             <span>@Model.Toplam.ToString("N2") ₺</span>
@@ -40,6 +52,10 @@
             else if (Kaynaklar.PlatformMu(Model.Kaynak) && Model.Durum == AdisyonDurumu.Odendi)
             {
                 <span>Ödeme: Online (@Model.Kaynak)</span>
+            }
+            @if (Model.IndirimYapan != null)
+            {
+                <span>İndirimi yapan: @Model.IndirimYapan</span>
             }
             @if (Model.KisiSayisi is int kisi)
             {

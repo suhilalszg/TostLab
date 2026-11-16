@@ -58,6 +58,8 @@ document.addEventListener('alpine:init', () => {
         odemeAcik: false,
         iptalAcik: false,
         iptalNedeni: '',
+        indirimAcik: false,
+        indirimFormu: { yuzdeMi: true, deger: '', neden: '' },
         toast: { yazi: '', tur: '' },
 
         // Yükleniyor durumları (spinner)
@@ -93,9 +95,20 @@ document.addEventListener('alpine:init', () => {
 
         get satirlar() { return this.yerelSatirlar; },
 
-        get toplam() {
+        // İndirimden önce (ekrandaki satırlardan, sunucuyu beklemeden)
+        get araToplam() {
             return this.yerelSatirlar.reduce((toplam, satir) => toplam + satir.adet * satir.birimFiyat, 0);
         },
+
+        // Sunucudaki AdisyonServisi.IndirimHesapla ile aynı kural
+        get indirimTutari() {
+            const indirim = this.adisyon?.indirim;
+            if (!indirim || indirim.deger <= 0) return 0;
+            const tutar = indirim.yuzdeMi ? Math.round(this.araToplam * indirim.deger) / 100 : indirim.deger;
+            return Math.min(tutar, this.araToplam);
+        },
+
+        get toplam() { return this.araToplam - this.indirimTutari; },
 
         get acikAdisyonSayisi() {
             return this.ekran.masalar.filter(masa => masa.doluMu).length + this.ekran.paketler.length;
@@ -149,7 +162,7 @@ document.addEventListener('alpine:init', () => {
             const secim = this.secili;
             this.adisyon = null;
             this.yerelSatirlar = [];
-            this.odemeAcik = this.iptalAcik = false;
+            this.odemeAcik = this.iptalAcik = this.indirimAcik = false;
             this.arama = '';
             this.gorunum = 'satis';
 
@@ -179,8 +192,8 @@ document.addEventListener('alpine:init', () => {
 
         geriDon() {
             if (this.odeniyor) return;
-            if (this.odemeAcik || this.iptalAcik) {
-                this.odemeAcik = this.iptalAcik = false;
+            if (this.odemeAcik || this.iptalAcik || this.indirimAcik) {
+                this.odemeAcik = this.iptalAcik = this.indirimAcik = false;
                 return;
             }
             this.gorunum = 'plan';
@@ -268,7 +281,7 @@ document.addEventListener('alpine:init', () => {
         async odemeyiAc() {
             if (this.odeniyor) return;
             if (!(await this.adisyonHazirMi('Sepet boş — ödeme alınacak bir şey yok.'))) return;
-            this.iptalAcik = false;
+            this.iptalAcik = this.indirimAcik = false;
             if (this.platformMu) {
                 // Getir/Trendyol/Yemeksepeti/Migros: para uygulamada ödendi, tür sorma, kapat
                 await this.ode({ id: null, ad: this.secili.kaynak });
@@ -297,7 +310,7 @@ document.addEventListener('alpine:init', () => {
 
         async iptalAc() {
             if (!(await this.adisyonHazirMi('Sepet boş — iptal edilecek adisyon yok.'))) return;
-            this.odemeAcik = false;
+            this.odemeAcik = this.indirimAcik = false;
             this.iptalNedeni = '';
             this.iptalAcik = true;
             this.$nextTick(() => this.$refs.iptalNedeni.focus());
@@ -317,6 +330,42 @@ document.addEventListener('alpine:init', () => {
             });
             this.iptalAcik = false;
             this.gorunum = 'plan';
+        },
+
+        // ---------- İndirim ----------
+        async indirimAc() {
+            if (!(await this.adisyonHazirMi('Sepet boş — indirim yapılacak adisyon yok.'))) return;
+            this.odemeAcik = this.iptalAcik = false;
+            const mevcut = this.adisyon.indirim;
+            this.indirimFormu = mevcut
+                ? { yuzdeMi: mevcut.yuzdeMi, deger: String(mevcut.deger).replace('.', ','), neden: mevcut.neden ?? '' }
+                : { yuzdeMi: true, deger: '', neden: '' };
+            this.indirimAcik = true;
+            this.$nextTick(() => this.$refs.indirimDegeri.focus());
+        },
+
+        // deger: hazır düğmelerden (%10) gelir; yoksa kutuya yazılan
+        indirimUygula(deger) {
+            const yazi = deger ?? this.indirimFormu.deger;
+            const sayi = Number(String(yazi).replace(',', '.'));
+            if (!(sayi > 0)) {
+                this.bildir('İndirim için bir sayı yaz.', 'uyari');
+                this.$refs.indirimDegeri.focus();
+                return;
+            }
+            const yuzdeMi = deger != null ? true : this.indirimFormu.yuzdeMi;
+            const neden = this.indirimFormu.neden.trim() || null;
+            const secim = this.secili;
+            this.istekGonder('/Satis/Indirim', () => ({ adisyonId: secim.adisyonId, yuzdeMi, deger: sayi, neden }),
+                () => this.bildir(`İndirim uygulandı · ${yuzdeMi ? '%' + sayi : this.para(sayi)}`, 'basari'));
+            this.indirimAcik = false;
+        },
+
+        indirimKaldir() {
+            const secim = this.secili;
+            this.istekGonder('/Satis/Indirim', () => ({ adisyonId: secim.adisyonId, yuzdeMi: true, deger: 0, neden: null }),
+                () => this.bildir('İndirim kaldırıldı'));
+            this.indirimAcik = false;
         },
 
         // ---------- Sunucu ile konuşma ----------

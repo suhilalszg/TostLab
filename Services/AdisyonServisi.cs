@@ -151,6 +151,45 @@ public class AdisyonServisi
         return Bilgiye(adisyon);
     }
 
+    // İndirim: yüzde (1–100) ya da tutar (₺). Değer 0 indirimi kaldırır.
+    // Platform siparişinde yok: fiyatı ve kampanyayı uygulama belirliyor.
+    // Kim yaptıysa kaydedilir (yönetici Kayıtlar'da görür).
+    public async Task<AdisyonBilgisi> IndirimUygulaAsync(IndirimIstegi istek, int kullaniciId)
+    {
+        var adisyon = await AcikAdisyonuYukleAsync(istek.AdisyonId, zorunlu: true);
+        if (Kaynaklar.PlatformMu(adisyon!.Kaynak))
+        {
+            throw new AdisyonHatasi("Platform siparişinde indirim yapılmaz.");
+        }
+
+        if (istek.Deger == 0)
+        {
+            adisyon.IndirimDegeri = 0;
+            adisyon.IndirimNedeni = null;
+            adisyon.IndirimYapanKullaniciId = null;
+        }
+        else
+        {
+            if (istek.Deger < 0 || (istek.YuzdeMi && istek.Deger > 100))
+            {
+                throw new AdisyonHatasi(istek.YuzdeMi ? "Yüzde 1 ile 100 arasında olmalı." : "İndirim tutarı geçerli değil.");
+            }
+            decimal araToplam = adisyon.Satirlar.Sum(satir => satir.Tutar);
+            if (!istek.YuzdeMi && istek.Deger > araToplam)
+            {
+                throw new AdisyonHatasi("İndirim adisyon tutarından büyük olamaz.");
+            }
+            adisyon.IndirimYuzdeMi = istek.YuzdeMi;
+            adisyon.IndirimDegeri = Math.Round(istek.Deger, 2);
+            adisyon.IndirimNedeni = string.IsNullOrWhiteSpace(istek.Neden) ? null : istek.Neden.Trim();
+            adisyon.IndirimYapanKullaniciId = kullaniciId;
+        }
+
+        ToplamiHesapla(adisyon);
+        await veritabani.SaveChangesAsync();
+        return Bilgiye(adisyon);
+    }
+
     // Masa ve telefon paketinde ödeme türü seçilir.
     // Yemeksepeti/Getir/Trendyol/Migros'ta para uygulamada ödenmiştir: ödeme türü sorulmaz, sadece kapanır.
     public async Task OdeAsync(OdemeIstegi istek)
@@ -273,9 +312,22 @@ public class AdisyonServisi
         return kisi;
     }
 
+    // Tek hesap yeri: satır toplamı - indirim. Ekrandaki satis.js de aynı kuralı uygular.
     private static void ToplamiHesapla(Siparis adisyon)
     {
-        adisyon.Toplam = adisyon.Satirlar.Sum(satir => satir.Tutar);
+        decimal araToplam = adisyon.Satirlar.Sum(satir => satir.Tutar);
+        adisyon.IndirimTutari = IndirimHesapla(araToplam, adisyon.IndirimYuzdeMi, adisyon.IndirimDegeri);
+        adisyon.Toplam = araToplam - adisyon.IndirimTutari;
+    }
+
+    public static decimal IndirimHesapla(decimal araToplam, bool yuzdeMi, decimal deger)
+    {
+        if (deger <= 0)
+        {
+            return 0;
+        }
+        decimal indirim = yuzdeMi ? Math.Round(araToplam * deger / 100, 2) : deger;
+        return Math.Min(indirim, araToplam);   // ürün silinip tutar küçülse de eksiye düşmesin
     }
 
     // "Getir 14:05": kasada hangi sipariş olduğu saatle daha kolay anlaşılır
@@ -288,6 +340,10 @@ public class AdisyonServisi
             .OrderBy(satir => satir.Id == 0 ? int.MaxValue : satir.Id)   // yeni eklenen en altta
             .Select(satir => new SatirBilgisi(satir.Id, satir.UrunId, satir.Urun.Ad, satir.Adet, satir.BirimFiyat, satir.Tutar))
             .ToList();
-        return new AdisyonBilgisi(adisyon.Id, adisyon.Kaynak, adisyon.MasaId, baslik, adisyon.Tarih, adisyon.Toplam, adisyon.KisiSayisi, satirlar);
+        var indirim = adisyon.IndirimDegeri > 0
+            ? new IndirimBilgisi(adisyon.IndirimYuzdeMi, adisyon.IndirimDegeri, adisyon.IndirimTutari, adisyon.IndirimNedeni)
+            : null;
+        return new AdisyonBilgisi(adisyon.Id, adisyon.Kaynak, adisyon.MasaId, baslik, adisyon.Tarih, adisyon.Toplam,
+            adisyon.KisiSayisi, satirlar, indirim);
     }
 }

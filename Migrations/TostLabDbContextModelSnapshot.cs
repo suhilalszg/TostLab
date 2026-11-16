@@ -17,6 +17,35 @@ namespace TostLab.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.15");
 
+            modelBuilder.Entity("TostLab.Models.GonderilenRapor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Alici")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Ay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ElleMi")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("GonderimSaati")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Yil")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Yil", "Ay");
+
+                    b.ToTable("GonderilenRaporlar");
+                });
+
             modelBuilder.Entity("TostLab.Models.Kullanici", b =>
                 {
                     b.Property<int>("Id")
@@ -254,6 +283,21 @@ namespace TostLab.Migrations
                     b.Property<int>("Durum")
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal>("IndirimDegeri")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IndirimNedeni")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("IndirimTutari")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("IndirimYapanKullaniciId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IndirimYuzdeMi")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("IptalEdenKullaniciId")
                         .HasColumnType("INTEGER");
 
@@ -289,6 +333,8 @@ namespace TostLab.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IndirimYapanKullaniciId");
 
                     b.HasIndex("IptalEdenKullaniciId");
 
@@ -371,6 +417,11 @@ namespace TostLab.Migrations
 
             modelBuilder.Entity("TostLab.Models.Siparis", b =>
                 {
+                    b.HasOne("TostLab.Models.Kullanici", "IndirimYapanKullanici")
+                        .WithMany()
+                        .HasForeignKey("IndirimYapanKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("TostLab.Models.Kullanici", "IptalEdenKullanici")
                         .WithMany()
                         .HasForeignKey("IptalEdenKullaniciId")
@@ -385,6 +436,8 @@ namespace TostLab.Migrations
                         .WithMany()
                         .HasForeignKey("OdemeTuruId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("IndirimYapanKullanici");
 
                     b.Navigation("IptalEdenKullanici");
 

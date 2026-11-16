@@ -50,6 +50,10 @@
     <div class="kutu"><div class="etiket">Ödenen adisyon</div><div class="deger">@ozet.OdenenSayisi</div></div>
     <div class="kutu"><div class="etiket">İptal</div><div class="deger">@ozet.IptalSayisi <small>· @ozet.IptalTutari.ToString("N2") ₺</small></div></div>
     <div class="kutu"><div class="etiket">Silinen ürün</div><div class="deger">@ozet.SilinenUrunAdedi <small>· @ozet.SilinenTutar.ToString("N2") ₺</small></div></div>
+    @if (ozet.IndirimToplami > 0)
+    {
+        <div class="kutu"><div class="etiket">İndirim</div><div class="deger">@ozet.IndirimToplami.ToString("N2") ₺</div></div>
+    }
     @if (ozet.AcikSayisi > 0)
     {
         <div class="kutu"><div class="etiket">Hâlâ açık</div><div class="deger">@ozet.AcikSayisi</div></div>

@@ -14,6 +14,38 @@
     <a class="btn btn-outline-secondary" asp-action="Index">Gün sonu</a>
 </div>
 
+@{
+    bool epostaHazirMi = ViewData["EpostaHazirMi"] as bool? ?? false;
+    var sonGonderim = ViewData["SonGonderim"] as GonderilenRapor;
+}
+<div class="eposta-serit">
+    @if (ViewData["Mesaj"] is string mesaj)
+    {
+        <b>@mesaj</b>
+    }
+    else if (sonGonderim != null)
+    {
+        <span>Son gönderim: @sonGonderim.GonderimSaati.ToString("d MMMM HH:mm") · @sonGonderim.Alici · @(sonGonderim.ElleMi ? "elle" : "otomatik")</span>
+    }
+    else if (epostaHazirMi)
+    {
+        <span>Bu ayın raporu ay bitince e-postayla kendiliğinden gidecek.</span>
+    }
+    else
+    {
+        <span>E-posta ayarlanmamış: rapor otomatik gitmez (eposta.json).</span>
+    }
+
+    @if (epostaHazirMi)
+    {
+        <form asp-action="AyGonder" method="post">
+            <input type="hidden" name="yil" value="@Model.Yil" />
+            <input type="hidden" name="ay" value="@Model.Ay" />
+            <button type="submit" class="btn btn-dark btn-sm">Şimdi e-postayla gönder</button>
+        </form>
+    }
+</div>
+
 <div class="kutular">
     <div class="kutu vurgulu"><div class="etiket">Ciro</div><div class="deger">@ozet.Ciro.ToString("N2") ₺</div></div>
     <div class="kutu"><div class="etiket">Net kazanç</div><div class="deger">@ozet.NetKazanc.ToString("N2") ₺</div></div>

@@ -84,6 +84,10 @@ public static class RaporMetni
     // Komisyon yoksa (oranlar 0 ya da platform siparişi yok) satır kalabalık etmesin
     private static void KomisyonVeNet(StringBuilder yazi, GunOzeti ozet)
     {
+        if (ozet.IndirimToplami > 0)
+        {
+            yazi.AppendLine($"Yapılan indirim: {Para(ozet.IndirimToplami)}");
+        }
         if (ozet.Komisyon > 0)
         {
             yazi.AppendLine($"Platform komisyonu: −{Para(ozet.Komisyon)}");

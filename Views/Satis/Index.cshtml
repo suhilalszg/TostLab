@@ -244,6 +244,18 @@
 
                 @* Alt kısım: toplam + düğmeler (hep altta sabit) *@
                 <div class="border-t border-gray-100 dark:border-slate-800 p-4 space-y-3 bg-white dark:bg-slate-900">
+                    @* İndirim varsa: ara toplam ve indirim satırı *@
+                    <template x-if="indirimTutari > 0">
+                        <div class="space-y-1 text-sm">
+                            <div class="flex justify-between text-slate-500 dark:text-slate-400">
+                                <span>Ara toplam</span><span class="tabular-nums" x-text="para(araToplam)"></span>
+                            </div>
+                            <div class="flex justify-between text-amber-700 dark:text-amber-400 font-semibold">
+                                <span x-text="'İndirim' + (adisyon.indirim.yuzdeMi ? ' %' + adisyon.indirim.deger : '') + (adisyon.indirim.neden ? ' · ' + adisyon.indirim.neden : '')"></span>
+                                <span class="tabular-nums" x-text="'−' + para(indirimTutari)"></span>
+                            </div>
+                        </div>
+                    </template>
                     <div class="flex items-baseline justify-between">
                         <span class="text-slate-500 dark:text-slate-400">Toplam</span>
                         <b class="text-3xl font-extrabold tabular-nums" x-text="para(toplam)"></b>
@@ -280,7 +292,41 @@
                         </div>
                     </form>
 
-                    <div class="space-y-2" x-show="!odemeAcik && !iptalAcik">
+                    @* İndirim: hazır yüzdeler tek dokunuş; ya da % / ₺ seçip yaz *@
+                    <form class="space-y-2" x-show="indirimAcik" x-transition.opacity @@submit.prevent="indirimUygula()">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-semibold">İndirim</span>
+                            <button type="button" x-show="adisyon?.indirim" @@click="indirimKaldir()"
+                                    class="rounded-lg py-2 px-3 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer select-none">İndirimi kaldır</button>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <template x-for="yuzde in [5, 10, 15, 20]" :key="yuzde">
+                                <button type="button" @@click="indirimUygula(yuzde)"
+                                        class="rounded-xl py-3 font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 cursor-pointer select-none active:scale-95 transition-transform"
+                                        x-text="'%' + yuzde"></button>
+                            </template>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="inline-flex rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden shrink-0">
+                                <button type="button" @@click="indirimFormu.yuzdeMi = true" :class="indirimFormu.yuzdeMi ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900' : ''"
+                                        class="px-4 font-bold cursor-pointer select-none">%</button>
+                                <button type="button" @@click="indirimFormu.yuzdeMi = false" :class="!indirimFormu.yuzdeMi ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900' : ''"
+                                        class="px-4 font-bold cursor-pointer select-none">₺</button>
+                            </div>
+                            <input type="text" inputmode="decimal" x-model="indirimFormu.deger" x-ref="indirimDegeri" placeholder="Değer"
+                                   class="w-full min-w-0 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-3 px-4 outline-none focus:ring-2 focus:ring-amber-400 tabular-nums" />
+                        </div>
+                        <input type="text" x-model="indirimFormu.neden" maxlength="100" placeholder="Neden (isteğe bağlı) örn. tanıdık, öğrenci"
+                               class="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-3 px-4 outline-none focus:ring-2 focus:ring-amber-400" />
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" @@click="indirimAcik = false"
+                                    class="rounded-xl py-3 px-4 font-semibold bg-slate-100 dark:bg-slate-800 cursor-pointer select-none active:scale-95 transition-transform">Vazgeç</button>
+                            <button type="submit"
+                                    class="rounded-xl py-3 px-4 font-semibold bg-amber-500 text-white hover:bg-amber-600 cursor-pointer select-none active:scale-95 transition-transform">Uygula</button>
+                        </div>
+                    </form>
+
+                    <div class="space-y-2" x-show="!odemeAcik && !iptalAcik && !indirimAcik">
                         @* Platform siparişinde para uygulamada ödendi: ödeme türü sorulmaz, tek dokunuşla kapanır *@
                         <button type="button" @@click="odemeyiAc()" :disabled="odeniyor"
                                 class="w-full inline-flex items-center justify-center gap-2 rounded-xl py-4 px-4 text-lg font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer select-none active:scale-95 transition-all duration-200 disabled:opacity-70">
@@ -288,10 +334,17 @@
                             <span x-text="platformMu ? 'Teslim edildi, kapat' : 'Öde'"></span>
                             <span class="tabular-nums" x-show="toplam > 0" x-text="'· ' + para(toplam)"></span>
                         </button>
-                        <button type="button" @@click="iptalAc()"
-                                class="w-full rounded-xl py-3 px-4 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 cursor-pointer select-none active:scale-95 transition-transform">
-                            Adisyonu iptal et
-                        </button>
+                        <div class="grid gap-2" :class="platformMu ? 'grid-cols-1' : 'grid-cols-2'">
+                            @* Platform siparişinde indirim yok: fiyatı uygulama belirliyor *@
+                            <button type="button" @@click="indirimAc()" x-show="!platformMu"
+                                    class="rounded-xl py-3 px-4 text-sm font-semibold text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40 cursor-pointer select-none active:scale-95 transition-transform">
+                                İndirim
+                            </button>
+                            <button type="button" @@click="iptalAc()"
+                                    class="rounded-xl py-3 px-4 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 cursor-pointer select-none active:scale-95 transition-transform">
+                                Adisyonu iptal et
+                            </button>
+                        </div>
                     </div>
                 </div>
             </aside>

@@ -11,6 +11,12 @@ using TostLab.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// E-posta ayarları (şifre içerir): git'e girmeyen eposta.json'dan. Dosya yoksa e-posta kapalı kalır.
+// Komut satırı sonra tekrar eklenir ki --Eposta:... ile verilen değer dosyadakini ezsin.
+builder.Configuration.AddJsonFile("eposta.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddCommandLine(args);
+builder.Services.Configure<EpostaAyarlari>(builder.Configuration.GetSection("Eposta"));
+
 builder.Services.AddControllersWithViews(options =>
 {
     // Giriş yapmamış kimse hiçbir sayfayı açamasın (açık sayfalarda [AllowAnonymous] var)
@@ -48,6 +54,10 @@ builder.Services.AddSingleton<IPasswordHasher<Kullanici>, PasswordHasher<Kullani
 builder.Services.AddScoped<AdisyonServisi>();
 // Raporlar (Kayıtlar, Bugün, Gün sonu): sadece okur
 builder.Services.AddScoped<RaporServisi>();
+// Aylık rapor e-postası: hazırla + gönder + kaydet; ay bitince arka planda zamanlayıcı tetikler
+builder.Services.AddScoped<EpostaServisi>();
+builder.Services.AddScoped<RaporGondermeServisi>();
+builder.Services.AddHostedService<AySonuZamanlayici>();
 
 var app = builder.Build();
 

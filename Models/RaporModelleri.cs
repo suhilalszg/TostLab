@@ -37,7 +37,8 @@ public record GunOzeti(
     int AcikSayisi,
     int SilinenUrunAdedi,
     decimal SilinenTutar,
-    decimal Komisyon)           // platformların kestiği toplam
+    decimal Komisyon,           // platformların kestiği toplam
+    decimal IndirimToplami)     // ödenen adisyonlarda yapılan indirim (ciro zaten indirimli)
 {
     // Dükkana kalan: ciro - platform komisyonu
     public decimal NetKazanc => Ciro - Komisyon;
@@ -74,7 +75,13 @@ public record AdisyonDetayi(
     List<SatirBilgisi> Satirlar,
     string? IptalNedeni,
     string? IptalEden,
-    List<SilinenBilgisi> Silinenler);
+    List<SilinenBilgisi> Silinenler,
+    decimal IndirimTutari,
+    string? IndirimAciklamasi,  // "%10 · tanıdık" ya da "20 ₺"
+    string? IndirimYapan)
+{
+    public decimal AraToplam => Toplam + IndirimTutari;
+}
 
 // Bir günün raporu: Bugün sayfası (ve 10. adımda Gün sonu) bunu gösterir
 public record GunRaporu(

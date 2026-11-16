@@ -13,9 +13,13 @@ public record AdisyonBilgisi(
     int? MasaId,
     string Baslik,          // "İç 2" ya da "Yemeksepeti 14:05"
     DateTime Acilis,
-    decimal Toplam,
+    decimal Toplam,         // indirimden sonra, ödenecek
     int? KisiSayisi,
-    List<SatirBilgisi> Satirlar);
+    List<SatirBilgisi> Satirlar,
+    IndirimBilgisi? Indirim);   // indirim yoksa null
+
+// Ekranın indirimi aynı kuralla kendisi de hesaplayabilsin diye değer + tür birlikte gelir
+public record IndirimBilgisi(bool YuzdeMi, decimal Deger, decimal Tutar, string? Neden);
 
 public record MasaBilgisi(
     int Id,
@@ -42,6 +46,8 @@ public record AdetIstegi(int AdisyonId, int SatirId, int Adet);
 public record OdemeIstegi(int AdisyonId, int? OdemeTuruId);   // platform siparişinde boş
 public record IptalIstegi(int AdisyonId, string? Neden);
 public record KisiIstegi(int AdisyonId, int Kisi);
+// Deger 0 = indirimi kaldır
+public record IndirimIstegi(int AdisyonId, bool YuzdeMi, decimal Deger, string? Neden);
 
 // Kurallara uymayan istek: mesajı kullanıcıya aynen gösterilir
 public class AdisyonHatasi(string mesaj) : Exception(mesaj);
