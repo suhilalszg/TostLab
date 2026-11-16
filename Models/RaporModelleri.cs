@@ -38,7 +38,11 @@ public record GunOzeti(
     int SilinenUrunAdedi,
     decimal SilinenTutar,
     decimal Komisyon,           // platformların kestiği toplam
-    decimal IndirimToplami)     // ödenen adisyonlarda yapılan indirim (ciro zaten indirimli)
+    decimal IndirimToplami,     // ödenen adisyonlarda yapılan indirim (ciro zaten indirimli)
+    int IadeSayisi,             // ödendikten sonra parası geri verilen (ciroya girmez)
+    decimal IadeTutari,
+    int IkramAdedi,             // ücretsiz verilen ürün adedi (ödenen adisyonlarda)
+    decimal IkramTutari)        // o ürünlerin normal fiyatı
 {
     // Dükkana kalan: ciro - platform komisyonu
     public decimal NetKazanc => Ciro - Komisyon;
@@ -78,7 +82,10 @@ public record AdisyonDetayi(
     List<SilinenBilgisi> Silinenler,
     decimal IndirimTutari,
     string? IndirimAciklamasi,  // "%10 · tanıdık" ya da "20 ₺"
-    string? IndirimYapan)
+    string? IndirimYapan,
+    string? IadeNedeni,
+    string? IadeEden,
+    DateTime? IadeSaati)
 {
     public decimal AraToplam => Toplam + IndirimTutari;
 }
@@ -123,6 +130,7 @@ public static class DurumYazisi
         AdisyonDurumu.Acik => "Açık",
         AdisyonDurumu.Odendi => "Ödendi",
         AdisyonDurumu.Iptal => "İptal",
+        AdisyonDurumu.Iade => "İade",
         _ => durum.ToString()
     };
 }

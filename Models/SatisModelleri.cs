@@ -5,7 +5,7 @@ namespace TostLab.Models;
 
 // ---------- Sunucudan ekrana ----------
 
-public record SatirBilgisi(int Id, int UrunId, string Ad, int Adet, decimal BirimFiyat, decimal Tutar);
+public record SatirBilgisi(int Id, int UrunId, string Ad, int Adet, decimal BirimFiyat, decimal Tutar, bool IkramMi);
 
 public record AdisyonBilgisi(
     int Id,
@@ -16,7 +16,8 @@ public record AdisyonBilgisi(
     decimal Toplam,         // indirimden sonra, ödenecek
     int? KisiSayisi,
     List<SatirBilgisi> Satirlar,
-    IndirimBilgisi? Indirim);   // indirim yoksa null
+    IndirimBilgisi? Indirim,    // indirim yoksa null
+    string? Garson);            // adisyonu açan kişi
 
 // Ekranın indirimi aynı kuralla kendisi de hesaplayabilsin diye değer + tür birlikte gelir
 public record IndirimBilgisi(bool YuzdeMi, decimal Deger, decimal Tutar, string? Neden);
@@ -28,9 +29,13 @@ public record MasaBilgisi(
     int? AdisyonId,
     decimal Toplam,
     DateTime? Acilis,
-    int? KisiSayisi);
+    int? KisiSayisi,
+    string? Garson);
 
-public record PaketBilgisi(int AdisyonId, string Baslik, string Kaynak, decimal Toplam, DateTime Acilis);
+public record PaketBilgisi(int AdisyonId, string Baslik, string Kaynak, decimal Toplam, DateTime Acilis, string? Garson);
+
+// İade ekranı: bugün ödenmiş adisyonlar
+public record OdenmisAdisyon(int Id, string Baslik, string Kaynak, decimal Toplam, DateTime Kapanis, string? OdemeTuru);
 
 // Masa planının tamamı: her değişiklikten sonra ekran bunu yeniden çizer
 public record EkranDurumu(List<MasaBilgisi> Masalar, List<PaketBilgisi> Paketler);
@@ -48,6 +53,14 @@ public record IptalIstegi(int AdisyonId, string? Neden);
 public record KisiIstegi(int AdisyonId, int Kisi);
 // Deger 0 = indirimi kaldır
 public record IndirimIstegi(int AdisyonId, bool YuzdeMi, decimal Deger, string? Neden);
+// İkram aç/kapa. Adet boşsa satırın tamamı; 3 tosttan 1'i ikramsa Adet = 1 (satır ikiye ayrılır).
+public record IkramIstegi(int AdisyonId, int SatirId, int? Adet);
+// Taşı: başka masaya. Hedef doluysa iki adisyon birleşir.
+public record TasiIstegi(int AdisyonId, int HedefMasaId);
+// Böl: seçilen satırlardan seçilen adetler ayrı ödenir
+public record BolSecimi(int SatirId, int Adet);
+public record BolIstegi(int AdisyonId, List<BolSecimi> Secimler, int? OdemeTuruId);
+public record IadeIstegi(int AdisyonId, string? Neden);
 
 // Kurallara uymayan istek: mesajı kullanıcıya aynen gösterilir
 public class AdisyonHatasi(string mesaj) : Exception(mesaj);

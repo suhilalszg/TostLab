@@ -29,6 +29,17 @@
         {
             <div class="urun-satir @(urun.SatistaMi ? "" : "kapali")" data-id="@urun.Id"
                  data-ara="@(urun.Ad + " " + urun.Icindekiler)">
+                @* Fotoğraf: kareye tıkla, dosya seç, hemen yüklenir (satış ekranındaki kartta görünür) *@
+                <div class="foto-alani">
+                    <label class="foto-kutu" title="Fotoğraf yükle / değiştir (JPG, PNG, WEBP · en fazla 3 MB)">
+                        <img src="@UrunFotograflari.AdresiBul(urun.FotografAdi)" alt="" hidden="@(urun.FotografAdi == null)" />
+                        <span class="foto-yok" hidden="@(urun.FotografAdi != null)">+ Foto</span>
+                        <input type="file" class="foto-sec" accept="image/jpeg,image/png,image/webp" hidden />
+                    </label>
+                    <button type="button" class="foto-sil" title="Fotoğrafı kaldır" aria-label="@urun.Ad fotoğrafını kaldır"
+                            hidden="@(urun.FotografAdi == null)">×</button>
+                </div>
+
                 @* Ürünün adına tıklayınca düzenleme sayfası açılır *@
                 <a class="urun-bilgi" asp-action="Duzenle" asp-route-id="@urun.Id" title="Düzenle">
                     <b>@urun.Ad</b>

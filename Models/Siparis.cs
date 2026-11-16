@@ -55,6 +55,16 @@ public class Siparis
     public int? IptalEdenKullaniciId { get; set; }
     public Kullanici? IptalEdenKullanici { get; set; }
 
+    // İade bilgileri: ödenmiş adisyon sonradan geri ödendiyse (Durum = Iade)
+    public string? IadeNedeni { get; set; }
+    public DateTime? IadeSaati { get; set; }
+    public int? IadeEdenKullaniciId { get; set; }
+    public Kullanici? IadeEdenKullanici { get; set; }
+
+    // Adisyonu açan kişi (garson): masa kartında adı görünür
+    public int? AcanKullaniciId { get; set; }
+    public Kullanici? AcanKullanici { get; set; }
+
     // Hâlâ masada mı (ödenmedi, iptal edilmedi)?
     public bool AcikMi => Durum == AdisyonDurumu.Acik;
 }

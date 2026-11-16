@@ -68,7 +68,7 @@ public class RaporServisi
         // 3) Özet: filtreden bağımsız, günün tamamı
         var gununHepsi = await GununAdisyonOzetleriAsync(gunBasi, gunSonu);
         var silinenler = await SilinenleriGetirAsync(iz => iz.Saat >= gunBasi && iz.Saat < gunSonu);
-        var ozet = OzetHesapla(gununHepsi, silinenler);
+        var ozet = OzetHesapla(gununHepsi, silinenler, await IkramlariGetirAsync(gunBasi, gunSonu));
 
         var odemeTurleri = await veritabani.OdemeTurleri.AsNoTracking().OrderBy(odeme => odeme.Id).ToListAsync();
 
@@ -83,6 +83,7 @@ public class RaporServisi
             .Include(siparis => siparis.OdemeTuru)
             .Include(siparis => siparis.IptalEdenKullanici)
             .Include(siparis => siparis.IndirimYapanKullanici)
+            .Include(siparis => siparis.IadeEdenKullanici)
             .FirstOrDefaultAsync(siparis => siparis.Id == adisyonId);
         if (adisyon == null)
         {
@@ -91,7 +92,7 @@ public class RaporServisi
 
         var satirlar = adisyon.Satirlar
             .OrderBy(satir => satir.Id)
-            .Select(satir => new SatirBilgisi(satir.Id, satir.UrunId, satir.Urun.Ad, satir.Adet, satir.BirimFiyat, satir.Tutar))
+            .Select(satir => new SatirBilgisi(satir.Id, satir.UrunId, satir.Urun.Ad, satir.Adet, satir.BirimFiyat, satir.Tutar, satir.IkramMi))
             .ToList();
 
         return new AdisyonDetayi(
@@ -110,7 +111,10 @@ public class RaporServisi
             await SilinenleriGetirAsync(iz => iz.SiparisId == adisyonId),
             adisyon.IndirimTutari,
             IndirimAciklamasi(adisyon),
-            adisyon.IndirimYapanKullanici?.KullaniciAdi);
+            adisyon.IndirimYapanKullanici?.KullaniciAdi,
+            adisyon.IadeNedeni,
+            adisyon.IadeEdenKullanici?.KullaniciAdi,
+            adisyon.IadeSaati);
     }
 
     private static string? IndirimAciklamasi(Siparis adisyon)
@@ -138,7 +142,7 @@ public class RaporServisi
         var satilanSatirlar = await veritabani.SiparisSatirlari.AsNoTracking()
             .Where(satir => satir.Siparis.Durum == AdisyonDurumu.Odendi
                          && satir.Siparis.Tarih >= gunBasi && satir.Siparis.Tarih < gunSonu)
-            .Select(satir => new { satir.Urun.Ad, satir.Adet, satir.BirimFiyat })
+            .Select(satir => new { satir.Urun.Ad, satir.Adet, BirimFiyat = satir.IkramMi ? 0 : satir.BirimFiyat })
             .ToListAsync();
         var enCokSatanlar = satilanSatirlar
             .GroupBy(satir => satir.Ad)
@@ -155,7 +159,7 @@ public class RaporServisi
             .OrderBy(saat => saat.Saat)
             .ToList();
 
-        return new GunRaporu(gunBasi, OzetHesapla(gununHepsi, silinenler),
+        return new GunRaporu(gunBasi, OzetHesapla(gununHepsi, silinenler, await IkramlariGetirAsync(gunBasi, gunSonu)),
             OdemeKirilimi(odenenler), KaynakKirilimi(odenenler), enCokSatanlar, saatlik);
     }
 
@@ -181,7 +185,7 @@ public class RaporServisi
                 grup.Count(adisyon => adisyon.Durum == AdisyonDurumu.Iptal)))
             .ToList();
 
-        return new AyRaporu(yil, ay, gunler, OzetHesapla(ayinHepsi, silinenler),
+        return new AyRaporu(yil, ay, gunler, OzetHesapla(ayinHepsi, silinenler, await IkramlariGetirAsync(ayBasi, aySonu)),
             OdemeKirilimi(odenenler), KaynakKirilimi(odenenler));
     }
 
@@ -216,10 +220,12 @@ public class RaporServisi
                 siparis.IndirimTutari))
             .ToListAsync();
 
-    private static GunOzeti OzetHesapla(List<AdisyonOzeti> gununHepsi, List<SilinenBilgisi> silinenler)
+    private static GunOzeti OzetHesapla(List<AdisyonOzeti> gununHepsi, List<SilinenBilgisi> silinenler,
+        List<IkramSatiri> ikramlar)
     {
         var odenenler = gununHepsi.Where(adisyon => adisyon.Durum == AdisyonDurumu.Odendi).ToList();
         var iptaller = gununHepsi.Where(adisyon => adisyon.Durum == AdisyonDurumu.Iptal).ToList();
+        var iadeler = gununHepsi.Where(adisyon => adisyon.Durum == AdisyonDurumu.Iade).ToList();
         return new GunOzeti(
             OdenenSayisi: odenenler.Count,
             Ciro: odenenler.Sum(adisyon => adisyon.Toplam),
@@ -229,8 +235,22 @@ public class RaporServisi
             SilinenUrunAdedi: silinenler.Sum(iz => iz.Adet),
             SilinenTutar: silinenler.Sum(iz => iz.Tutar),
             Komisyon: odenenler.Sum(adisyon => adisyon.Komisyon),
-            IndirimToplami: odenenler.Sum(adisyon => adisyon.IndirimTutari));
+            IndirimToplami: odenenler.Sum(adisyon => adisyon.IndirimTutari),
+            IadeSayisi: iadeler.Count,
+            IadeTutari: iadeler.Sum(adisyon => adisyon.Toplam),
+            IkramAdedi: ikramlar.Sum(ikram => ikram.Adet),
+            IkramTutari: ikramlar.Sum(ikram => ikram.Adet * ikram.BirimFiyat));
     }
+
+    // Ödenen adisyonlardaki ikram satırları (ürün ücretsiz verildi; normal fiyatı raporda görünür)
+    private async Task<List<IkramSatiri>> IkramlariGetirAsync(DateTime bas, DateTime son) =>
+        await veritabani.SiparisSatirlari.AsNoTracking()
+            .Where(satir => satir.IkramMi && satir.Siparis.Durum == AdisyonDurumu.Odendi
+                         && satir.Siparis.Tarih >= bas && satir.Siparis.Tarih < son)
+            .Select(satir => new IkramSatiri(satir.Adet, satir.BirimFiyat))
+            .ToListAsync();
+
+    private record IkramSatiri(int Adet, decimal BirimFiyat);
 
     private record AdisyonOzeti(AdisyonDurumu Durum, string Kaynak, string? OdemeTuru, DateTime Tarih,
         decimal Toplam, decimal KomisyonOrani, decimal IndirimTutari)

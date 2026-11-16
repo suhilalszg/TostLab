@@ -15,5 +15,13 @@ public class SiparisSatiri
     // Sipariş anındaki fiyat: ürünün fiyatı sonradan değişse de bu değişmez
     public decimal BirimFiyat { get; set; }
 
-    public decimal Tutar => Adet * BirimFiyat;
+    // İkram: ürün adisyonda görünür ama ücret alınmaz. Kimin ikram ettiği saklanır.
+    public bool IkramMi { get; set; }
+    public int? IkramEdenKullaniciId { get; set; }
+    public Kullanici? IkramEdenKullanici { get; set; }
+
+    public decimal Tutar => IkramMi ? 0 : Adet * BirimFiyat;
+
+    // İkram edilen ürünün normal fiyatı (raporda "ikram toplamı" için)
+    public decimal IkramTutari => IkramMi ? Adet * BirimFiyat : 0;
 }

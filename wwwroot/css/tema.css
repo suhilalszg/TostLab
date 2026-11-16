@@ -19,16 +19,25 @@
 }
 
 :root {
-    /* Palet: siyah, krem, sarı (hepsi açık tonlarda) */
-    --antrasit: #1C1C1C;        /* Siyah: yazılar */
-    --antrasit-acik: #161616;   /* Siyah: sol menü */
-    --kum: #CFC7B8;             /* Kum rengi: çizgiler, pasif menü yazıları */
-    --tereyagi: #F5DC8A;        /* Açık sarı: butonlar, seçili menü, öne çıkan kutu */
-    --tereyagi-koyu: #EDCB62;   /* Butonun üzerine gelince */
-    --krem: #FBF7EE;            /* Krem: sayfa zemini */
-    --fis-krem: #F3EAD5;        /* Koyu krem: fiş kağıdı */
-    --sari: #F2C230;            /* TOST LAB sarısı: sadece logo */
+    /* Palet: koyu mor + pembe geçiş (satış ekranıyla aynı) */
+    --antrasit: #1D1430;        /* Koyu mor-siyah: yazılar */
+    --antrasit-acik: #2E1065;   /* Koyu mor: sol menü */
+    --kum: #CDBFE6;             /* Lavanta: pasif menü yazıları */
+    --tereyagi: #EBDDFF;        /* Açık lavanta: butonlar, seçili menü, öne çıkan kutu */
+    --tereyagi-koyu: #DCC4FF;   /* Butonun üzerine gelince */
+    --krem: #F7F3FC;            /* Çok açık lavanta: sayfa zemini */
+    --fis-krem: #F2EBFB;        /* Fiş kağıdı */
+    --sari: #F472B6;            /* TOST LAB pembesi: logo */
     --beyaz: #ffffff;
+
+    /* Mor-pembe vurgular (satış ekranı, fotoğraf kutuları, öne çıkan düğmeler) */
+    --mor: #7C3AED;
+    --pembe: #DB2777;
+    --mor-acik: #EDE4FF;
+    --pembe-acik: #FCE7F3;
+    --mor-cizgi: #C4B5FD;
+    --gradyan: linear-gradient(135deg, #5B21B6 0%, #A21CAF 55%, #EC4899 100%);
+    --menu-gradyan: linear-gradient(180deg, #2E1065 0%, #4C1D95 55%, #831843 100%);
 
     /* Durum renkleri (palete uyumlu) */
     --kirmizi: #a8323f;
@@ -40,8 +49,8 @@
     --zemin: var(--krem);
     --kart: var(--beyaz);
     --yazi: var(--antrasit);
-    --soluk-yazi: #8a857b;
-    --cizgi: #ebe4d6;
+    --soluk-yazi: #857C99;
+    --cizgi: #E9E1F5;
     --ana-renk: var(--antrasit);
     --menu: var(--antrasit-acik);
     --fis: var(--fis-krem);
@@ -56,17 +65,21 @@
    Sadece "görev" renkleri değişir, sayfalar aynı değişkenleri kullanmaya devam eder. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-tema="acik"]) {
-        --zemin: #121212;
-        --kart: #1c1c1c;
-        --beyaz: #242424;
-        --krem: #191919;
-        --fis: #181818;
-        --fis-krem: #181818;
-        --yazi: #EEE7D9;
-        --soluk-yazi: #9A938A;
-        --cizgi: #2D2D2D;
-        --kum: #4A463F;
-        --menu: #0A0A0A;
+        --zemin: #0F0819;
+        --kart: #1A0F2E;
+        --beyaz: #22143A;
+        --krem: #160C26;
+        --fis: #170D29;
+        --fis-krem: #170D29;
+        --yazi: #F1EAFE;
+        --soluk-yazi: #A498BC;
+        --cizgi: #2C1E45;
+        --kum: #6B5A8C;
+        --menu: #0B0514;
+        --mor-acik: #2A1748;
+        --pembe-acik: #3A1430;
+        --mor-cizgi: #4C3575;
+        --menu-gradyan: linear-gradient(180deg, #1A0633 0%, #2E1065 60%, #500724 100%);
         --yesil-zemin: #16301F;
         --kirmizi-zemin: #3A1C21;
         color-scheme: dark;
@@ -74,17 +87,21 @@
 }
 
 :root[data-tema="koyu"] {
-    --zemin: #121212;
-    --kart: #1c1c1c;
-    --beyaz: #242424;
-    --krem: #191919;
-    --fis: #181818;
-    --fis-krem: #181818;
-    --yazi: #EEE7D9;
-    --soluk-yazi: #9A938A;
-    --cizgi: #2D2D2D;
-    --kum: #4A463F;
-    --menu: #0A0A0A;
+    --zemin: #0F0819;
+    --kart: #1A0F2E;
+    --beyaz: #22143A;
+    --krem: #160C26;
+    --fis: #170D29;
+    --fis-krem: #170D29;
+    --yazi: #F1EAFE;
+    --soluk-yazi: #A498BC;
+    --cizgi: #2C1E45;
+    --kum: #6B5A8C;
+    --menu: #0B0514;
+    --mor-acik: #2A1748;
+    --pembe-acik: #3A1430;
+    --mor-cizgi: #4C3575;
+    --menu-gradyan: linear-gradient(180deg, #1A0633 0%, #2E1065 60%, #500724 100%);
     --yesil-zemin: #16301F;
     --kirmizi-zemin: #3A1C21;
     color-scheme: dark;

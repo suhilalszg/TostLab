@@ -58,6 +58,8 @@ builder.Services.AddScoped<RaporServisi>();
 builder.Services.AddScoped<EpostaServisi>();
 builder.Services.AddScoped<RaporGondermeServisi>();
 builder.Services.AddHostedService<AySonuZamanlayici>();
+// Ürün fotoğrafları: Menü'den yüklenir, diskte durur
+builder.Services.AddSingleton<UrunFotograflari>();
 
 var app = builder.Build();
 
@@ -87,6 +89,15 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Yüklenen ürün fotoğrafları: /urun-foto/12-ab12cd34.jpg
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        app.Services.GetRequiredService<UrunFotograflari>().Klasor),
+    RequestPath = UrunFotograflari.Adres
+});
+
 app.UseRouting();
 
 app.UseAuthentication();   // 1) Sen kimsin? (çerezi oku)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TostLab.Data;
 using TostLab.Models;
+using TostLab.Services;
 
 namespace TostLab.Controllers;
 
@@ -187,6 +188,53 @@ public class UrunlerController : Controller
             TempData["Bildirim"] = $"{urun.Ad} menüden silindi.";
         }
         return RedirectToAction("Index");
+    }
+
+    // Menü listesindeki fotoğraf kutusu: seçilen dosya hemen yüklenir (sayfa yenilenmez)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(UrunFotograflari.EnBuyukBoyut + 64 * 1024)]
+    public async Task<IActionResult> Foto(int id, IFormFile? foto, [FromServices] UrunFotograflari fotograflar)
+    {
+        var urun = await veritabani.Urunler.FindAsync(id);
+        if (urun == null)
+        {
+            return NotFound();
+        }
+        if (foto == null)
+        {
+            return BadRequest(new { hata = "Fotoğraf seç." });
+        }
+
+        string yeniAd;
+        try
+        {
+            yeniAd = await fotograflar.KaydetAsync(id, foto);
+        }
+        catch (InvalidOperationException hata)
+        {
+            return BadRequest(new { hata = hata.Message });
+        }
+
+        fotograflar.Sil(urun.FotografAdi);   // eskisi diskte birikmesin
+        urun.FotografAdi = yeniAd;
+        await veritabani.SaveChangesAsync();
+        return Json(new { adres = UrunFotograflari.AdresiBul(yeniAd) });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> FotoSil(int id, [FromServices] UrunFotograflari fotograflar)
+    {
+        var urun = await veritabani.Urunler.FindAsync(id);
+        if (urun == null)
+        {
+            return NotFound();
+        }
+        fotograflar.Sil(urun.FotografAdi);
+        urun.FotografAdi = null;
+        await veritabani.SaveChangesAsync();
+        return Json(new { adres = (string?)null });
     }
 
     private async Task<List<string>> KategorileriGetirAsync()

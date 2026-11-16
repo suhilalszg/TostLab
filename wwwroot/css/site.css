@@ -27,7 +27,7 @@ body {
 
 /* ---------- Sol menü ---------- */
 .yan-menu {
-    background: var(--menu);
+    background: var(--menu-gradyan, var(--menu));
     color: var(--kum);
     display: flex;
     flex-direction: column;
@@ -51,11 +51,11 @@ body {
     position: relative;
     /* Altın parıltılı yazı: arka planı yazının şekline kırpıyoruz */
     color: var(--sari);
-    background: linear-gradient(90deg, #C99A1E 0%, #F2C230 40%, #FBE38E 60%, #F2C230 80%, #C99A1E 100%);
+    background: linear-gradient(90deg, #C084FC 0%, #F0ABFC 35%, #FFFFFF 55%, #F9A8D4 75%, #EC4899 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 6px rgba(242, 194, 48, .35));
+    filter: drop-shadow(0 0 6px rgba(236, 72, 153, .45));
 }
 
 /* Logonun iki ucundaki ince altın çizgiler */
@@ -66,13 +66,13 @@ body {
     left: 50%;
     width: 1px;
     height: 10px;
-    background: #F2C230;
+    background: #F472B6;
     opacity: .7;
 }
 .yan-menu .logo::before { top: 0; }
 .yan-menu .logo::after { bottom: 0; }
 
-.yan-menu .logo:hover { filter: drop-shadow(0 0 10px rgba(242, 194, 48, .6)); }
+.yan-menu .logo:hover { filter: drop-shadow(0 0 10px rgba(236, 72, 153, .7)); }
 
 .yan-menu nav {
     display: flex;
@@ -134,6 +134,7 @@ body {
 
 /* Satış ekranı gibi tam ekran sayfalar: kenar boşluğu az */
 .icerik.tam-ekran { padding: 0; height: 100vh; overflow: hidden; }
+.panel.menusuz { grid-template-columns: 1fr; }
 
 .yan-menu .rozet {
     width: 40px;
@@ -349,7 +350,7 @@ h1, h2, h3 { color: var(--yazi); font-weight: 700; }
 
 .urun-satir {
     display: grid;
-    grid-template-columns: 1fr 120px 42px;
+    grid-template-columns: 56px 1fr 120px 42px;
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
@@ -478,7 +479,7 @@ a.urun-bilgi:hover b { text-decoration: underline; }
 
 
 @media (max-width: 560px) {
-    .urun-satir { grid-template-columns: 1fr 96px 42px; }
+    .urun-satir { grid-template-columns: 48px 1fr 96px 42px; }
     .hizli-ekle { grid-template-columns: 1fr 80px auto; }
 }
 
@@ -629,3 +630,60 @@ a.urun-bilgi:hover b { text-decoration: underline; }
     background: var(--kart); border: 1px solid var(--cizgi); border-radius: var(--kose); padding: 10px 16px; margin-bottom: 16px; font-size: 13px; }
 .eposta-serit form { margin: 0; }
 .fis-satir.ara { border-top: 1px dashed var(--kum); margin-top: 8px; padding-top: 8px; }
+
+.durum-iade { background: #f3e8ff; color: #7e22ce; }
+.damga-iade { color: #7e22ce; }
+
+/* ---------- Menü: ürün fotoğrafı ---------- */
+.foto-alani { position: relative; width: 56px; height: 56px; }
+.foto-kutu {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--mor-acik), var(--pembe-acik));
+    border: 1px dashed var(--mor-cizgi);
+    transition: transform .15s, box-shadow .15s;
+}
+.foto-kutu:hover { transform: scale(1.04); box-shadow: 0 6px 16px rgba(124, 58, 237, .25); }
+.foto-kutu img { width: 100%; height: 100%; object-fit: cover; }
+.foto-yok { font-size: 11px; font-weight: 700; color: var(--mor); text-align: center; line-height: 1.1; }
+.foto-sil {
+    position: absolute; top: -6px; right: -6px;
+    width: 20px; height: 20px; padding: 0;
+    border: 0; border-radius: 50%;
+    background: #e11d48; color: #fff; font-size: 13px; line-height: 20px;
+    cursor: pointer; opacity: 0; transition: opacity .15s;
+}
+.foto-alani:hover .foto-sil:not([hidden]) { opacity: 1; }
+.foto-alani.yukleniyor .foto-kutu { opacity: .5; animation: foto-nabiz 1s infinite alternate; }
+.foto-alani.kaydedildi .foto-kutu { box-shadow: 0 0 0 3px #22c55e; }
+.foto-alani.hatali .foto-kutu { box-shadow: 0 0 0 3px #e11d48; }
+@keyframes foto-nabiz { to { opacity: .9; } }
+
+/* ---------- Mor-pembe vurgu (satış ekranıyla uyumlu) ---------- */
+.btn-dark, .btn-primary,
+.giris-form button {
+    background: var(--gradyan);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(219, 39, 119, .18);
+}
+.btn-dark:hover, .btn-primary:hover,
+.btn-dark:focus, .btn-primary:focus,
+.giris-form button:hover {
+    background: var(--gradyan);
+    border-color: transparent;
+    color: #fff;
+    filter: brightness(1.08);
+}
+.kutu.vurgulu { background: var(--gradyan); border-color: transparent; color: #fff; }
+.kutu.vurgulu .etiket { color: rgba(255, 255, 255, .75); }
+.yan-menu nav a.secili { color: #fff; }
+.yan-menu nav a.secili::after { background: linear-gradient(180deg, #C084FC, #EC4899); }
+.tema-dugme { border-color: rgba(255, 255, 255, .2); }
+@media (max-width: 760px) { .foto-alani { width: 48px; height: 48px; } }

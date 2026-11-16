@@ -280,8 +280,20 @@ namespace TostLab.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("AcanKullaniciId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Durum")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int?>("IadeEdenKullaniciId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("IadeNedeni")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("IadeSaati")
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal>("IndirimDegeri")
                         .HasColumnType("TEXT");
@@ -334,6 +346,10 @@ namespace TostLab.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AcanKullaniciId");
+
+                    b.HasIndex("IadeEdenKullaniciId");
+
                     b.HasIndex("IndirimYapanKullaniciId");
 
                     b.HasIndex("IptalEdenKullaniciId");
@@ -361,6 +377,12 @@ namespace TostLab.Migrations
                     b.Property<decimal>("BirimFiyat")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("IkramEdenKullaniciId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IkramMi")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("SiparisId")
                         .HasColumnType("INTEGER");
 
@@ -368,6 +390,8 @@ namespace TostLab.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IkramEdenKullaniciId");
 
                     b.HasIndex("SiparisId");
 
@@ -387,6 +411,9 @@ namespace TostLab.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Fiyat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FotografAdi")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Icindekiler")
@@ -417,6 +444,16 @@ namespace TostLab.Migrations
 
             modelBuilder.Entity("TostLab.Models.Siparis", b =>
                 {
+                    b.HasOne("TostLab.Models.Kullanici", "AcanKullanici")
+                        .WithMany()
+                        .HasForeignKey("AcanKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TostLab.Models.Kullanici", "IadeEdenKullanici")
+                        .WithMany()
+                        .HasForeignKey("IadeEdenKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("TostLab.Models.Kullanici", "IndirimYapanKullanici")
                         .WithMany()
                         .HasForeignKey("IndirimYapanKullaniciId")
@@ -437,6 +474,10 @@ namespace TostLab.Migrations
                         .HasForeignKey("OdemeTuruId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.Navigation("AcanKullanici");
+
+                    b.Navigation("IadeEdenKullanici");
+
                     b.Navigation("IndirimYapanKullanici");
 
                     b.Navigation("IptalEdenKullanici");
@@ -448,6 +489,11 @@ namespace TostLab.Migrations
 
             modelBuilder.Entity("TostLab.Models.SiparisSatiri", b =>
                 {
+                    b.HasOne("TostLab.Models.Kullanici", "IkramEdenKullanici")
+                        .WithMany()
+                        .HasForeignKey("IkramEdenKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("TostLab.Models.Siparis", "Siparis")
                         .WithMany("Satirlar")
                         .HasForeignKey("SiparisId")
@@ -459,6 +505,8 @@ namespace TostLab.Migrations
                         .HasForeignKey("UrunId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("IkramEdenKullanici");
 
                     b.Navigation("Siparis");
 

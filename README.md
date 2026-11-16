@@ -10,11 +10,11 @@ gün sonunda raporu hazırlar ve WhatsApp'a gönderilecek metni çıkarır.
 
 | Ekran | Ne yapar | Kim görür |
 |---|---|---|
-| **Satış** | Masa planı (boş / dolu), kategori → ürün → adisyon tek ekranda. Masa, telefonla paket ve Yemeksepeti / Getir / Trendyol / Migros siparişleri. Kişi sayısı, adet değiştirme, indirim (%5–20 tek dokunuş ya da yazılan % / ₺), iptal (nedeni yazılır), ödeme türü seçerek kapatma. | Herkes |
+| **Satış** | Mor-pembe dokunmatik POS ekranı. Masa planı (boş / dolu, garson adı, tutar, geçen süre), solda açık adisyonlar ve toplamı, sağda süzgeçler ve yeni paket / platform siparişi. Satışta fotoğraflı ürün kartları ve dikey kategori çubuğu. İşlemler: **İkram** (ücretsiz, adet adet), **İade** (bugün ödenmiş adisyon, nedenli), **Böl** (seçilen ürünleri ayrı öde), **İskonto** (% ya da ₺), **Taşı** (boş masaya taşı ya da dolu masayla birleştir), **İptal** (nedenli). Üst çubukta internet / sunucu durumu ve kullanıcı. | Herkes |
 | **Bugün** | Günün özeti: ciro, ortalama adisyon, ödeme türüne ve kaynağa göre dağılım, en çok satan ürünler, saatlere göre yoğunluk. | Yönetici her şeyi, çalışan sadece adetleri |
 | **Kayıtlar** | Geçmiş adisyonlar: gün / durum / kaynak / ödeme türüne göre süzme, fiş görünümünde detay (ÖDENDİ / İPTAL damgası), adisyondan silinen ürünlerin izi. | Yönetici |
 | **Gün sonu** | Seçilen günün raporu ve aylık özet; platform komisyonu düşülmüş net kazanç; WhatsApp'ta açılacak hazır metin, yazdırma. | Yönetici |
-| **Menü** | Ürün ekle / düzenle / satışa aç-kapat, listede hızlı fiyat girişi. | Yönetici |
+| **Menü** | Ürün ekle / düzenle / satışa aç-kapat, listede hızlı fiyat girişi, ürün fotoğrafı yükleme (JPG / PNG / WEBP, en fazla 3 MB). | Yönetici |
 | **Ayarlar** | Masalar, ödeme türleri (Nakit, Kart, Multinet, Pluxee, Edenred, Setcard, Metropol…), platform komisyon oranları. | Yönetici |
 | **Kullanıcılar** | Yönetici ve çalışan hesapları. | Yönetici |
 
@@ -48,7 +48,8 @@ Migrations/    Veritabanı şemasının adım adım geçmişi
 - **Fiyat sunucuda hesaplanır.** Satış ekranı sadece "hangi ürün, kaç tane" gönderir; tutarı sunucu ürün tablosundan bulur.
 - **Geçmiş bozulmaz.** Satırda sipariş anındaki birim fiyat, siparişte ödeme anındaki komisyon oranı saklanır.
   Fiyat ya da oran sonradan değişse de eski raporlar aynı kalır. Siparişi olan masa / ödeme türü / ürün silinemez, sadece kapatılır.
-- **İz bırakılır.** İptal edilen adisyonun nedeni, saati ve kimin ettiği; açık adisyondan silinen her ürün (kim, ne zaman, kaç tane) kaydedilir.
+- **İz bırakılır.** İptal / iade edilen adisyonun nedeni, saati ve kimin ettiği; ikramı kimin yaptığı; adisyonu kimin açtığı (garson); açık adisyondan silinen her ürün (kim, ne zaman, kaç tane) kaydedilir.
+- **Fotoğraflar diskte.** Menü'den yüklenen fotoğraflar `urun-foto/` klasörüne yazılır (git'e girmez), `/urun-foto/...` adresinden sunulur. Dosyanın gerçekten resim olduğu ilk baytlarından kontrol edilir.
 - **Çalışan para görmez.** Bugün sayfasında ciro ve tutarlar sunucuda hiç çizilmez; Kayıtlar ve Gün sonu sadece yöneticiye açıktır.
 - **Gün = adisyonun açıldığı takvim günü** (dükkan gece 12'de kapanıyor).
 
@@ -96,4 +97,5 @@ Yeni migration uygulama açılırken kendiliğinden uygulanır.
 - [x] Kayıtlar, Bugün, Gün sonu ve aylık özet, platform komisyonu
 - [x] Ay sonunda aylık raporun kendiliğinden e-postayla gönderilmesi
 - [x] İndirim (yüzde ya da tutar, kim yaptı kaydedilir; platform siparişinde yok)
+- [x] Yeni tasarım (mor-pembe POS), ürün fotoğrafları, ikram / iade / böl / taşı, garson adı
 - [ ] Dükkanda gerçek kullanım ve geri bildirimle düzeltmeler

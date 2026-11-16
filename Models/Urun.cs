@@ -8,4 +8,8 @@ public class Urun
     public string Kategori { get; set; } = "";
     public string? Icindekiler { get; set; }
     public bool SatistaMi { get; set; } = true;
+
+    // Menü'den yüklenen fotoğrafın dosya adı (veri/urun-foto klasöründe).
+    // Yoksa satış ekranında ürünün baş harfi görünür.
+    public string? FotografAdi { get; set; }
 }

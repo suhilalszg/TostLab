@@ -88,6 +88,14 @@ public static class RaporMetni
         {
             yazi.AppendLine($"Yapılan indirim: {Para(ozet.IndirimToplami)}");
         }
+        if (ozet.IkramAdedi > 0)
+        {
+            yazi.AppendLine($"İkram: {ozet.IkramAdedi} ürün ({Para(ozet.IkramTutari)})");
+        }
+        if (ozet.IadeSayisi > 0)
+        {
+            yazi.AppendLine($"İade: {ozet.IadeSayisi} ({Para(ozet.IadeTutari)})");
+        }
         if (ozet.Komisyon > 0)
         {
             yazi.AppendLine($"Platform komisyonu: −{Para(ozet.Komisyon)}");

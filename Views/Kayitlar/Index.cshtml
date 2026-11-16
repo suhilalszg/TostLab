@@ -54,6 +54,14 @@
     {
         <div class="kutu"><div class="etiket">İndirim</div><div class="deger">@ozet.IndirimToplami.ToString("N2") ₺</div></div>
     }
+    @if (ozet.IkramAdedi > 0)
+    {
+        <div class="kutu"><div class="etiket">İkram</div><div class="deger">@ozet.IkramAdedi <small>· @ozet.IkramTutari.ToString("N2") ₺</small></div></div>
+    }
+    @if (ozet.IadeSayisi > 0)
+    {
+        <div class="kutu"><div class="etiket">İade</div><div class="deger">@ozet.IadeSayisi <small>· @ozet.IadeTutari.ToString("N2") ₺</small></div></div>
+    }
     @if (ozet.AcikSayisi > 0)
     {
         <div class="kutu"><div class="etiket">Hâlâ açık</div><div class="deger">@ozet.AcikSayisi</div></div>
@@ -85,8 +93,8 @@
                         <td>@kayit.Kaynak</td>
                         <td>@(kayit.OdemeTuru ?? (Kaynaklar.PlatformMu(kayit.Kaynak) ? "Online" : "—"))</td>
                         <td class="sag">@kayit.UrunAdedi</td>
-                        <td class="sag @(kayit.Durum == AdisyonDurumu.Iptal ? "ustu-cizili" : "")">@kayit.Toplam.ToString("N2")</td>
-                        <td><span class="durum durum-@kayit.Durum.ToString().ToLower()">@DurumYazisi.Yaz(kayit.Durum)</span></td>
+                        <td class="sag @(kayit.Durum is AdisyonDurumu.Iptal or AdisyonDurumu.Iade ? "ustu-cizili" : "")">@kayit.Toplam.ToString("N2")</td>
+                        <td><span class="durum durum-@kayit.Durum.ToString().ToLowerInvariant()">@DurumYazisi.Yaz(kayit.Durum)</span></td>
                     </tr>
                 }
             </tbody>

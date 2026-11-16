@@ -80,6 +80,64 @@
         });
     });
 
+    // ---------- Ürün fotoğrafı: seçilince hemen yüklenir ----------
+    function fotografiGoster(alan, adres) {
+        const resim = alan.querySelector('img');
+        resim.hidden = !adres;
+        if (adres) resim.src = adres; else resim.removeAttribute('src');
+        alan.querySelector('.foto-yok').hidden = !!adres;
+        alan.querySelector('.foto-sil').hidden = !adres;
+    }
+
+    document.querySelectorAll('.foto-sec').forEach(function (secici) {
+        secici.addEventListener('change', async function () {
+            const dosya = secici.files[0];
+            if (!dosya) return;
+            const alan = secici.closest('.foto-alani');
+            const satir = secici.closest('.urun-satir');
+            if (dosya.size > 3 * 1024 * 1024) {
+                alert('Fotoğraf en fazla 3 MB olabilir.');
+                secici.value = '';
+                return;
+            }
+
+            const form = new FormData();
+            form.append('id', satir.dataset.id);
+            form.append('foto', dosya);
+            alan.classList.add('yukleniyor');
+            try {
+                const cevap = await fetch('/Urunler/Foto', {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': anahtarDegeri },
+                    body: form
+                });
+                const veri = await cevap.json().catch(() => ({}));
+                if (!cevap.ok) throw new Error(veri.hata || 'Fotoğraf yüklenemedi.');
+                fotografiGoster(alan, veri.adres);
+                isaretle(alan, 'kaydedildi');
+            } catch (hata) {
+                alert(hata.message);
+                isaretle(alan, 'hatali');
+            } finally {
+                alan.classList.remove('yukleniyor');
+                secici.value = '';   // aynı dosya tekrar seçilebilsin
+            }
+        });
+    });
+
+    document.querySelectorAll('.foto-sil').forEach(function (dugme) {
+        dugme.addEventListener('click', async function () {
+            if (!confirm('Fotoğraf kaldırılsın mı?')) return;
+            const alan = dugme.closest('.foto-alani');
+            try {
+                await gonder('/Urunler/FotoSil', { id: dugme.closest('.urun-satir').dataset.id });
+                fotografiGoster(alan, null);
+            } catch (hata) {
+                alert(hata.message);
+            }
+        });
+    });
+
     // ---------- Kategorinin altındaki hızlı ekleme ----------
     // "+ Ürün ekle" yazısına basınca kutular açılır
     document.querySelectorAll('.ekle-ac').forEach(function (dugme) {

@@ -6,6 +6,9 @@
 //  3) İstekler sırayla gider (kuyruk). Hızlı hızlı dokunulsa bile sıra karışmaz.
 //  4) Bekleyen istek varken sunucu cevabı ekrana yazılmaz; son istek bitince yazılır.
 //     Böylece "3 kere dokundum, ekranda bir an 2 göründü" gibi zıplamalar olmaz.
+//
+// İşlemler (İkram, Böl, İskonto, Taşı, İptal, İade, Ödeme) ortadaki tek bir pencerede açılır:
+// "pencere" değişkeni hangisinin açık olduğunu tutar.
 
 document.addEventListener('alpine:init', () => {
     const veri = JSON.parse(document.getElementById('satis-verisi').textContent);
@@ -14,29 +17,28 @@ document.addEventListener('alpine:init', () => {
     const saatBicimi = new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
     // ---------- Renkler (Tailwind sınıfları) ----------
-    const masaRenkleri = {
-        bos: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
-        dolu: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-    };
-    const platformDugmeRenkleri = {
-        Paket: 'bg-slate-700 hover:bg-slate-800',
-        Yemeksepeti: 'bg-red-600 hover:bg-red-700',
-        Getir: 'bg-purple-600 hover:bg-purple-700',
-        Trendyol: 'bg-orange-500 hover:bg-orange-600',
-        Migros: 'bg-amber-500 hover:bg-amber-600'
-    };
-    const platformRozetRenkleri = {
-        Paket: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-        Yemeksepeti: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300',
-        Getir: 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300',
-        Trendyol: 'bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300',
-        Migros: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+    const platformRenkleri = {
+        Masa: 'bg-gradient-to-br from-violet-600 to-pink-500',
+        Paket: 'bg-gradient-to-br from-violet-800 to-violet-600',
+        Yemeksepeti: 'bg-red-600',
+        Getir: 'bg-purple-600',
+        Trendyol: 'bg-orange-500',
+        Migros: 'bg-amber-500'
     };
     const toastRenkleri = {
-        basari: 'bg-emerald-600',
+        basari: 'bg-gradient-to-r from-violet-700 to-pink-600',
         hata: 'bg-rose-600',
         uyari: 'bg-amber-500',
-        '': 'bg-slate-900 dark:bg-slate-700'
+        '': 'bg-[#2e1065]'
+    };
+    const pencereBasliklari = {
+        odeme: 'Ödeme al',
+        iptal: 'Adisyonu iptal et',
+        indirim: 'İskonto',
+        ikram: 'İkram',
+        tasi: 'Masaya taşı',
+        bol: 'Hesabı böl',
+        iade: 'İade'
     };
 
     Alpine.data('satisEkrani', () => ({
@@ -46,8 +48,10 @@ document.addEventListener('alpine:init', () => {
         ekran: veri.ekran,                 // { masalar: [...], paketler: [...] }
         platformlar: veri.platformlar,     // parası uygulamada ödenen kaynaklar
         paketKaynaklari: ['Paket', ...veri.platformlar],
+        hazirIptalNedenleri: ['Müşteri vazgeçti', 'Yanlış giriş', 'Ürün bitti', 'Çok bekledi'],
 
         gorunum: 'plan',                   // 'plan' | 'satis'
+        planFiltresi: 'tum',               // 'tum' | 'dolu' | 'bos' | 'paket'
         // kisi: adisyon açılmadan girilen kişi sayısı (ilk ürünle sunucuya gider)
         secili: { kaynak: null, masaId: null, adisyonId: null, baslik: '', kisi: null },
         adisyon: null,                     // sunucudan gelen son adisyon (yoksa null)
@@ -55,12 +59,17 @@ document.addEventListener('alpine:init', () => {
 
         seciliKategori: null,
         arama: '',
-        odemeAcik: false,
-        iptalAcik: false,
+        menuAcik: false,
+        pencere: null,                     // açık pencere: 'odeme' | 'iptal' | 'indirim' | 'ikram' | 'tasi' | 'bol' | 'iade'
         iptalNedeni: '',
-        indirimAcik: false,
         indirimFormu: { yuzdeMi: true, deger: '', neden: '' },
+        bolSecimi: {},                     // satırId -> seçilen adet
+        iade: { liste: [], secili: null, neden: '', yukleniyor: false, gonderiliyor: false },
         toast: { yazi: '', tur: '' },
+
+        // Bağlantı durumu (üst çubuktaki noktalar)
+        internetVar: navigator.onLine,
+        sunucuVar: true,
 
         // Yükleniyor durumları (spinner)
         adisyonYukleniyor: false,
@@ -70,14 +79,17 @@ document.addEventListener('alpine:init', () => {
 
         kuyruk: Promise.resolve(),
         bekleyenIstek: 0,
+        ekranSurumu: 0,                    // her işlem cevabında artar (eski plan yenilemesini ayırt etmek için)
         simdi: Date.now(),
 
         init() {
             this.seciliKategori = this.kategoriler[0] ?? null;
-            // Masa planı arada bir yenilensin (başka cihaz da kullanırsa) ve süreler ilerlesin
-            setInterval(() => this.simdi = Date.now(), 30000);
-            // Satış ekranındayken de yenilenir: üstteki masa şeridi güncel kalsın
+            // Saat ve geçen süreler ilerlesin
+            setInterval(() => this.simdi = Date.now(), 15000);
+            // Masa planı arada bir yenilensin (başka cihaz da kullanırsa)
             setInterval(() => { if (!this.bekleyenIstek) this.planiYenile(); }, 15000);
+            window.addEventListener('online', () => this.internetVar = true);
+            window.addEventListener('offline', () => this.internetVar = false);
         },
 
         // ---------- Türetilen değerler ----------
@@ -93,26 +105,52 @@ document.addEventListener('alpine:init', () => {
             return this.urunler.filter(urun => urun.kategori === this.seciliKategori);
         },
 
+        get gorunenMasalar() {
+            if (this.planFiltresi === 'dolu') return this.ekran.masalar.filter(masa => masa.doluMu);
+            if (this.planFiltresi === 'bos') return this.ekran.masalar.filter(masa => !masa.doluMu);
+            return this.ekran.masalar;
+        },
+
+        get planSuzgecleri() {
+            const dolu = this.ekran.masalar.filter(masa => masa.doluMu).length;
+            return [
+                { kod: 'tum', ad: 'Tümü', sayi: this.ekran.masalar.length + this.ekran.paketler.length },
+                { kod: 'dolu', ad: 'Dolu', sayi: dolu },
+                { kod: 'bos', ad: 'Boş', sayi: this.ekran.masalar.length - dolu },
+                { kod: 'paket', ad: 'Paketler', sayi: this.ekran.paketler.length }
+            ];
+        },
+
+        // Soldaki liste: dolu masalar + paketler, en eski en üstte
+        get acikListe() {
+            const masalar = this.ekran.masalar.filter(masa => masa.doluMu).map(masa => ({
+                anahtar: 'm' + masa.id, masa, baslik: masa.ad, kaynak: 'Masa',
+                toplam: masa.toplam, acilis: masa.acilis, garson: masa.garson
+            }));
+            const paketler = this.ekran.paketler.map(paket => ({
+                anahtar: 'p' + paket.adisyonId, adisyonId: paket.adisyonId, baslik: paket.baslik, kaynak: paket.kaynak,
+                toplam: paket.toplam, acilis: paket.acilis, garson: paket.garson
+            }));
+            return [...masalar, ...paketler].sort((birinci, ikinci) => new Date(birinci.acilis) - new Date(ikinci.acilis));
+        },
+
         get satirlar() { return this.yerelSatirlar; },
 
-        // İndirimden önce (ekrandaki satırlardan, sunucuyu beklemeden)
+        // İkram ve indirimden önce (ekrandaki satırlardan, sunucuyu beklemeden)
         get araToplam() {
             return this.yerelSatirlar.reduce((toplam, satir) => toplam + satir.adet * satir.birimFiyat, 0);
         },
 
-        // Sunucudaki AdisyonServisi.IndirimHesapla ile aynı kural
+        get ikramTutari() {
+            return this.yerelSatirlar.filter(satir => satir.ikramMi).reduce((toplam, satir) => toplam + satir.adet * satir.birimFiyat, 0);
+        },
+
+        // Sunucudaki AdisyonServisi.IndirimHesapla ile aynı kural (ikramlar hariç tutar üzerinden)
         get indirimTutari() {
-            const indirim = this.adisyon?.indirim;
-            if (!indirim || indirim.deger <= 0) return 0;
-            const tutar = indirim.yuzdeMi ? Math.round(this.araToplam * indirim.deger) / 100 : indirim.deger;
-            return Math.min(tutar, this.araToplam);
+            return this.indirimHesapla(this.araToplam - this.ikramTutari);
         },
 
-        get toplam() { return this.araToplam - this.indirimTutari; },
-
-        get acikAdisyonSayisi() {
-            return this.ekran.masalar.filter(masa => masa.doluMu).length + this.ekran.paketler.length;
-        },
+        get toplam() { return this.araToplam - this.ikramTutari - this.indirimTutari; },
 
         get platformMu() { return this.platformlar.includes(this.secili.kaynak); },
 
@@ -123,19 +161,48 @@ document.addEventListener('alpine:init', () => {
                  + this.ekran.paketler.reduce((toplam, paket) => toplam + paket.toplam, 0);
         },
 
+        get pencereBasligi() { return pencereBasliklari[this.pencere] ?? ''; },
+
+        get saatYazisi() { return saatBicimi.format(new Date(this.simdi)); },
+
         get toastRengi() { return toastRenkleri[this.toast.tur] ?? toastRenkleri['']; },
+
+        // Böl penceresinde seçilenlerin tutarı (yüzde iskonto varsa o da düşülür; sunucu da öyle yapar)
+        get bolAdedi() {
+            return Object.values(this.bolSecimi).reduce((toplam, adet) => toplam + adet, 0);
+        },
+
+        get bolToplami() {
+            const ara = (this.adisyon?.satirlar ?? []).reduce((toplam, satir) =>
+                toplam + (satir.ikramMi ? 0 : (this.bolSecimi[satir.id] ?? 0) * satir.birimFiyat), 0);
+            const indirim = this.adisyon?.indirim;
+            if (!indirim?.yuzdeMi) return ara;
+            return ara - Math.min(Math.round(ara * indirim.deger) / 100, ara);
+        },
+
+        indirimHesapla(tutar) {
+            const indirim = this.adisyon?.indirim;
+            if (!indirim || indirim.deger <= 0) return 0;
+            const hesap = indirim.yuzdeMi ? Math.round(tutar * indirim.deger) / 100 : indirim.deger;
+            return Math.min(hesap, tutar);
+        },
 
         adisyondakiAdet(urunId) {
             return this.yerelSatirlar.filter(satir => satir.urunId === urunId).reduce((adet, satir) => adet + satir.adet, 0);
         },
 
-        masaRengi(doluMu) { return doluMu ? masaRenkleri.dolu : masaRenkleri.bos; },
-        platformDugmeRengi(kaynak) { return platformDugmeRenkleri[kaynak] ?? platformDugmeRenkleri.Paket; },
-        platformRozetRengi(kaynak) { return platformRozetRenkleri[kaynak] ?? platformRozetRenkleri.Paket; },
+        platformDugmeRengi(kaynak) { return platformRenkleri[kaynak] ?? platformRenkleri.Paket; },
 
         // ---------- Biçimlendirme ----------
         para(tutar) { return paraBicimi.format(tutar) + ' ₺'; },
         saat(tarih) { return saatBicimi.format(new Date(tarih)); },
+        basHarf(ad) { return (ad ?? '?').trim().charAt(0).toLocaleUpperCase('tr-TR'); },
+        // "İç 2" -> "İ2", "Getir 14:05" -> "G": soldaki listedeki küçük kare
+        kisaAd(baslik) {
+            const parcalar = (baslik ?? '').split(' ');
+            const sayi = parcalar.find(parca => /^\d+$/.test(parca)) ?? '';
+            return this.basHarf(baslik) + sayi;
+        },
         gecenSure(tarih) {
             if (!tarih) return '';
             const dakika = Math.max(0, Math.floor((this.simdi - new Date(tarih)) / 60000));
@@ -155,6 +222,11 @@ document.addEventListener('alpine:init', () => {
             this.adisyonaGec({ kaynak, masaId: null, adisyonId, baslik, kisi: null });
         },
 
+        acikListeAc(oge) {
+            if (oge.masa) this.masaAc(oge.masa);
+            else this.adisyonAc(oge.adisyonId, oge.baslik, oge.kaynak);
+        },
+
         async adisyonaGec(yeniSecim) {
             this.secili = yeniSecim;
             // Alpine nesneyi reaktif bir kılıfa (proxy) sarar. Karşılaştırmalar (this.secili === secim)
@@ -162,19 +234,20 @@ document.addEventListener('alpine:init', () => {
             const secim = this.secili;
             this.adisyon = null;
             this.yerelSatirlar = [];
-            this.odemeAcik = this.iptalAcik = this.indirimAcik = false;
+            this.pencere = null;
             this.arama = '';
             this.gorunum = 'satis';
 
             if (!secim.adisyonId) return;
             this.adisyonYukleniyor = true;
-            this.yukleme = this.adisyonuGetir(secim);   // Öde/Hesap'a erken basılırsa bunu bekler
+            this.yukleme = this.adisyonuGetir(secim);   // Öde'ye erken basılırsa bunu bekler
             await this.yukleme;
         },
 
         async adisyonuGetir(secim) {
             try {
                 const cevap = await fetch(`/Satis/Adisyon/${secim.adisyonId}`);
+                this.sunucuVar = true;
                 if (this.secili !== secim) return;   // bu arada başka masaya geçildi
                 if (cevap.ok) {
                     this.adisyonuYaz(await cevap.json());
@@ -184,6 +257,7 @@ document.addEventListener('alpine:init', () => {
                     this.planiYenile();
                 }
             } catch {
+                this.sunucuVar = false;
                 this.bildir('Bağlantı hatası. Tekrar dene.', 'hata');
             } finally {
                 if (this.secili === secim) this.adisyonYukleniyor = false;
@@ -192,11 +266,14 @@ document.addEventListener('alpine:init', () => {
 
         geriDon() {
             if (this.odeniyor) return;
-            if (this.odemeAcik || this.iptalAcik || this.indirimAcik) {
-                this.odemeAcik = this.iptalAcik = this.indirimAcik = false;
-                return;
-            }
+            if (this.menuAcik) { this.menuAcik = false; return; }
+            if (this.pencere) { this.pencereyiKapat(); return; }
             this.gorunum = 'plan';
+        },
+
+        pencereyiKapat() {
+            if (this.odeniyor) return;
+            this.pencere = null;
         },
 
         // ---------- Ürün ekle / adet / sil ----------
@@ -208,12 +285,12 @@ document.addEventListener('alpine:init', () => {
                 this.yukleme.then(() => { if (this.secili === secim && !this.adisyonYukleniyor) this.urunEkle(urun); });
                 return;
             }
-            // 1) Ekranı hemen güncelle
-            const satir = this.yerelSatirlar.find(oge => oge.urunId === urun.id && oge.birimFiyat === urun.fiyat);
+            // 1) Ekranı hemen güncelle (ikram satırına eklenmez: sunucu da öyle yapar)
+            const satir = this.yerelSatirlar.find(oge => oge.urunId === urun.id && oge.birimFiyat === urun.fiyat && !oge.ikramMi);
             if (satir) {
                 satir.adet++;
             } else {
-                this.yerelSatirlar.push({ anahtar: 'yeni-' + urun.id, id: null, urunId: urun.id, ad: urun.ad, adet: 1, birimFiyat: urun.fiyat });
+                this.yerelSatirlar.push({ anahtar: 'yeni-' + urun.id, id: null, urunId: urun.id, ad: urun.ad, adet: 1, birimFiyat: urun.fiyat, ikramMi: false });
             }
             // 2) Sunucuya sırayla gönder (ilk üründe adisyon sunucuda açılır)
             const secim = this.secili;
@@ -262,7 +339,7 @@ document.addEventListener('alpine:init', () => {
             this.istekGonder('/Satis/Kisi', () => ({ adisyonId: secim.adisyonId, kisi: yeni }));
         },
 
-        // ---------- Ödeme / iptal ----------
+        // ---------- Pencere açmadan önce ----------
         // Sepet boşsa nazik uyarı; ilk ürün hâlâ yoldaysa adisyon açılana kadar bekle
         async adisyonHazirMi(bosMesaji) {
             if (this.adisyonYukleniyor) await this.yukleme;
@@ -278,16 +355,16 @@ document.addEventListener('alpine:init', () => {
             return true;
         },
 
+        // ---------- Ödeme ----------
         async odemeyiAc() {
             if (this.odeniyor) return;
-            if (!(await this.adisyonHazirMi('Sepet boş — ödeme alınacak bir şey yok.'))) return;
-            this.iptalAcik = this.indirimAcik = false;
+            if (!(await this.adisyonHazirMi('Adisyon boş — ödeme alınacak bir şey yok.'))) return;
             if (this.platformMu) {
                 // Getir/Trendyol/Yemeksepeti/Migros: para uygulamada ödendi, tür sorma, kapat
                 await this.ode({ id: null, ad: this.secili.kaynak });
                 return;
             }
-            this.odemeAcik = true;
+            this.pencere = 'odeme';
         },
 
         async ode(odeme) {
@@ -303,23 +380,23 @@ document.addEventListener('alpine:init', () => {
 
             if (basariliMi) {
                 this.bildir(`${baslik} kapandı · ${this.para(tutar)} · ${odeme.ad}`, 'basari');
-                this.odemeAcik = false;
+                this.pencere = null;
                 if (this.secili === secim) this.gorunum = 'plan';
             }
         },
 
+        // ---------- İptal ----------
         async iptalAc() {
-            if (!(await this.adisyonHazirMi('Sepet boş — iptal edilecek adisyon yok.'))) return;
-            this.odemeAcik = this.indirimAcik = false;
+            if (!(await this.adisyonHazirMi('Adisyon boş — iptal edilecek bir şey yok.'))) return;
             this.iptalNedeni = '';
-            this.iptalAcik = true;
+            this.pencere = 'iptal';
             this.$nextTick(() => this.$refs.iptalNedeni.focus());
         },
 
         iptalEt() {
             const neden = this.iptalNedeni.trim();
             if (!neden) {
-                this.bildir('İptal nedenini yaz.', 'uyari');
+                this.bildir('İptal nedenini yaz ya da seç.', 'uyari');
                 this.$refs.iptalNedeni.focus();
                 return;
             }
@@ -328,19 +405,19 @@ document.addEventListener('alpine:init', () => {
             this.istekGonder('/Satis/Iptal', () => ({ adisyonId: secim.adisyonId, neden }), () => {
                 this.bildir(`${baslik} iptal edildi`);
             });
-            this.iptalAcik = false;
+            this.pencere = null;
             this.gorunum = 'plan';
         },
 
-        // ---------- İndirim ----------
+        // ---------- İskonto (indirim) ----------
         async indirimAc() {
-            if (!(await this.adisyonHazirMi('Sepet boş — indirim yapılacak adisyon yok.'))) return;
-            this.odemeAcik = this.iptalAcik = false;
+            if (this.platformMu) return;
+            if (!(await this.adisyonHazirMi('Adisyon boş — iskonto yapılacak bir şey yok.'))) return;
             const mevcut = this.adisyon.indirim;
             this.indirimFormu = mevcut
                 ? { yuzdeMi: mevcut.yuzdeMi, deger: String(mevcut.deger).replace('.', ','), neden: mevcut.neden ?? '' }
                 : { yuzdeMi: true, deger: '', neden: '' };
-            this.indirimAcik = true;
+            this.pencere = 'indirim';
             this.$nextTick(() => this.$refs.indirimDegeri.focus());
         },
 
@@ -349,7 +426,7 @@ document.addEventListener('alpine:init', () => {
             const yazi = deger ?? this.indirimFormu.deger;
             const sayi = Number(String(yazi).replace(',', '.'));
             if (!(sayi > 0)) {
-                this.bildir('İndirim için bir sayı yaz.', 'uyari');
+                this.bildir('İskonto için bir sayı yaz.', 'uyari');
                 this.$refs.indirimDegeri.focus();
                 return;
             }
@@ -357,18 +434,146 @@ document.addEventListener('alpine:init', () => {
             const neden = this.indirimFormu.neden.trim() || null;
             const secim = this.secili;
             this.istekGonder('/Satis/Indirim', () => ({ adisyonId: secim.adisyonId, yuzdeMi, deger: sayi, neden }),
-                () => this.bildir(`İndirim uygulandı · ${yuzdeMi ? '%' + sayi : this.para(sayi)}`, 'basari'));
-            this.indirimAcik = false;
+                () => this.bildir(`İskonto uygulandı · ${yuzdeMi ? '%' + sayi : this.para(sayi)}`, 'basari'));
+            this.pencere = null;
         },
 
         indirimKaldir() {
             const secim = this.secili;
             this.istekGonder('/Satis/Indirim', () => ({ adisyonId: secim.adisyonId, yuzdeMi: true, deger: 0, neden: null }),
-                () => this.bildir('İndirim kaldırıldı'));
-            this.indirimAcik = false;
+                () => this.bildir('İskonto kaldırıldı'));
+            this.pencere = null;
+        },
+
+        // ---------- İkram ----------
+        async ikramAc() {
+            if (this.platformMu) return;
+            if (!(await this.adisyonHazirMi('Adisyon boş — ikram edilecek ürün yok.'))) return;
+            this.pencere = 'ikram';
+        },
+
+        // adet: null = satırın tamamı (ikramsa geri alır)
+        ikramEt(satir, adet) {
+            const secim = this.secili;
+            const geriAlMi = satir.ikramMi;
+            this.istekGonder('/Satis/Ikram', () => ({ adisyonId: secim.adisyonId, satirId: satir.id, adet }),
+                () => this.bildir(geriAlMi ? `${satir.ad} ikramı geri alındı` : `${satir.ad} ikram edildi`, geriAlMi ? '' : 'basari'));
+        },
+
+        // ---------- Taşı ----------
+        async tasiAc() {
+            if (this.platformMu) return;
+            if (!(await this.adisyonHazirMi('Adisyon boş — taşınacak bir şey yok.'))) return;
+            this.pencere = 'tasi';
+        },
+
+        tasi(hedef) {
+            const secim = this.secili;
+            const eskiBaslik = secim.baslik;
+            this.istekGonder('/Satis/Tasi', () => ({ adisyonId: secim.adisyonId, hedefMasaId: hedef.id }),
+                () => this.bildir(hedef.doluMu ? `${eskiBaslik}, ${hedef.ad} ile birleşti` : `${eskiBaslik} → ${hedef.ad} taşındı`, 'basari'));
+            this.pencere = null;
+        },
+
+        // ---------- Böl ----------
+        async bolAc() {
+            if (this.platformMu) return;
+            if (!(await this.adisyonHazirMi('Adisyon boş — bölünecek bir şey yok.'))) return;
+            this.bolSecimi = {};
+            this.pencere = 'bol';
+        },
+
+        bolDegistir(satir, fark) {
+            const yeni = Math.min(satir.adet, Math.max(0, (this.bolSecimi[satir.id] ?? 0) + fark));
+            this.bolSecimi = { ...this.bolSecimi, [satir.id]: yeni };
+        },
+
+        bolHepsi() {
+            if (this.bolAdedi) { this.bolSecimi = {}; return; }
+            this.bolSecimi = Object.fromEntries(this.adisyon.satirlar.map(satir => [satir.id, satir.adet]));
+        },
+
+        async bolOde(odeme) {
+            if (this.odeniyor || !this.bolAdedi) return;
+            const secim = this.secili;
+            const tutar = this.bolToplami;
+            const secimler = Object.entries(this.bolSecimi)
+                .filter(([, adet]) => adet > 0)
+                .map(([satirId, adet]) => ({ satirId: Number(satirId), adet }));
+            let basariliMi = false;
+
+            this.odeniyor = odeme.id;
+            await this.istekGonder('/Satis/Bol', () => ({ adisyonId: secim.adisyonId, secimler, odemeTuruId: odeme.id }), () => basariliMi = true);
+            this.odeniyor = null;
+
+            if (basariliMi) {
+                this.bildir(`${this.para(tutar)} ${odeme.ad} ile ödendi`, 'basari');
+                this.pencere = null;
+                // Hepsi ödendiyse masa kapandı: plana dön
+                if (this.secili === secim && !this.adisyon) this.gorunum = 'plan';
+            }
+        },
+
+        // ---------- İade ----------
+        // Açık adisyonla ilgisi yok: bugün ödenmiş bir adisyonun parası geri verilir.
+        // Bu yüzden kuyruğa girmez, ekrandaki adisyonu değiştirmez.
+        async iadeAc() {
+            this.iade = { liste: [], secili: null, neden: '', yukleniyor: true, gonderiliyor: false };
+            this.pencere = 'iade';
+            try {
+                const cevap = await fetch('/Satis/Odenenler');
+                this.sunucuVar = true;
+                if (cevap.ok) this.iade.liste = await cevap.json();
+            } catch {
+                this.sunucuVar = false;
+                this.bildir('Bağlantı hatası. Tekrar dene.', 'hata');
+            } finally {
+                this.iade.yukleniyor = false;
+            }
+        },
+
+        async iadeEt() {
+            const kayit = this.iade.secili;
+            const neden = this.iade.neden.trim();
+            if (!kayit) return;
+            if (!neden) {
+                this.bildir('İade nedenini yaz.', 'uyari');
+                this.$refs.iadeNedeni.focus();
+                return;
+            }
+            this.iade.gonderiliyor = true;
+            const { tamam, sonuc } = await this.gonder('/Satis/Iade', { adisyonId: kayit.id, neden });
+            this.iade.gonderiliyor = false;
+            if (!tamam) {
+                this.bildir(sonuc.hata || 'İade yapılamadı.', 'hata');
+                return;
+            }
+            this.bildir(`#${kayit.id} ${kayit.baslik} iade edildi · ${this.para(kayit.toplam)}`, 'basari');
+            this.pencere = null;
         },
 
         // ---------- Sunucu ile konuşma ----------
+        // Tek bir POST: cevabı ve masa planını işler. Hata fırlatmaz, sonucu döner.
+        async gonder(adres, govde) {
+            try {
+                const cevap = await fetch(adres, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': anahtarDegeri },
+                    body: JSON.stringify(govde)
+                });
+                this.sunucuVar = true;
+                const sonuc = await cevap.json().catch(() => ({}));
+                if (sonuc.ekran) {
+                    this.ekran = sonuc.ekran;
+                    this.ekranSurumu++;   // yolda olan eski bir plan yenilemesi bunu ezmesin
+                }
+                return { tamam: cevap.ok, sonuc };
+            } catch {
+                this.sunucuVar = false;
+                return { tamam: false, sonuc: { hata: 'Bağlantı hatası. Tekrar dene.' } };
+            }
+        },
+
         // govdeHazirla bir fonksiyon: istek sırası gelince çalışır, böylece önceki
         // istekte açılan adisyonun numarasını (adisyonId) kullanabilir.
         // Geriye bir Promise döner: isteyen "await" ile bitmesini bekleyebilir.
@@ -378,21 +583,15 @@ document.addEventListener('alpine:init', () => {
 
             this.kuyruk = this.kuyruk.then(async () => {
                 try {
-                    const cevap = await fetch(adres, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': anahtarDegeri },
-                        body: JSON.stringify(govdeHazirla())
-                    });
-                    const sonuc = await cevap.json().catch(() => ({}));
-                    if (sonuc.ekran) this.ekran = sonuc.ekran;
+                    const { tamam, sonuc } = await this.gonder(adres, govdeHazirla());
 
-                    if (!cevap.ok) {
+                    if (!tamam) {
                         this.bildir(sonuc.hata || 'İşlem yapılamadı.', 'hata');
                         if (this.secili === secim) await this.adisyonuYenile();   // ekranı sunucuya eşitle
                         return;
                     }
 
-                    // Adisyon açıldıysa numarasını hemen sakla: sıradaki istekler bunu kullanır
+                    // Adisyon açıldıysa (ya da taşınıp birleştiyse) numarasını hemen sakla: sıradaki istekler bunu kullanır
                     if (sonuc.adisyon) secim.adisyonId = sonuc.adisyon.id;
                     else if ('adisyon' in sonuc) secim.adisyonId = null;   // son satır silindi ya da kapandı
 
@@ -400,8 +599,6 @@ document.addEventListener('alpine:init', () => {
                         this.adisyonuYaz(sonuc.adisyon);
                     }
                     basarili?.();
-                } catch {
-                    this.bildir('Bağlantı hatası. Tekrar dene.', 'hata');
                 } finally {
                     this.bekleyenIstek--;
                 }
@@ -416,24 +613,35 @@ document.addEventListener('alpine:init', () => {
                 if (this.secili.kaynak !== 'Masa') this.secili.baslik = `${this.secili.kaynak} (yeni)`;
                 return;
             }
+            // Taşı'dan sonra masa / kaynak değişmiş olabilir
             this.secili.adisyonId = adisyon.id;
             this.secili.baslik = adisyon.baslik;
+            this.secili.masaId = adisyon.masaId;
+            this.secili.kaynak = adisyon.kaynak;
             this.yerelSatirlar = adisyon.satirlar.map(satir => ({ ...satir, anahtar: 'satir-' + satir.id }));
         },
 
         async adisyonuYenile() {
             if (!this.secili.adisyonId) { this.adisyonuYaz(null); return; }
-            const cevap = await fetch(`/Satis/Adisyon/${this.secili.adisyonId}`);
-            this.adisyonuYaz(cevap.ok ? await cevap.json() : null);
+            try {
+                const cevap = await fetch(`/Satis/Adisyon/${this.secili.adisyonId}`);
+                this.adisyonuYaz(cevap.ok ? await cevap.json() : null);
+            } catch {
+                this.sunucuVar = false;
+            }
         },
 
         async planiYenile() {
             this.planYukleniyor = true;
+            const surum = this.ekranSurumu;
             try {
                 const cevap = await fetch('/Satis/Durum');
-                if (cevap.ok) this.ekran = await cevap.json();
+                this.sunucuVar = cevap.ok;
+                const yeniEkran = cevap.ok ? await cevap.json() : null;
+                // Bu istek yoldayken bir işlem daha yeni planı getirdiyse eskisini yazma
+                if (yeniEkran && surum === this.ekranSurumu && !this.bekleyenIstek) this.ekran = yeniEkran;
             } catch {
-                // sessiz geç: 15 sn sonra yine denenecek
+                this.sunucuVar = false;   // 15 sn sonra yine denenecek
             } finally {
                 this.planYukleniyor = false;
             }

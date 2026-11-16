@@ -35,6 +35,14 @@ public static class RaporEpostasi
         {
             Satir(html, "Yapılan indirim", Para(ozet.IndirimToplami));
         }
+        if (ozet.IkramAdedi > 0)
+        {
+            Satir(html, "İkram", $"{ozet.IkramAdedi} ürün ({Para(ozet.IkramTutari)})");
+        }
+        if (ozet.IadeSayisi > 0)
+        {
+            Satir(html, "İade", $"{ozet.IadeSayisi} ({Para(ozet.IadeTutari)})");
+        }
         Satir(html, "Açık gün", rapor.Gunler.Count.ToString());
         Satir(html, "Günlük ortalama ciro", Para(rapor.GunlukOrtalamaCiro));
         Satir(html, "Adisyon", ozet.OdenenSayisi.ToString());

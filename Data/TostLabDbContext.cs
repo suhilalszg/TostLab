@@ -43,6 +43,21 @@ public class TostLabDbContext : DbContext
             .WithMany()
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<Siparis>()
+            .HasOne(siparis => siparis.IadeEdenKullanici)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Siparis>()
+            .HasOne(siparis => siparis.AcanKullanici)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SiparisSatiri>()
+            .HasOne(satir => satir.IkramEdenKullanici)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<SiparisSatiri>()
             .HasOne(satir => satir.Urun)
             .WithMany()

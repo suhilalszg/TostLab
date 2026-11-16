@@ -27,7 +27,11 @@ public class SatisController : Controller
         var urunler = await veritabani.Urunler
             .Where(urun => urun.SatistaMi)
             .OrderBy(urun => urun.Id)
-            .Select(urun => new { id = urun.Id, ad = urun.Ad, fiyat = urun.Fiyat, kategori = urun.Kategori })
+            .Select(urun => new
+            {
+                id = urun.Id, ad = urun.Ad, fiyat = urun.Fiyat, kategori = urun.Kategori,
+                foto = urun.FotografAdi == null ? null : UrunFotograflari.Adres + "/" + urun.FotografAdi
+            })
             .ToListAsync();
         var odemeTurleri = await veritabani.OdemeTurleri
             .Where(odeme => odeme.AktifMi)
@@ -55,7 +59,27 @@ public class SatisController : Controller
 
     [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> UrunEkle([FromBody] UrunEkleIstegi istek) =>
-        Calistir(async () => await adisyonServisi.UrunEkleAsync(istek));
+        Calistir(async () => await adisyonServisi.UrunEkleAsync(istek, KullaniciId()));
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public Task<IActionResult> Ikram([FromBody] IkramIstegi istek) =>
+        Calistir(async () => await adisyonServisi.IkramAsync(istek, KullaniciId()));
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public Task<IActionResult> Tasi([FromBody] TasiIstegi istek) =>
+        Calistir(async () => await adisyonServisi.TasiAsync(istek));
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public Task<IActionResult> Bol([FromBody] BolIstegi istek) =>
+        Calistir(() => adisyonServisi.BolOdeAsync(istek));
+
+    // İade penceresi açılınca: bugün ödenenler
+    [HttpGet]
+    public async Task<IActionResult> Odenenler() => Json(await adisyonServisi.BugunOdenenlerAsync());
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public Task<IActionResult> Iade([FromBody] IadeIstegi istek) =>
+        Calistir(async () => { await adisyonServisi.IadeEtAsync(istek, KullaniciId()); return null; });
 
     [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> Adet([FromBody] AdetIstegi istek) =>

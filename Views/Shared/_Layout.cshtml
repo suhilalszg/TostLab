@@ -8,6 +8,8 @@
     bool tamEkran = ViewData["TamEkran"] as bool? ?? false;
     // Tailwind kullanan sayfa Bootstrap istemez: ikisinin aynı adlı sınıfları (p-4, border...) çakışır
     bool bootstrapYok = ViewData["BootstrapYok"] as bool? ?? false;
+    // Satış ekranı kendi üst çubuğunu ve menüsünü çizer: soldaki dikey menü gizlenir
+    bool menuYok = ViewData["MenuYok"] as bool? ?? false;
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -34,7 +36,9 @@
     @await RenderSectionAsync("Stiller", required: false)
 </head>
 <body>
-    <div class="panel">
+    <div class="panel @(menuYok ? "menusuz" : "")">
+        @if (!menuYok)
+        {
         <aside class="yan-menu">
             <a class="logo" asp-controller="Satis" asp-action="Index">TOST LAB°</a>
 
@@ -62,6 +66,7 @@
                 }
             </div>
         </aside>
+        }
 
         <main class="icerik @(tamEkran ? "tam-ekran" : "")">
             @if (!tamEkran)

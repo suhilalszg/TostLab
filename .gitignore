@@ -488,3 +488,6 @@ tostlab.db-wal
 
 # E-posta şifresi: sadece dükkan bilgisayarında durur
 eposta.json
+
+# Menüden yüklenen ürün fotoğrafları (dükkan bilgisayarında durur)
+urun-foto/
