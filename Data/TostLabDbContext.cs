@@ -77,15 +77,15 @@ public class TostLabDbContext : DbContext
             new Masa { Id = 4, Ad = "İç 4" },
             new Masa { Id = 5, Ad = "Dış 1" });
 
-        // Her platform bir kez; oranlar abiden gelince Ayarlar'dan girilecek (şimdilik 0)
+        // Her platform bir kez; abinin verdiği oran: hepsi %38 (Ayarlar'dan değişebilir)
         modelBuilder.Entity<PlatformKomisyonu>()
             .HasIndex(komisyon => komisyon.Kaynak)
             .IsUnique();
         modelBuilder.Entity<PlatformKomisyonu>().HasData(
-            new PlatformKomisyonu { Id = 1, Kaynak = "Yemeksepeti", Oran = 0 },
-            new PlatformKomisyonu { Id = 2, Kaynak = "Getir", Oran = 0 },
-            new PlatformKomisyonu { Id = 3, Kaynak = "Trendyol", Oran = 0 },
-            new PlatformKomisyonu { Id = 4, Kaynak = "Migros", Oran = 0 });
+            new PlatformKomisyonu { Id = 1, Kaynak = "Yemeksepeti", Oran = 38 },
+            new PlatformKomisyonu { Id = 2, Kaynak = "Getir", Oran = 38 },
+            new PlatformKomisyonu { Id = 3, Kaynak = "Trendyol", Oran = 38 },
+            new PlatformKomisyonu { Id = 4, Kaynak = "Migros", Oran = 38 });
 
         modelBuilder.Entity<OdemeTuru>().HasData(
             new OdemeTuru { Id = 1, Ad = "Nakit" },

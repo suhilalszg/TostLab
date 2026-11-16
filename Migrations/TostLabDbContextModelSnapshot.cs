@@ -180,25 +180,25 @@ namespace TostLab.Migrations
                         {
                             Id = 1,
                             Kaynak = "Yemeksepeti",
-                            Oran = 0m
+                            Oran = 38m
                         },
                         new
                         {
                             Id = 2,
                             Kaynak = "Getir",
-                            Oran = 0m
+                            Oran = 38m
                         },
                         new
                         {
                             Id = 3,
                             Kaynak = "Trendyol",
-                            Oran = 0m
+                            Oran = 38m
                         },
                         new
                         {
                             Id = 4,
                             Kaynak = "Migros",
-                            Oran = 0m
+                            Oran = 38m
                         });
                 });
 
