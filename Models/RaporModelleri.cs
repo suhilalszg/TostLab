@@ -71,6 +71,38 @@ public record AdisyonDetayi(
     string? IptalEden,
     List<SilinenBilgisi> Silinenler);
 
+// Bir günün raporu: Bugün sayfası (ve 10. adımda Gün sonu) bunu gösterir
+public record GunRaporu(
+    DateTime Gun,
+    GunOzeti Ozet,
+    List<KirilimSatiri> OdemeKirilimi,     // Nakit, Kart, Multinet..., Online
+    List<KirilimSatiri> KaynakKirilimi,    // Masa, Paket, Getir...
+    List<KirilimSatiri> EnCokSatanlar,     // ilk 5 ürün
+    List<SaatSatiri> Saatlik)
+{
+    // Ortalama adisyon tutarı (hiç ödeme yoksa 0)
+    public decimal OrtalamaAdisyon => Ozet.OdenenSayisi == 0 ? 0 : Ozet.Ciro / Ozet.OdenenSayisi;
+}
+
+// Kırılımın bir satırı: "Nakit · 12 adisyon · 3.450 ₺" ya da "Sade · 18 adet · 1.800 ₺"
+public record KirilimSatiri(string Ad, int Adet, decimal Tutar);
+
+public record SaatSatiri(int Saat, int Adet);
+
+// Aylık özet: her gün bir satır + ayın toplamı
+public record AyRaporu(
+    int Yil,
+    int Ay,
+    List<GunSatiri> Gunler,                // sadece kaydı olan günler
+    GunOzeti Toplam,
+    List<KirilimSatiri> OdemeKirilimi,
+    List<KirilimSatiri> KaynakKirilimi)
+{
+    public decimal GunlukOrtalamaCiro => Gunler.Count == 0 ? 0 : Toplam.Ciro / Gunler.Count;
+}
+
+public record GunSatiri(DateTime Gun, int OdenenSayisi, decimal Ciro, int IptalSayisi);
+
 public static class DurumYazisi
 {
     public static string Yaz(AdisyonDurumu durum) => durum switch

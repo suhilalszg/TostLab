@@ -1,0 +1,28 @@
+@* Raporun WhatsApp metni: önizleme + WhatsApp'ta aç + kopyala. Gün sonu ve Aylık ortak kullanır. *@
+@model string
+@{
+    // wa.me bağlantısı WhatsApp'ı metin yazılmış halde açar; kime gideceğini kullanıcı seçer
+    string whatsappAdresi = "https://wa.me/?text=" + Uri.EscapeDataString(Model);
+}
+
+<section class="kart whatsapp-kutu">
+    <h2>WhatsApp mesajı</h2>
+    <pre class="fis rapor-metni" id="rapor-metni">@Model</pre>
+    <div class="dugmeler">
+        <a class="btn btn-dark" href="@whatsappAdresi" target="_blank" rel="noopener">WhatsApp'ta aç</a>
+        <button type="button" class="btn btn-outline-secondary" id="metni-kopyala">Kopyala</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Yazdır</button>
+    </div>
+</section>
+
+<script>
+    document.getElementById('metni-kopyala').addEventListener('click', async function () {
+        try {
+            await navigator.clipboard.writeText(document.getElementById('rapor-metni').textContent);
+            this.textContent = 'Kopyalandı';
+        } catch (hata) {
+            this.textContent = 'Kopyalanamadı';
+        }
+        setTimeout(() => this.textContent = 'Kopyala', 1500);
+    });
+</script>

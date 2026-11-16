@@ -1,0 +1,21 @@
+@* Bir kırılım listesi: ad, adet, tutar ve toplam içindeki payı (çubuk). Bugün ve Gün sonu ortak kullanır. *@
+@model (List<KirilimSatiri> Satirlar, decimal Toplam, string AdetYazisi)
+
+@if (Model.Satirlar.Count == 0)
+{
+    <p class="bos-yazi">Henüz ödeme yok.</p>
+}
+else
+{
+    @foreach (var satir in Model.Satirlar)
+    {
+        int pay = Model.Toplam == 0 ? 0 : (int)Math.Round(satir.Tutar * 100 / Model.Toplam);
+        <div class="kirilim-satir">
+            <div class="ust">
+                <span>@satir.Ad <small>· @satir.Adet @Model.AdetYazisi</small></span>
+                <b>@satir.Tutar.ToString("N2") ₺</b>
+            </div>
+            <div class="cubuk" title="%@pay"><div style="width:@pay%"></div></div>
+        </div>
+    }
+}

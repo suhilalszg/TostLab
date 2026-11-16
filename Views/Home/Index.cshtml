@@ -1,26 +1,85 @@
-﻿@{
+﻿@model GunRaporu
+@{
     ViewData["Title"] = "Bugün";
+    var ozet = Model.Ozet;
+    // Çalışan ciro görmez: para yazan her şey bu değişkene bağlı.
+    // Sunucuda çizildiği için çalışanın tarayıcısına para bilgisi hiç gitmez.
+    bool yoneticiMi = User.IsInRole(Roller.Yonetici);
+    int enYogunSaat = Model.Saatlik.Count == 0 ? 0 : Model.Saatlik.Max(saat => saat.Adet);
 }
 
-@* Şimdilik yer tutucu: gerçek rakamlar 09. adımda (Bugün ekranı) veritabanından gelecek *@
 <div class="kutular">
-    <div class="kutu vurgulu">
-        <div class="etiket">Sipariş</div>
-        <div class="deger">0</div>
-    </div>
-    <div class="kutu">
-        <div class="etiket">Ciro</div>
-        <div class="deger">0 ₺</div>
-    </div>
+    @if (yoneticiMi)
+    {
+        <div class="kutu vurgulu"><div class="etiket">Ciro</div><div class="deger">@ozet.Ciro.ToString("N2") ₺</div></div>
+    }
+    <div class="kutu"><div class="etiket">Ödenen adisyon</div><div class="deger">@ozet.OdenenSayisi</div></div>
+    @if (yoneticiMi)
+    {
+        <div class="kutu"><div class="etiket">Ortalama adisyon</div><div class="deger">@Model.OrtalamaAdisyon.ToString("N2") ₺</div></div>
+    }
+    <div class="kutu"><div class="etiket">Açık adisyon</div><div class="deger">@ozet.AcikSayisi</div></div>
     <div class="kutu">
         <div class="etiket">İptal</div>
-        <div class="deger">0</div>
+        <div class="deger">@ozet.IptalSayisi @if (yoneticiMi) { <small>· @ozet.IptalTutari.ToString("N2") ₺</small> }</div>
     </div>
 </div>
 
-<div class="kart">
-    <h2 style="font-size: 18px; margin: 0 0 6px">Hoş geldin, @User.Identity?.Name</h2>
-    <p style="margin: 0; color: var(--soluk-yazi)">
-        Panel hazırlanıyor. Sipariş girişi, kayıtlar ve gün sonu raporu sırayla bu menüye eklenecek.
-    </p>
+<div class="bugun-izgara">
+    @if (yoneticiMi)
+    {
+        <section class="kart">
+            <h2>Ödeme türüne göre</h2>
+            @await Html.PartialAsync("_Kirilim", (Model.OdemeKirilimi, ozet.Ciro, "adisyon"))
+        </section>
+
+        <section class="kart">
+            <h2>Kaynağa göre</h2>
+            @await Html.PartialAsync("_Kirilim", (Model.KaynakKirilimi, ozet.Ciro, "adisyon"))
+        </section>
+    }
+
+    <section class="kart">
+        <h2>En çok satanlar</h2>
+        @if (Model.EnCokSatanlar.Count == 0)
+        {
+            <p class="bos-yazi">Henüz satış yok.</p>
+        }
+        else
+        {
+            <ol class="cok-satan">
+                @foreach (var urun in Model.EnCokSatanlar)
+                {
+                    <li><span>@urun.Ad</span><b>@urun.Adet adet</b>@if (yoneticiMi) { <small>@urun.Tutar.ToString("N2") ₺</small> }</li>
+                }
+            </ol>
+        }
+    </section>
+
+    <section class="kart">
+        <h2>Saatlere göre sipariş</h2>
+        @if (Model.Saatlik.Count == 0)
+        {
+            <p class="bos-yazi">Henüz sipariş yok.</p>
+        }
+        else
+        {
+            @foreach (var saat in Model.Saatlik)
+            {
+                <div class="cubuk-satir">
+                    <span>@saat.Saat.ToString("00"):00</span>
+                    <div class="cubuk"><div style="width:@(saat.Adet * 100 / enYogunSaat)%"></div></div>
+                    <b>@saat.Adet</b>
+                </div>
+            }
+        }
+    </section>
 </div>
+
+@if (yoneticiMi && ozet.SilinenUrunAdedi > 0)
+{
+    <p class="ayar-not">
+        Bugün adisyonlardan <b>@ozet.SilinenUrunAdedi ürün</b> silindi (@ozet.SilinenTutar.ToString("N2") ₺).
+        <a asp-controller="Kayitlar" asp-action="Index">Kayıtlar'da gör</a>
+    </p>
+}

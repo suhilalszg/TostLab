@@ -2,15 +2,22 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TostLab.Models;
+using TostLab.Services;
 
 namespace TostLab.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
+    private readonly RaporServisi raporServisi;
+
+    public HomeController(RaporServisi raporServisi)
     {
-        return View();
+        this.raporServisi = raporServisi;
     }
+
+    // Bugün: herkes açar. Para bilgisi (ciro, ödeme türleri) sadece yöneticiye çizilir; bkz. Views/Home/Index
+    public async Task<IActionResult> Index() =>
+        View(await raporServisi.GunRaporuAsync(DateTime.Today));
 
     public IActionResult Privacy()
     {

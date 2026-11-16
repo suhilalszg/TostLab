@@ -1,0 +1,39 @@
+@model GunRaporu
+@{
+    ViewData["Title"] = "Gün sonu";
+    var ozet = Model.Ozet;
+    string GunAdresi(DateTime hedef) => Url.Action("Index", new { gun = hedef.ToString("yyyy-MM-dd") })!;
+}
+
+<form method="get" class="kayit-filtre">
+    <a class="btn btn-link" href="@GunAdresi(Model.Gun.AddDays(-1))" title="Önceki gün">‹</a>
+    <input type="date" name="gun" class="form-control" value="@Model.Gun.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+    <a class="btn btn-link" href="@GunAdresi(Model.Gun.AddDays(1))" title="Sonraki gün">›</a>
+    <a class="btn btn-outline-secondary" asp-action="Ay" asp-route-yil="@Model.Gun.Year" asp-route-ay="@Model.Gun.Month">Aylık özet</a>
+</form>
+
+@if (ozet.AcikSayisi > 0)
+{
+    <div class="alert alert-danger">
+        Bu günden <b>@ozet.AcikSayisi</b> adisyon hâlâ açık. Kapanmadan ciroya girmez.
+    </div>
+}
+
+<div class="kutular">
+    <div class="kutu vurgulu"><div class="etiket">Ciro</div><div class="deger">@ozet.Ciro.ToString("N2") ₺</div></div>
+    <div class="kutu"><div class="etiket">Adisyon</div><div class="deger">@ozet.OdenenSayisi</div></div>
+    <div class="kutu"><div class="etiket">Ortalama</div><div class="deger">@Model.OrtalamaAdisyon.ToString("N2") ₺</div></div>
+    <div class="kutu"><div class="etiket">İptal</div><div class="deger">@ozet.IptalSayisi <small>· @ozet.IptalTutari.ToString("N2") ₺</small></div></div>
+</div>
+
+<div class="bugun-izgara">
+    <section class="kart">
+        <h2>Ödeme türüne göre</h2>
+        @await Html.PartialAsync("_Kirilim", (Model.OdemeKirilimi, ozet.Ciro, "adisyon"))
+    </section>
+    <section class="kart">
+        <h2>Kaynağa göre</h2>
+        @await Html.PartialAsync("_Kirilim", (Model.KaynakKirilimi, ozet.Ciro, "adisyon"))
+    </section>
+    @await Html.PartialAsync("_WhatsappKutusu", (string)ViewData["WhatsappMetni"]!)
+</div>

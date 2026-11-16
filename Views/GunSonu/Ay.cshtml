@@ -1,0 +1,57 @@
+@model AyRaporu
+@{
+    var ayBasi = new DateTime(Model.Yil, Model.Ay, 1);
+    ViewData["Title"] = "Aylık özet · " + ayBasi.ToString("MMMM yyyy");
+    var ozet = Model.Toplam;
+    var onceki = ayBasi.AddMonths(-1);
+    var sonraki = ayBasi.AddMonths(1);
+}
+
+<div class="kayit-filtre">
+    <a class="btn btn-link" asp-action="Ay" asp-route-yil="@onceki.Year" asp-route-ay="@onceki.Month" title="Önceki ay">‹</a>
+    <b>@ayBasi.ToString("MMMM yyyy")</b>
+    <a class="btn btn-link" asp-action="Ay" asp-route-yil="@sonraki.Year" asp-route-ay="@sonraki.Month" title="Sonraki ay">›</a>
+    <a class="btn btn-outline-secondary" asp-action="Index">Gün sonu</a>
+</div>
+
+<div class="kutular">
+    <div class="kutu vurgulu"><div class="etiket">Ciro</div><div class="deger">@ozet.Ciro.ToString("N2") ₺</div></div>
+    <div class="kutu"><div class="etiket">Günlük ortalama</div><div class="deger">@Model.GunlukOrtalamaCiro.ToString("N2") ₺</div></div>
+    <div class="kutu"><div class="etiket">Adisyon</div><div class="deger">@ozet.OdenenSayisi</div></div>
+    <div class="kutu"><div class="etiket">İptal</div><div class="deger">@ozet.IptalSayisi <small>· @ozet.IptalTutari.ToString("N2") ₺</small></div></div>
+</div>
+
+<div class="bugun-izgara">
+    <section class="kart">
+        <h2>Günler</h2>
+        @if (Model.Gunler.Count == 0)
+        {
+            <p class="bos-yazi">Bu ay kayıt yok.</p>
+        }
+        else
+        {
+            <table class="table kayit-tablo">
+                <thead><tr><th>Gün</th><th class="sag">Adisyon</th><th class="sag">İptal</th><th class="sag">Ciro</th></tr></thead>
+                <tbody>
+                    @foreach (var gun in Model.Gunler)
+                    {
+                        var adres = Url.Action("Index", new { gun = gun.Gun.ToString("yyyy-MM-dd") });
+                        <tr class="tiklanir" onclick="location.href='@adres'">
+                            <td><a href="@adres">@gun.Gun.ToString("d MMM ddd")</a></td>
+                            <td class="sag">@gun.OdenenSayisi</td>
+                            <td class="sag">@gun.IptalSayisi</td>
+                            <td class="sag">@gun.Ciro.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+    <section class="kart">
+        <h2>Ödeme türüne göre</h2>
+        @await Html.PartialAsync("_Kirilim", (Model.OdemeKirilimi, ozet.Ciro, "adisyon"))
+        <h2 class="mt-3">Kaynağa göre</h2>
+        @await Html.PartialAsync("_Kirilim", (Model.KaynakKirilimi, ozet.Ciro, "adisyon"))
+    </section>
+    @await Html.PartialAsync("_WhatsappKutusu", (string)ViewData["WhatsappMetni"]!)
+</div>
