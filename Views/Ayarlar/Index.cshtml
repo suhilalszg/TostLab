@@ -46,6 +46,33 @@
 
 <p class="ayar-not">Kapalı olanlar sipariş ekranında görünmez. Geçmiş siparişler bozulmasın diye silme yok.</p>
 
+<section class="kategori-blok komisyon-blok">
+    <div class="kategori-baslik">
+        <span class="ad">Platform komisyonları</span>
+        <span class="bilgi">% olarak</span>
+    </div>
+    @if (ViewData["Mesaj"] is string mesaj)
+    {
+        <div class="komisyon-mesaj">@mesaj</div>
+    }
+    <form asp-action="KomisyonKaydet" method="post">
+        @foreach (var komisyon in Model.Komisyonlar)
+        {
+            <label class="ayar-satir">
+                <span>@komisyon.Kaynak</span>
+                <span class="fiyat-kutu">
+                    <input type="text" name="oran[@komisyon.Kaynak]" value="@komisyon.Oran.ToString("0.##")" inputmode="decimal" />
+                    <span>%</span>
+                </span>
+            </label>
+        }
+        <div class="ekle-alani">
+            <button type="submit" class="btn btn-dark">Kaydet</button>
+        </div>
+    </form>
+</section>
+<p class="ayar-not">Yeni oran bundan sonra kapanan siparişlere uygulanır; eski siparişlerin komisyonu değişmez.</p>
+
 @section Scripts {
     <script src="~/js/ayarlar.js" asp-append-version="true"></script>
 }

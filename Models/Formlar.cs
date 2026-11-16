@@ -78,9 +78,10 @@ public class MenuSayfasi
     }
 }
 
-// Ayarlar sayfasının ekrana gönderdiği iki liste
+// Ayarlar sayfasının ekrana gönderdiği listeler
 public class AyarlarSayfasi
 {
     public List<Masa> Masalar { get; set; } = new();
     public List<OdemeTuru> OdemeTurleri { get; set; } = new();
+    public List<PlatformKomisyonu> Komisyonlar { get; set; } = new();
 }

@@ -616,3 +616,10 @@ a.urun-bilgi:hover b { text-decoration: underline; }
     .yan-menu, .kayit-filtre, .dugmeler, .alert { display: none !important; }
     .icerik { padding: 0 !important; }
 }
+
+/* ---------- Komisyon ---------- */
+.komisyon-yazi { display: block; margin-top: 3px; color: var(--soluk-yazi); font-size: 12px; }
+.komisyon-blok { max-width: 420px; margin-top: 18px; }
+.komisyon-blok .ayar-satir { display: flex; justify-content: space-between; align-items: center; }
+.komisyon-blok .fiyat-kutu { width: 110px; }
+.komisyon-mesaj { padding: 8px 14px; background: var(--fis); font-size: 13px; }

@@ -16,6 +16,10 @@
     <div class="kutu"><div class="etiket">Ödenen adisyon</div><div class="deger">@ozet.OdenenSayisi</div></div>
     @if (yoneticiMi)
     {
+        if (ozet.Komisyon > 0)
+        {
+            <div class="kutu"><div class="etiket">Net kazanç</div><div class="deger">@ozet.NetKazanc.ToString("N2") ₺</div></div>
+        }
         <div class="kutu"><div class="etiket">Ortalama adisyon</div><div class="deger">@Model.OrtalamaAdisyon.ToString("N2") ₺</div></div>
     }
     <div class="kutu"><div class="etiket">Açık adisyon</div><div class="deger">@ozet.AcikSayisi</div></div>

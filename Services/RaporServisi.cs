@@ -180,10 +180,11 @@ public class RaporServisi
         .OrderByDescending(kirilim => kirilim.Tutar)
         .ToList();
 
-    // Kaynağa göre: sıra satış ekranındaki gibi (Masa, Paket, platformlar)
+    // Kaynağa göre: sıra satış ekranındaki gibi (Masa, Paket, platformlar). Platformlarda komisyon da var.
     private static List<KirilimSatiri> KaynakKirilimi(List<AdisyonOzeti> odenenler) => odenenler
         .GroupBy(adisyon => adisyon.Kaynak)
-        .Select(grup => new KirilimSatiri(grup.Key, grup.Count(), grup.Sum(adisyon => adisyon.Toplam)))
+        .Select(grup => new KirilimSatiri(grup.Key, grup.Count(), grup.Sum(adisyon => adisyon.Toplam),
+            grup.Sum(adisyon => adisyon.Komisyon)))
         .OrderBy(kirilim => Array.IndexOf(Kaynaklar.Hepsi, kirilim.Ad))
         .ToList();
 
@@ -196,7 +197,8 @@ public class RaporServisi
                 siparis.Kaynak,
                 siparis.OdemeTuru != null ? siparis.OdemeTuru.Ad : null,
                 siparis.Tarih,
-                siparis.Toplam))
+                siparis.Toplam,
+                siparis.KomisyonOrani))
             .ToListAsync();
 
     private static GunOzeti OzetHesapla(List<AdisyonOzeti> gununHepsi, List<SilinenBilgisi> silinenler)
@@ -210,10 +212,16 @@ public class RaporServisi
             IptalTutari: iptaller.Sum(adisyon => adisyon.Toplam),
             AcikSayisi: gununHepsi.Count(adisyon => adisyon.Durum == AdisyonDurumu.Acik),
             SilinenUrunAdedi: silinenler.Sum(iz => iz.Adet),
-            SilinenTutar: silinenler.Sum(iz => iz.Tutar));
+            SilinenTutar: silinenler.Sum(iz => iz.Tutar),
+            Komisyon: odenenler.Sum(adisyon => adisyon.Komisyon));
     }
 
-    private record AdisyonOzeti(AdisyonDurumu Durum, string Kaynak, string? OdemeTuru, DateTime Tarih, decimal Toplam);
+    private record AdisyonOzeti(AdisyonDurumu Durum, string Kaynak, string? OdemeTuru, DateTime Tarih,
+        decimal Toplam, decimal KomisyonOrani)
+    {
+        // Siparis.Komisyon ile aynı hesap
+        public decimal Komisyon => Math.Round(Toplam * KomisyonOrani / 100, 2);
+    }
 
     // Silinen ürün izleri. Koşul dışarıdan gelir (gün ya da adisyon), sorgunun geri kalanı ortak.
     private async Task<List<SilinenBilgisi>> SilinenleriGetirAsync(

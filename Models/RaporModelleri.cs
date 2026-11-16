@@ -36,7 +36,12 @@ public record GunOzeti(
     decimal IptalTutari,
     int AcikSayisi,
     int SilinenUrunAdedi,
-    decimal SilinenTutar);
+    decimal SilinenTutar,
+    decimal Komisyon)           // platformların kestiği toplam
+{
+    // Dükkana kalan: ciro - platform komisyonu
+    public decimal NetKazanc => Ciro - Komisyon;
+}
 
 public record SilinenBilgisi(
     int SiparisId,
@@ -85,7 +90,8 @@ public record GunRaporu(
 }
 
 // Kırılımın bir satırı: "Nakit · 12 adisyon · 3.450 ₺" ya da "Sade · 18 adet · 1.800 ₺"
-public record KirilimSatiri(string Ad, int Adet, decimal Tutar);
+// Komisyon sadece kaynak kırılımında dolu (platform satırları)
+public record KirilimSatiri(string Ad, int Adet, decimal Tutar, decimal Komisyon = 0);
 
 public record SaatSatiri(int Saat, int Adet);
 

@@ -27,9 +27,39 @@ public class AyarlarController : Controller
         var model = new AyarlarSayfasi
         {
             Masalar = await veritabani.Masalar.OrderBy(masa => masa.Id).ToListAsync(),
-            OdemeTurleri = await veritabani.OdemeTurleri.OrderBy(odeme => odeme.Id).ToListAsync()
+            OdemeTurleri = await veritabani.OdemeTurleri.OrderBy(odeme => odeme.Id).ToListAsync(),
+            Komisyonlar = await veritabani.PlatformKomisyonlari.OrderBy(komisyon => komisyon.Id).ToListAsync()
         };
+        ViewData["Mesaj"] = TempData["Mesaj"];
         return View(model);
+    }
+
+    // Komisyon oranları: düz form, hepsi tek seferde kaydedilir.
+    // Formdan "oran[Getir]=18" gibi gelir; sözlüğe (Dictionary) kendiliğinden dolar.
+    // Yeni oran sadece bundan sonra kapanan siparişlere uygulanır (eski siparişte oran yazılı).
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> KomisyonKaydet(Dictionary<string, string> oran)
+    {
+        var komisyonlar = await veritabani.PlatformKomisyonlari.ToListAsync();
+        foreach (var komisyon in komisyonlar)
+        {
+            if (!oran.TryGetValue(komisyon.Kaynak, out string? yazi))
+            {
+                continue;
+            }
+            bool sayiMi = decimal.TryParse(yazi.Replace('.', ',').Replace("%", "").Trim(),
+                System.Globalization.NumberStyles.Number, new System.Globalization.CultureInfo("tr-TR"), out decimal yeniOran);
+            if (!sayiMi || yeniOran < 0 || yeniOran > 100)
+            {
+                TempData["Mesaj"] = $"{komisyon.Kaynak} için 0 ile 100 arasında bir oran yaz.";
+                return RedirectToAction(nameof(Index));
+            }
+            komisyon.Oran = yeniOran;
+        }
+        await veritabani.SaveChangesAsync();
+        TempData["Mesaj"] = "Komisyon oranları kaydedildi.";
+        return RedirectToAction(nameof(Index));
     }
 
     // Yeni masa ya da ödeme türü: /Ayarlar/Ekle  (liste=masa | odeme)

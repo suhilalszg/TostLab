@@ -16,6 +16,10 @@ else
                 <b>@satir.Tutar.ToString("N2") ₺</b>
             </div>
             <div class="cubuk" title="%@pay"><div style="width:@pay%"></div></div>
+            @if (satir.Komisyon > 0)
+            {
+                <small class="komisyon-yazi">Komisyon −@satir.Komisyon.ToString("N2") ₺ · Net @((satir.Tutar - satir.Komisyon).ToString("N2")) ₺</small>
+            }
         </div>
     }
 }

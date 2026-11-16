@@ -155,6 +155,53 @@ namespace TostLab.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TostLab.Models.PlatformKomisyonu", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Kaynak")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Oran")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Kaynak")
+                        .IsUnique();
+
+                    b.ToTable("PlatformKomisyonlari");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Kaynak = "Yemeksepeti",
+                            Oran = 0m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Kaynak = "Getir",
+                            Oran = 0m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Kaynak = "Trendyol",
+                            Oran = 0m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Kaynak = "Migros",
+                            Oran = 0m
+                        });
+                });
+
             modelBuilder.Entity("TostLab.Models.SilinenSatir", b =>
                 {
                     b.Property<int>("Id")
@@ -225,6 +272,9 @@ namespace TostLab.Migrations
 
                     b.Property<int?>("KisiSayisi")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("KomisyonOrani")
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("MasaId")
                         .HasColumnType("INTEGER");

@@ -160,9 +160,15 @@ public class AdisyonServisi
         if (Kaynaklar.PlatformMu(adisyon!.Kaynak))
         {
             adisyon.OdemeTuruId = null;
+            // O anki oranı siparişe kopyala: oran sonradan değişse de bu siparişin komisyonu değişmez
+            adisyon.KomisyonOrani = await veritabani.PlatformKomisyonlari
+                .Where(komisyon => komisyon.Kaynak == adisyon.Kaynak)
+                .Select(komisyon => komisyon.Oran)
+                .FirstOrDefaultAsync();
         }
         else
         {
+            adisyon.KomisyonOrani = 0;
             bool odemeVar = await veritabani.OdemeTurleri.AnyAsync(odeme => odeme.Id == istek.OdemeTuruId && odeme.AktifMi);
             if (!odemeVar)
             {

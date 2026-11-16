@@ -29,6 +29,11 @@ public class Siparis
     // Satırların toplamı; her değişiklikte yeniden hesaplanır
     public decimal Toplam { get; set; }
 
+    // Platformun kestiği yüzde, ödeme anında yazılır (masa ve telefon paketinde 0)
+    public decimal KomisyonOrani { get; set; }
+
+    public decimal Komisyon => Math.Round(Toplam * KomisyonOrani / 100, 2);
+
     public List<SiparisSatiri> Satirlar { get; set; } = new();
 
     // İptal bilgileri: sadece Durum = Iptal ise dolu

@@ -17,6 +17,7 @@ public class TostLabDbContext : DbContext
     public DbSet<Siparis> Siparisler => Set<Siparis>();
     public DbSet<SiparisSatiri> SiparisSatirlari => Set<SiparisSatiri>();
     public DbSet<SilinenSatir> SilinenSatirlar => Set<SilinenSatir>();
+    public DbSet<PlatformKomisyonu> PlatformKomisyonlari => Set<PlatformKomisyonu>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,6 +76,16 @@ public class TostLabDbContext : DbContext
             new Masa { Id = 3, Ad = "İç 3" },
             new Masa { Id = 4, Ad = "İç 4" },
             new Masa { Id = 5, Ad = "Dış 1" });
+
+        // Her platform bir kez; oranlar abiden gelince Ayarlar'dan girilecek (şimdilik 0)
+        modelBuilder.Entity<PlatformKomisyonu>()
+            .HasIndex(komisyon => komisyon.Kaynak)
+            .IsUnique();
+        modelBuilder.Entity<PlatformKomisyonu>().HasData(
+            new PlatformKomisyonu { Id = 1, Kaynak = "Yemeksepeti", Oran = 0 },
+            new PlatformKomisyonu { Id = 2, Kaynak = "Getir", Oran = 0 },
+            new PlatformKomisyonu { Id = 3, Kaynak = "Trendyol", Oran = 0 },
+            new PlatformKomisyonu { Id = 4, Kaynak = "Migros", Oran = 0 });
 
         modelBuilder.Entity<OdemeTuru>().HasData(
             new OdemeTuru { Id = 1, Ad = "Nakit" },

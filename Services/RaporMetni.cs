@@ -17,6 +17,7 @@ public static class RaporMetni
         yazi.AppendLine(rapor.Gun.ToString("d MMMM yyyy, dddd"));
         yazi.AppendLine();
         yazi.AppendLine($"*Ciro: {Para(ozet.Ciro)}*");
+        KomisyonVeNet(yazi, ozet);
         yazi.AppendLine($"Adisyon: {ozet.OdenenSayisi} · Ortalama: {Para(rapor.OrtalamaAdisyon)}");
         yazi.AppendLine($"İptal: {ozet.IptalSayisi} ({Para(ozet.IptalTutari)})");
         if (ozet.SilinenUrunAdedi > 0)
@@ -51,6 +52,7 @@ public static class RaporMetni
         yazi.AppendLine(new DateTime(rapor.Yil, rapor.Ay, 1).ToString("MMMM yyyy"));
         yazi.AppendLine();
         yazi.AppendLine($"*Ciro: {Para(ozet.Ciro)}*");
+        KomisyonVeNet(yazi, ozet);
         yazi.AppendLine($"Açık gün: {rapor.Gunler.Count} · Günlük ortalama: {Para(rapor.GunlukOrtalamaCiro)}");
         yazi.AppendLine($"Adisyon: {ozet.OdenenSayisi} · İptal: {ozet.IptalSayisi} ({Para(ozet.IptalTutari)})");
 
@@ -76,6 +78,16 @@ public static class RaporMetni
         foreach (var satir in satirlar)
         {
             yazi.AppendLine($"{satir.Ad}: {Para(satir.Tutar)} ({satir.Adet})");
+        }
+    }
+
+    // Komisyon yoksa (oranlar 0 ya da platform siparişi yok) satır kalabalık etmesin
+    private static void KomisyonVeNet(StringBuilder yazi, GunOzeti ozet)
+    {
+        if (ozet.Komisyon > 0)
+        {
+            yazi.AppendLine($"Platform komisyonu: −{Para(ozet.Komisyon)}");
+            yazi.AppendLine($"*Net kazanç: {Para(ozet.NetKazanc)}*");
         }
     }
 
