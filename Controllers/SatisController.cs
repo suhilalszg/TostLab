@@ -59,7 +59,7 @@ public class SatisController : Controller
 
     [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> Adet([FromBody] AdetIstegi istek) =>
-        Calistir(() => adisyonServisi.AdetDegistirAsync(istek));
+        Calistir(() => adisyonServisi.AdetDegistirAsync(istek, KullaniciId()));
 
     [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> Kisi([FromBody] KisiIstegi istek) =>

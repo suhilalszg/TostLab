@@ -1,0 +1,125 @@
+@model KayitlarSayfasi
+@{
+    ViewData["Title"] = "Kayıtlar";
+    var filtre = Model.Filtre;
+    var gun = filtre.SecilenGun;
+    var ozet = Model.Ozet;
+
+    // Önceki / sonraki gün bağlantısı: diğer seçimler korunur
+    string GunAdresi(DateTime hedef) => Url.Action("Index", new
+    {
+        gun = hedef.ToString("yyyy-MM-dd"),
+        durum = filtre.Durum,
+        kaynak = filtre.Kaynak,
+        odemeTuruId = filtre.OdemeTuruId
+    })!;
+}
+
+<form method="get" class="kayit-filtre">
+    <a class="btn btn-link" href="@GunAdresi(gun.AddDays(-1))" title="Önceki gün">‹</a>
+    <input type="date" name="gun" class="form-control" value="@gun.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+    <a class="btn btn-link" href="@GunAdresi(gun.AddDays(1))" title="Sonraki gün">›</a>
+
+    <select name="durum" class="form-select" onchange="this.form.submit()">
+        <option value="">Tüm durumlar</option>
+        @foreach (var durum in Enum.GetValues<AdisyonDurumu>())
+        {
+            <option value="@durum" selected="@(filtre.Durum == durum)">@DurumYazisi.Yaz(durum)</option>
+        }
+    </select>
+
+    <select name="kaynak" class="form-select" onchange="this.form.submit()">
+        <option value="">Tüm kaynaklar</option>
+        @foreach (var kaynak in Kaynaklar.Hepsi)
+        {
+            <option value="@kaynak" selected="@(filtre.Kaynak == kaynak)">@kaynak</option>
+        }
+    </select>
+
+    <select name="odemeTuruId" class="form-select" onchange="this.form.submit()">
+        <option value="">Tüm ödemeler</option>
+        @foreach (var odeme in Model.OdemeTurleri)
+        {
+            <option value="@odeme.Id" selected="@(filtre.OdemeTuruId == odeme.Id)">@odeme.Ad</option>
+        }
+    </select>
+</form>
+
+<div class="kutular">
+    <div class="kutu vurgulu"><div class="etiket">Ciro</div><div class="deger">@ozet.Ciro.ToString("N2") ₺</div></div>
+    <div class="kutu"><div class="etiket">Ödenen adisyon</div><div class="deger">@ozet.OdenenSayisi</div></div>
+    <div class="kutu"><div class="etiket">İptal</div><div class="deger">@ozet.IptalSayisi <small>· @ozet.IptalTutari.ToString("N2") ₺</small></div></div>
+    <div class="kutu"><div class="etiket">Silinen ürün</div><div class="deger">@ozet.SilinenUrunAdedi <small>· @ozet.SilinenTutar.ToString("N2") ₺</small></div></div>
+    @if (ozet.AcikSayisi > 0)
+    {
+        <div class="kutu"><div class="etiket">Hâlâ açık</div><div class="deger">@ozet.AcikSayisi</div></div>
+    }
+</div>
+
+<section class="kart">
+    @if (Model.Kayitlar.Count == 0)
+    {
+        <p class="bos-yazi">Bu gün için kayıt yok.</p>
+    }
+    else
+    {
+        <table class="table kayit-tablo">
+            <thead>
+                <tr>
+                    <th>No</th><th>Saat</th><th>Adisyon</th><th>Kaynak</th><th>Ödeme</th>
+                    <th class="sag">Ürün</th><th class="sag">Tutar</th><th>Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var kayit in Model.Kayitlar)
+                {
+                    var detayAdresi = Url.Action("Detay", new { id = kayit.Id });
+                    <tr class="tiklanir" onclick="location.href='@detayAdresi'">
+                        <td><a href="@detayAdresi">#@kayit.Id</a></td>
+                        <td>@kayit.Acilis.ToString("HH:mm")@(kayit.Kapanis is DateTime kapanis ? $"–{kapanis:HH:mm}" : "")</td>
+                        <td>@kayit.Baslik</td>
+                        <td>@kayit.Kaynak</td>
+                        <td>@(kayit.OdemeTuru ?? (Kaynaklar.PlatformMu(kayit.Kaynak) ? "Online" : "—"))</td>
+                        <td class="sag">@kayit.UrunAdedi</td>
+                        <td class="sag @(kayit.Durum == AdisyonDurumu.Iptal ? "ustu-cizili" : "")">@kayit.Toplam.ToString("N2")</td>
+                        <td><span class="durum durum-@kayit.Durum.ToString().ToLower()">@DurumYazisi.Yaz(kayit.Durum)</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@if (Model.Silinenler.Count > 0)
+{
+    <h2 class="bolum-baslik">Adisyondan silinen ürünler</h2>
+    <section class="kart">
+        <table class="table kayit-tablo">
+            <thead>
+                <tr><th>Saat</th><th>Adisyon</th><th>Ürün</th><th class="sag">Adet</th><th class="sag">Tutar</th><th>Kim</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var iz in Model.Silinenler)
+                {
+                    <tr>
+                        <td>@iz.Saat.ToString("HH:mm")</td>
+                        <td>
+                            @if (iz.AdisyonDuruyorMu)
+                            {
+                                <a asp-action="Detay" asp-route-id="@iz.SiparisId">@iz.AdisyonBasligi #@iz.SiparisId</a>
+                            }
+                            else
+                            {
+                                <span title="Son ürün de silindiği için adisyon kalmadı">@iz.AdisyonBasligi (boşaltıldı)</span>
+                            }
+                        </td>
+                        <td>@iz.UrunAdi</td>
+                        <td class="sag">@iz.Adet</td>
+                        <td class="sag">@iz.Tutar.ToString("N2")</td>
+                        <td>@iz.Kullanici</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}

@@ -1,0 +1,87 @@
+@model AdisyonDetayi
+@{
+    ViewData["Title"] = $"Adisyon #{Model.Id}";
+}
+
+<a class="btn btn-link geri" asp-action="Index" asp-route-gun="@Model.Acilis.ToString("yyyy-MM-dd")">‹ Kayıtlar</a>
+
+<div class="detay-izgara">
+    <div class="fis kayit-fis">
+        @if (Model.Durum != AdisyonDurumu.Acik)
+        {
+            <div class="damga damga-@Model.Durum.ToString().ToLower()">@DurumYazisi.Yaz(Model.Durum).ToUpper()</div>
+        }
+
+        <div class="fis-baslik">
+            <b>TOST LAB</b>
+            <span>Adisyon #@Model.Id · @Model.Baslik</span>
+            <span>@Model.Acilis.ToString("d MMMM yyyy HH:mm")@(Model.Kapanis is DateTime kapanis ? $" – {kapanis:HH:mm}" : "")</span>
+        </div>
+
+        @foreach (var satir in Model.Satirlar)
+        {
+            <div class="fis-satir">
+                <span>@satir.Adet × @satir.Ad</span>
+                <span>@satir.Tutar.ToString("N2")</span>
+            </div>
+        }
+
+        <div class="fis-satir toplam">
+            <span>TOPLAM</span>
+            <span>@Model.Toplam.ToString("N2") ₺</span>
+        </div>
+
+        <div class="fis-alt">
+            <span>Kaynak: @Model.Kaynak</span>
+            @if (Model.OdemeTuru != null)
+            {
+                <span>Ödeme: @Model.OdemeTuru</span>
+            }
+            else if (Kaynaklar.PlatformMu(Model.Kaynak) && Model.Durum == AdisyonDurumu.Odendi)
+            {
+                <span>Ödeme: Online (@Model.Kaynak)</span>
+            }
+            @if (Model.KisiSayisi is int kisi)
+            {
+                <span>Kişi: @kisi</span>
+            }
+        </div>
+    </div>
+
+    <div>
+        @if (Model.Durum == AdisyonDurumu.Iptal)
+        {
+            <section class="kart iptal-kart">
+                <h2>İptal</h2>
+                <p><b>Neden:</b> @Model.IptalNedeni</p>
+                <p><b>Eden:</b> @(Model.IptalEden ?? "—") · @Model.Kapanis?.ToString("HH:mm")</p>
+            </section>
+        }
+
+        <section class="kart">
+            <h2>Silinen ürünler</h2>
+            @if (Model.Silinenler.Count == 0)
+            {
+                <p class="bos-yazi">Bu adisyondan ürün silinmedi.</p>
+            }
+            else
+            {
+                <table class="table kayit-tablo">
+                    <thead><tr><th>Saat</th><th>Ürün</th><th class="sag">Adet</th><th class="sag">Tutar</th><th>Kim</th></tr></thead>
+                    <tbody>
+                        @foreach (var iz in Model.Silinenler)
+                        {
+                            <tr>
+                                <td>@iz.Saat.ToString("HH:mm")</td>
+                                <td>@iz.UrunAdi</td>
+                                <td class="sag">@iz.Adet</td>
+                                <td class="sag">@iz.Tutar.ToString("N2")</td>
+                                <td>@iz.Kullanici</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    </div>
+</div>

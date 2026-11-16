@@ -16,6 +16,7 @@ public class TostLabDbContext : DbContext
     public DbSet<Urun> Urunler => Set<Urun>();
     public DbSet<Siparis> Siparisler => Set<Siparis>();
     public DbSet<SiparisSatiri> SiparisSatirlari => Set<SiparisSatiri>();
+    public DbSet<SilinenSatir> SilinenSatirlar => Set<SilinenSatir>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -49,6 +50,18 @@ public class TostLabDbContext : DbContext
         // Satış ekranı sık sık "açık adisyonları" sorar: bu sorgu hızlı olsun
         modelBuilder.Entity<Siparis>()
             .HasIndex(siparis => new { siparis.Durum, siparis.MasaId });
+
+        // Kayıtlar sayfası günü tarihle süzer
+        modelBuilder.Entity<Siparis>()
+            .HasIndex(siparis => siparis.Tarih);
+
+        // Silinen ürün izi: kullanıcı silinemez, iz kaybolmasın
+        modelBuilder.Entity<SilinenSatir>()
+            .HasOne(iz => iz.Kullanici)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SilinenSatir>().HasIndex(iz => iz.Saat);
+        modelBuilder.Entity<SilinenSatir>().HasIndex(iz => iz.SiparisId);
 
         // Aynı kullanıcı adı iki kez kullanılamasın
         modelBuilder.Entity<Kullanici>()

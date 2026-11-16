@@ -155,6 +155,49 @@ namespace TostLab.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TostLab.Models.SilinenSatir", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Adet")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdisyonBasligi")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("BirimFiyat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("KullaniciId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Saat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SiparisId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UrunAdi")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UrunId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KullaniciId");
+
+                    b.HasIndex("Saat");
+
+                    b.HasIndex("SiparisId");
+
+                    b.ToTable("SilinenSatirlar");
+                });
+
             modelBuilder.Entity("TostLab.Models.Siparis", b =>
                 {
                     b.Property<int>("Id")
@@ -202,6 +245,8 @@ namespace TostLab.Migrations
                     b.HasIndex("MasaId");
 
                     b.HasIndex("OdemeTuruId");
+
+                    b.HasIndex("Tarih");
 
                     b.HasIndex("Durum", "MasaId");
 
@@ -261,6 +306,17 @@ namespace TostLab.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Urunler");
+                });
+
+            modelBuilder.Entity("TostLab.Models.SilinenSatir", b =>
+                {
+                    b.HasOne("TostLab.Models.Kullanici", "Kullanici")
+                        .WithMany()
+                        .HasForeignKey("KullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Kullanici");
                 });
 
             modelBuilder.Entity("TostLab.Models.Siparis", b =>

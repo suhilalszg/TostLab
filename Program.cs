@@ -46,6 +46,8 @@ builder.Services.AddSingleton<IPasswordHasher<Kullanici>, PasswordHasher<Kullani
 
 // Adisyon kuralları: her istekte veritabanıyla birlikte yeni bir tane oluşur (scoped)
 builder.Services.AddScoped<AdisyonServisi>();
+// Raporlar (Kayıtlar, Bugün, Gün sonu): sadece okur
+builder.Services.AddScoped<RaporServisi>();
 
 var app = builder.Build();
 

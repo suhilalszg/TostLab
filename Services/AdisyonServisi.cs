@@ -92,11 +92,28 @@ public class AdisyonServisi
     }
 
     // − / + / sil: adet 0 olursa satır silinir; adisyonda satır kalmazsa adisyon da silinir (masa boşalır)
-    public async Task<AdisyonBilgisi?> AdetDegistirAsync(AdetIstegi istek)
+    // Adet azalırsa (ya da satır silinirse) kim, ne zaman, neyi çıkardı: SilinenSatirlar tablosuna yazılır.
+    public async Task<AdisyonBilgisi?> AdetDegistirAsync(AdetIstegi istek, int kullaniciId)
     {
         var adisyon = await AcikAdisyonuYukleAsync(istek.AdisyonId, zorunlu: true);
         var satir = adisyon!.Satirlar.FirstOrDefault(oge => oge.Id == istek.SatirId)
             ?? throw new AdisyonHatasi("Satır bulunamadı. Sayfayı yenile.");
+
+        int yeniAdet = Math.Clamp(istek.Adet, 0, 99);
+        if (yeniAdet < satir.Adet)
+        {
+            veritabani.SilinenSatirlar.Add(new SilinenSatir
+            {
+                SiparisId = adisyon.Id,
+                AdisyonBasligi = adisyon.Masa?.Ad ?? PaketBasligi(adisyon.Kaynak, adisyon.Tarih),
+                UrunId = satir.UrunId,
+                UrunAdi = satir.Urun.Ad,
+                Adet = satir.Adet - yeniAdet,
+                BirimFiyat = satir.BirimFiyat,
+                Saat = DateTime.Now,
+                KullaniciId = kullaniciId
+            });
+        }
 
         if (istek.Adet <= 0)
         {
@@ -256,7 +273,7 @@ public class AdisyonServisi
     }
 
     // "Getir 14:05": kasada hangi sipariş olduğu saatle daha kolay anlaşılır
-    private static string PaketBasligi(string kaynak, DateTime acilis) => $"{kaynak} {acilis:HH:mm}";
+    public static string PaketBasligi(string kaynak, DateTime acilis) => $"{kaynak} {acilis:HH:mm}";
 
     private static AdisyonBilgisi Bilgiye(Siparis adisyon)
     {

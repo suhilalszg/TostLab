@@ -43,6 +43,7 @@
                 <a asp-controller="Home" asp-action="Index" class="@(aktifSayfa == "Home" ? "secili" : "")">Bugün</a>
                 @if (yoneticiMi)
                 {
+                    <a asp-controller="Kayitlar" asp-action="Index" class="@(aktifSayfa == "Kayitlar" ? "secili" : "")">Kayıtlar</a>
                     <a asp-controller="Urunler" asp-action="Index" class="@(aktifSayfa == "Urunler" ? "secili" : "")">Menü</a>
                     <a asp-controller="Ayarlar" asp-action="Index" class="@(aktifSayfa == "Ayarlar" ? "secili" : "")">Ayarlar</a>
                     <a asp-controller="Kullanicilar" asp-action="Index" class="@(aktifSayfa == "Kullanicilar" ? "secili" : "")">Kullanıcılar</a>
