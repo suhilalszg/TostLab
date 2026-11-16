@@ -4,7 +4,7 @@ using TostLab.Models;
 
 namespace TostLab.Services;
 
-// Sadece OKUR, hiçbir şeyi değiştirmez. Kayıtlar, Bugün ve Gün sonu sayfaları buradan beslenir.
+// Sadece OKUR, hiçbir şeyi değiştirmez. Adisyon paneli, Bugün ve Gün sonu sayfaları buradan beslenir.
 // Not: SQLite ondalık (decimal) sayıları SQL içinde toplayamaz. Bir günün kaydı az olduğu için
 // satırları çekip toplamı C# tarafında (LINQ to Objects) alıyoruz.
 public class RaporServisi
@@ -16,14 +16,62 @@ public class RaporServisi
         this.veritabani = veritabani;
     }
 
-    public async Task<KayitlarSayfasi> KayitlarAsync(KayitFiltresi filtre)
-    {
-        DateTime gunBasi = filtre.SecilenGun;
-        DateTime gunSonu = gunBasi.AddDays(1);
+    // ===================== ADİSYON PANELİ (gün / hafta / ay) =====================
 
+    public async Task<AdisyonPaneli> AdisyonPaneliAsync(PanelFiltresi filtre)
+    {
+        DateTime bas = filtre.Baslangic;
+        DateTime son = filtre.Bitis;
+
+        // Rakamlar ve kırılımlar: dönemin tamamı (en çok satan 10 ürün)
+        var rapor = await AralikRaporuAsync(bas, son, enCokSatanSayisi: 10);
+        var adisyonlar = await GununAdisyonOzetleriAsync(bas, son);
+        var odenenler = adisyonlar.Where(adisyon => adisyon.Durum == AdisyonDurumu.Odendi).ToList();
+
+        // Bir önceki aynı uzunluktaki dönem (dün / geçen hafta / geçen ay)
+        DateTime oncekiBas = filtre.Donem == Donem.Ay ? bas.AddMonths(-1) : bas - (son - bas);
+        var oncekiToplamlar = await veritabani.Siparisler.AsNoTracking()
+            .Where(siparis => siparis.Durum == AdisyonDurumu.Odendi && siparis.Tarih >= oncekiBas && siparis.Tarih < bas)
+            .Select(siparis => siparis.Toplam)
+            .ToListAsync();
+
+        // Günlük çubuklar: dönemin her günü (satış olmayan gün 0)
+        var gunler = new List<GunlukSatir>();
+        for (DateTime gun = bas; gun < son; gun = gun.AddDays(1))
+        {
+            var gununkiler = odenenler.Where(adisyon => adisyon.Tarih.Date == gun).ToList();
+            gunler.Add(new GunlukSatir(gun, gununkiler.Count, gununkiler.Sum(adisyon => adisyon.Toplam),
+                gununkiler.Sum(adisyon => adisyon.Komisyon)));
+        }
+
+        // Kategoriye göre satış (ikram satırları 0 ₺ sayılır)
+        var kategoriSatirlari = await veritabani.SiparisSatirlari.AsNoTracking()
+            .Where(satir => satir.Siparis.Durum == AdisyonDurumu.Odendi && satir.Siparis.Tarih >= bas && satir.Siparis.Tarih < son)
+            .Select(satir => new { satir.Urun.Kategori, satir.Adet, BirimFiyat = satir.IkramMi ? 0 : satir.BirimFiyat })
+            .ToListAsync();
+        var kategoriKirilimi = kategoriSatirlari
+            .GroupBy(satir => satir.Kategori)
+            .Select(grup => new KirilimSatiri(grup.Key, grup.Sum(satir => satir.Adet), grup.Sum(satir => satir.Adet * satir.BirimFiyat)))
+            .OrderByDescending(kirilim => kirilim.Tutar)
+            .ToList();
+
+        var kayitlar = await KayitListesiAsync(bas, son, filtre.Durum, filtre.Kaynak, filtre.OdemeTuruId);
+        var silinenler = await SilinenleriGetirAsync(iz => iz.Saat >= bas && iz.Saat < son);
+        var odemeTurleri = await veritabani.OdemeTurleri.AsNoTracking().OrderBy(odeme => odeme.Id).ToListAsync();
+
+        return new AdisyonPaneli(filtre, rapor, oncekiToplamlar.Sum(),
+            odenenler.Where(adisyon => adisyon.KomisyonOrani > 0).Sum(adisyon => adisyon.Toplam),
+            gunler, kategoriKirilimi, kayitlar, silinenler, odemeTurleri);
+    }
+
+    // Dönemin adisyon listesi; durum / kaynak / ödeme seçildiyse süzülür
+    private async Task<List<KayitSatiri>> KayitListesiAsync(DateTime bas, DateTime son,
+        AdisyonDurumu? durumSuzgeci, string? kaynakSuzgeci, int? odemeSuzgeci)
+    {
         // Adisyon hangi gün açıldıysa o güne sayılır (dükkan 12'de kapanıyor)
         var gununAdisyonlari = veritabani.Siparisler.AsNoTracking()
-            .Where(siparis => siparis.Tarih >= gunBasi && siparis.Tarih < gunSonu);
+            .Where(siparis => siparis.Tarih >= bas && siparis.Tarih < son);
+        var filtre = new { Durum = durumSuzgeci, Kaynak = kaynakSuzgeci, OdemeTuruId = odemeSuzgeci };
 
         // 1) Filtreyi uygula: her seçim sorguya bir Where daha ekler (henüz veritabanına gidilmedi)
         var suzulmus = gununAdisyonlari;
@@ -57,22 +105,13 @@ public class RaporServisi
             })
             .ToListAsync();
 
-        var kayitlar = hamKayitlar
+        return hamKayitlar
             .Select(kayit => new KayitSatiri(
                 kayit.Id,
                 kayit.MasaAdi ?? AdisyonServisi.PaketBasligi(kayit.Kaynak, kayit.Tarih),
                 kayit.Kaynak, kayit.Durum, kayit.Tarih, kayit.KapanisSaati,
                 kayit.OdemeTuru, kayit.UrunAdedi, kayit.Toplam))
             .ToList();
-
-        // 3) Özet: filtreden bağımsız, günün tamamı
-        var gununHepsi = await GununAdisyonOzetleriAsync(gunBasi, gunSonu);
-        var silinenler = await SilinenleriGetirAsync(iz => iz.Saat >= gunBasi && iz.Saat < gunSonu);
-        var ozet = OzetHesapla(gununHepsi, silinenler, await IkramlariGetirAsync(gunBasi, gunSonu));
-
-        var odemeTurleri = await veritabani.OdemeTurleri.AsNoTracking().OrderBy(odeme => odeme.Id).ToListAsync();
-
-        return new KayitlarSayfasi(filtre, ozet, kayitlar, silinenler, odemeTurleri);
     }
 
     public async Task<AdisyonDetayi?> AdisyonDetayiAsync(int adisyonId)
@@ -129,11 +168,84 @@ public class RaporServisi
 
     // ===================== GÜN RAPORU (Bugün sayfası, ileride Gün sonu) =====================
 
-    public async Task<GunRaporu> GunRaporuAsync(DateTime gun)
-    {
-        DateTime gunBasi = gun.Date;
-        DateTime gunSonu = gunBasi.AddDays(1);
+    public Task<GunRaporu> GunRaporuAsync(DateTime gun) => AralikRaporuAsync(gun.Date, gun.Date.AddDays(1));
 
+    // ===================== PANO (Bugün sayfası: bugün / dün / bu hafta) =====================
+
+    public async Task<PanoRaporu> PanoAsync(PanoAraligi aralik)
+    {
+        DateTime bugun = DateTime.Today;
+        // Hafta pazartesi başlar
+        DateTime haftaBasi = bugun.AddDays(-(((int)bugun.DayOfWeek + 6) % 7));
+        var (baslangic, bitis) = aralik switch
+        {
+            PanoAraligi.Dun => (bugun.AddDays(-1), bugun),
+            PanoAraligi.Hafta => (haftaBasi, bugun.AddDays(1)),
+            _ => (bugun, bugun.AddDays(1))
+        };
+
+        var rapor = await AralikRaporuAsync(baslangic, bitis);
+
+        // Karşılaştırma: bir hafta önceki aynı aralık (aynı gün ya da geçen hafta)
+        DateTime oncekiBas = baslangic.AddDays(-7);
+        DateTime oncekiSon = bitis.AddDays(-7);
+        var oncekiToplamlar = await veritabani.Siparisler.AsNoTracking()
+            .Where(siparis => siparis.Durum == AdisyonDurumu.Odendi && siparis.Tarih >= oncekiBas && siparis.Tarih < oncekiSon)
+            .Select(siparis => siparis.Toplam)
+            .ToListAsync();
+        var turkce = new System.Globalization.CultureInfo("tr-TR");
+        string oncekiAdi = aralik == PanoAraligi.Hafta
+            ? "geçen hafta"
+            : "geçen " + baslangic.ToString("dddd", turkce).ToLower(turkce);
+
+        // Aralığın adisyonları: ilk açılış saati, platform cirosu ve son siparişler bunlardan
+        var adisyonlar = await veritabani.Siparisler.AsNoTracking()
+            .Where(siparis => siparis.Tarih >= baslangic && siparis.Tarih < bitis)
+            .Select(siparis => new
+            {
+                siparis.Id,
+                siparis.Tarih,
+                siparis.Kaynak,
+                MasaAdi = siparis.Masa != null ? siparis.Masa.Ad : null,
+                siparis.Toplam,
+                siparis.Durum,
+                siparis.KomisyonOrani
+            })
+            .ToListAsync();
+
+        decimal platformCirosu = adisyonlar
+            .Where(adisyon => adisyon.Durum == AdisyonDurumu.Odendi && adisyon.KomisyonOrani > 0)
+            .Sum(adisyon => adisyon.Toplam);
+
+        // Son 6 sipariş: ürünleri ayrı sorguyla (sadece bu 6 adisyonun satırları)
+        var sonAltisi = adisyonlar.OrderByDescending(adisyon => adisyon.Tarih).Take(6).ToList();
+        var sonIdler = sonAltisi.Select(adisyon => adisyon.Id).ToList();
+        var sonSatirlar = await veritabani.SiparisSatirlari.AsNoTracking()
+            .Where(satir => sonIdler.Contains(satir.SiparisId))
+            .OrderBy(satir => satir.Id)
+            .Select(satir => new { satir.SiparisId, satir.Urun.Ad, satir.Adet })
+            .ToListAsync();
+        var sonSiparisler = sonAltisi
+            .Select(adisyon => new SonSiparis(
+                adisyon.Id,
+                adisyon.Tarih,
+                adisyon.Kaynak,
+                adisyon.MasaAdi ?? adisyon.Kaynak,
+                string.Join(", ", sonSatirlar
+                    .Where(satir => satir.SiparisId == adisyon.Id)
+                    .Select(satir => satir.Adet > 1 ? $"{satir.Adet}× {satir.Ad}" : satir.Ad)),
+                adisyon.Toplam,
+                adisyon.Durum))
+            .ToList();
+
+        return new PanoRaporu(aralik, baslangic, bitis, rapor, oncekiToplamlar.Sum(), oncekiAdi,
+            adisyonlar.Count == 0 ? null : adisyonlar.Min(adisyon => adisyon.Tarih),
+            platformCirosu, sonSiparisler);
+    }
+
+    // Bir zaman aralığının raporu (bir gün ya da bir hafta)
+    private async Task<GunRaporu> AralikRaporuAsync(DateTime gunBasi, DateTime gunSonu, int enCokSatanSayisi = 5)
+    {
         var gununHepsi = await GununAdisyonOzetleriAsync(gunBasi, gunSonu);
         var silinenler = await SilinenleriGetirAsync(iz => iz.Saat >= gunBasi && iz.Saat < gunSonu);
         var odenenler = gununHepsi.Where(adisyon => adisyon.Durum == AdisyonDurumu.Odendi).ToList();
@@ -148,7 +260,7 @@ public class RaporServisi
             .GroupBy(satir => satir.Ad)
             .Select(grup => new KirilimSatiri(grup.Key, grup.Sum(satir => satir.Adet), grup.Sum(satir => satir.Adet * satir.BirimFiyat)))
             .OrderByDescending(kirilim => kirilim.Adet).ThenByDescending(kirilim => kirilim.Tutar)
-            .Take(5)
+            .Take(enCokSatanSayisi)
             .ToList();
 
         // Saatlere göre sipariş sayısı (iptaller hariç): en yoğun saatleri görmek için
@@ -191,7 +303,7 @@ public class RaporServisi
 
     // ===================== YARDIMCILAR =====================
 
-    // Ödeme türüne göre: platform siparişinin ödeme türü yok, parası uygulamada ödendi -> "Online"
+    // Ödeme kırılımı: platform siparişinin ödeme türü yok, parası uygulamada ödendi -> "Online"
     private static List<KirilimSatiri> OdemeKirilimi(List<AdisyonOzeti> odenenler) => odenenler
         .GroupBy(adisyon => adisyon.OdemeTuru ?? "Online")
         .Select(grup => new KirilimSatiri(grup.Key, grup.Count(), grup.Sum(adisyon => adisyon.Toplam)))

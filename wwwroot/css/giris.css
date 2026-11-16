@@ -23,7 +23,7 @@ body {
 
 .giris-serit {
     width: 68px;
-    background: var(--menu-gradyan, var(--menu));
+    background: var(--menu);
     color: var(--sari);
     display: flex;
     align-items: center;
@@ -37,11 +37,7 @@ body {
     font-size: 25px;
     letter-spacing: .12em;
     color: var(--sari);
-    background: linear-gradient(90deg, #C084FC 0%, #F0ABFC 35%, #FFFFFF 55%, #F9A8D4 75%, #EC4899 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 6px rgba(236, 72, 153, .45));
+    letter-spacing: .2em;
 }
 
 .giris-form {
@@ -91,8 +87,8 @@ body {
     padding: 11px;
     font: inherit;
     font-weight: 700;
-    background: var(--gradyan);
-    color: #fff;
+    background: var(--antrasit);
+    color: var(--sari);
     border: 0;
     border-radius: 8px;
     cursor: pointer;

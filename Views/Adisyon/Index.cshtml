@@ -1,0 +1,394 @@
+@model AdisyonPaneli
+@{
+    ViewData["Title"] = "Adisyon";
+    ViewData["UstBarYok"] = true;   // başlığı ve dönem seçiciyi bu sayfa çizer
+
+    var filtre = Model.Filtre;
+    var rapor = Model.Rapor;
+    var ozet = rapor.Ozet;
+    var turkce = new System.Globalization.CultureInfo("tr-TR");
+    var noktali = System.Globalization.CultureInfo.InvariantCulture;
+    string Para(decimal tutar) => tutar.ToString("N0", turkce) + " ₺";
+    bool cokGunluMu = filtre.Donem != Donem.Gun;
+
+    string donemYazisi = filtre.Donem switch
+    {
+        Donem.Hafta => $"{filtre.Baslangic.ToString("d MMMM", turkce)} – {filtre.Bitis.AddDays(-1).ToString("d MMMM yyyy", turkce)}",
+        Donem.Ay => filtre.Baslangic.ToString("MMMM yyyy", turkce),
+        _ => filtre.Baslangic.ToString("d MMMM yyyy, dddd", turkce)
+    };
+    string oncekiAdi = filtre.Donem switch { Donem.Hafta => "geçen hafta", Donem.Ay => "geçen ay", _ => "önceki gün" };
+
+    // Adres üretici: dönem / tarih / süzgeçler korunur, verilen değişir
+    string Adres(Donem? donem = null, DateTime? tarih = null, bool suzgecleriTut = true) => Url.Action("Index", new
+    {
+        donem = donem ?? filtre.Donem,
+        tarih = (tarih ?? filtre.SecilenTarih).ToString("yyyy-MM-dd"),
+        durum = suzgecleriTut ? filtre.Durum : null,
+        kaynak = suzgecleriTut ? filtre.Kaynak : null,
+        odemeTuruId = suzgecleriTut ? filtre.OdemeTuruId : null
+    })!;
+
+    // Saatlik grafik: ilk ve son saat arası boşluklar 0
+    var saatlik = new List<SaatSatiri>();
+    if (rapor.Saatlik.Count > 0)
+    {
+        for (int saat = rapor.Saatlik.Min(s => s.Saat); saat <= rapor.Saatlik.Max(s => s.Saat); saat++)
+        {
+            saatlik.Add(new SaatSatiri(saat, rapor.Saatlik.FirstOrDefault(s => s.Saat == saat)?.Adet ?? 0));
+        }
+    }
+    int enCokSaat = saatlik.Count == 0 ? 1 : Math.Max(1, saatlik.Max(s => s.Adet));
+    var yogunSaatler = saatlik.Where(s => s.Adet > 0).OrderByDescending(s => s.Adet).ThenBy(s => s.Saat).Take(2).Select(s => s.Saat).ToList();
+
+    decimal enYuksekGun = Model.Gunler.Count == 0 ? 1 : Math.Max(1, Model.Gunler.Max(g => g.Ciro));
+    var enIyiGun = Model.Gunler.Where(g => g.Ciro > 0).OrderByDescending(g => g.Ciro).FirstOrDefault();
+    int satisliGun = Model.Gunler.Count(g => g.Ciro > 0);
+
+    decimal suzulmusToplam = Model.Kayitlar.Where(k => k.Durum == AdisyonDurumu.Odendi).Sum(k => k.Toplam);
+    bool suzgecVar = filtre.Durum != null || filtre.Kaynak != null || filtre.OdemeTuruId != null;
+}
+
+@section Stiller {
+    <link rel="stylesheet" href="~/css/pano.css" asp-append-version="true" />
+}
+
+<div class="pano">
+    @* ---------- Başlık + dönem seçici ---------- *@
+    <header class="pano-ust">
+        <div>
+            <h1>ADİSYON</h1>
+            <span class="pano-tarih">@donemYazisi</span>
+        </div>
+        <div class="pano-sag">
+            <nav class="aralik-secici">
+                <a href="@Adres(Donem.Gun)" class="@(filtre.Donem == Donem.Gun ? "secili" : "")">Gün</a>
+                <a href="@Adres(Donem.Hafta)" class="@(filtre.Donem == Donem.Hafta ? "secili" : "")">Hafta</a>
+                <a href="@Adres(Donem.Ay)" class="@(filtre.Donem == Donem.Ay ? "secili" : "")">Ay</a>
+            </nav>
+            <form method="get" class="tarih-secici">
+                <a href="@Adres(tarih: filtre.OncekiTarih)" title="Önceki">‹</a>
+                <input type="hidden" name="donem" value="@filtre.Donem" />
+                <input type="date" name="tarih" value="@filtre.SecilenTarih.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+                <a href="@Adres(tarih: filtre.SonrakiTarih)" title="Sonraki">›</a>
+            </form>
+            @if (filtre.Donem == Donem.Ay)
+            {
+                <a class="yeni-siparis" asp-controller="GunSonu" asp-action="Ay" asp-route-yil="@filtre.Baslangic.Year" asp-route-ay="@filtre.Baslangic.Month">Aylık rapor</a>
+            }
+            else
+            {
+                <a class="yeni-siparis" asp-controller="GunSonu" asp-action="Index" asp-route-gun="@filtre.SecilenTarih.ToString("yyyy-MM-dd")">Gün sonu</a>
+            }
+        </div>
+    </header>
+
+    @if (ozet.AcikSayisi > 0)
+    {
+        <p class="pano-uyari"><b>@ozet.AcikSayisi</b> adisyon hâlâ açık: kapanmadan ciroya girmez.</p>
+    }
+
+    @* ---------- Rakamlar ---------- *@
+    <section class="pano-kutular alti">
+        <div class="pano-kutu one-cikan">
+            <span class="etiket">Net kazanç</span>
+            <b>@Para(ozet.NetKazanc)</b>
+            <small>komisyon sonrası</small>
+        </div>
+        <div class="pano-kutu">
+            <span class="etiket">Brüt ciro</span>
+            <b>@Para(ozet.Ciro)</b>
+            @if (Model.DegisimYuzdesi is decimal degisim)
+            {
+                <small><span class="@(degisim >= 0 ? "artis" : "azalis")">@(degisim >= 0 ? "▲" : "▼") %@Math.Abs(degisim).ToString("0", turkce)</span> @oncekiAdi</small>
+            }
+            else
+            {
+                <small>@oncekiAdi satış yok</small>
+            }
+        </div>
+        <div class="pano-kutu">
+            <span class="etiket">Adisyon</span>
+            <b>@ozet.OdenenSayisi</b>
+            <small>ortalama fiş @Para(rapor.OrtalamaAdisyon)</small>
+        </div>
+        <div class="pano-kutu">
+            <span class="etiket">Komisyon</span>
+            <b class="@(ozet.Komisyon > 0 ? "eksi" : "")">@(ozet.Komisyon > 0 ? "−" : "")@Para(ozet.Komisyon)</b>
+            <small>@(ozet.Komisyon > 0 ? $"platform cirosundan %{Model.KomisyonYuzdesi.ToString("0", turkce)}" : "platform siparişi yok")</small>
+        </div>
+        <div class="pano-kutu">
+            <span class="etiket">İskonto + ikram</span>
+            <b>@Para(ozet.IndirimToplami + ozet.IkramTutari)</b>
+            <small>@ozet.IkramAdedi ikram · @Para(ozet.IndirimToplami) iskonto</small>
+        </div>
+        <div class="pano-kutu">
+            <span class="etiket">İptal + iade</span>
+            <b>@(ozet.IptalSayisi + ozet.IadeSayisi)</b>
+            <small class="@(ozet.IptalTutari + ozet.IadeTutari > 0 ? "eksi" : "")">@Para(ozet.IptalTutari + ozet.IadeTutari) kayıp</small>
+        </div>
+    </section>
+
+    @* ---------- Ana grafik + ödeme ---------- *@
+    <section class="pano-izgara ust">
+        <div class="pano-kart">
+            @if (cokGunluMu)
+            {
+                <div class="kart-baslik">
+                    <h2>Günlük ciro</h2>
+                    <span>
+                        @if (enIyiGun != null)
+                        {
+                            @:en iyi gün @enIyiGun.Gun.ToString("d MMM ddd", turkce) · günlük ortalama @Para(satisliGun == 0 ? 0 : ozet.Ciro / satisliGun)
+                        }
+                        else
+                        {
+                            @:bu dönemde satış yok
+                        }
+                    </span>
+                </div>
+                <div class="saat-grafik gunluk">
+                    @foreach (var gun in Model.Gunler)
+                    {
+                        <a class="saat-sutun" href="@Adres(Donem.Gun, gun.Gun)" title="@gun.Gun.ToString("d MMMM dddd", turkce) · @gun.Adet adisyon · @Para(gun.Ciro)">
+                            <span class="sayi">@(gun.Ciro > 0 ? (gun.Ciro >= 1000 ? (gun.Ciro / 1000).ToString("0.#", turkce) + "b" : gun.Ciro.ToString("0", turkce)) : "")</span>
+                            <div class="yigin" style="height:@((gun.Ciro * 100 / enYuksekGun).ToString("0.##", noktali))%">
+                                @if (gun.Komisyon > 0)
+                                {
+                                    <div class="komisyon-parca" style="height:@((gun.Komisyon * 100 / Math.Max(1, gun.Ciro)).ToString("0.##", noktali))%"></div>
+                                }
+                                <div class="cubuk @(gun.Gun == DateTime.Today ? "yogun" : "")"></div>
+                            </div>
+                            <span class="saat">@(filtre.Donem == Donem.Hafta ? gun.Gun.ToString("ddd", turkce) : gun.Gun.Day.ToString())</span>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="kart-baslik">
+                    <h2>Saatlik sipariş</h2>
+                    @if (yogunSaatler.Count > 0)
+                    {
+                        <span>en yoğun @string.Join(" ve ", yogunSaatler.OrderBy(s => s).Select(s => $"{s:00}:00"))</span>
+                    }
+                </div>
+                @if (saatlik.Count == 0)
+                {
+                    <p class="pano-bos">Bu gün sipariş yok.</p>
+                }
+                else
+                {
+                    <div class="saat-grafik">
+                        @foreach (var saat in saatlik)
+                        {
+                            <div class="saat-sutun">
+                                <span class="sayi">@(saat.Adet > 0 ? saat.Adet.ToString() : "")</span>
+                                <div class="cubuk @(yogunSaatler.Contains(saat.Saat) ? "yogun" : "")" style="height:@(saat.Adet * 100 / enCokSaat)%"></div>
+                                <span class="saat">@saat.Saat</span>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="pano-kart">
+            <div class="kart-baslik">
+                <h2>Ödeme</h2>
+                <span>@Para(ozet.Ciro)</span>
+            </div>
+            @await Html.PartialAsync("_PanoKirilim", (rapor.OdemeKirilimi, "adisyon", false))
+        </div>
+    </section>
+
+    @* ---------- Kaynak + kategori + en çok satanlar ---------- *@
+    <section class="pano-izgara uclu">
+        <div class="pano-kart">
+            <div class="kart-baslik">
+                <h2>Kaynak</h2>
+                <span>net · <i class="kirmizi-yazi">kırmızı</i> = komisyon</span>
+            </div>
+            @await Html.PartialAsync("_PanoKirilim", (rapor.KaynakKirilimi, "", true))
+        </div>
+        <div class="pano-kart">
+            <div class="kart-baslik">
+                <h2>Kategori</h2>
+                <span>adet · ciro</span>
+            </div>
+            @await Html.PartialAsync("_PanoKirilim", (Model.KategoriKirilimi, "", false))
+        </div>
+        <div class="pano-kart">
+            <div class="kart-baslik">
+                <h2>En çok satanlar</h2>
+                <span>adet · ciro</span>
+            </div>
+            @if (rapor.EnCokSatanlar.Count == 0)
+            {
+                <p class="pano-bos">Henüz satış yok.</p>
+            }
+            else
+            {
+                <ol class="cok-satan-liste">
+                    @for (int sira = 0; sira < rapor.EnCokSatanlar.Count; sira++)
+                    {
+                        var urun = rapor.EnCokSatanlar[sira];
+                        <li>
+                            <span class="sira">@((sira + 1).ToString("00"))</span>
+                            <span class="ad">@urun.Ad</span>
+                            <b>@urun.Adet</b>
+                            <span class="tutar">@Para(urun.Tutar)</span>
+                        </li>
+                    }
+                </ol>
+            }
+        </div>
+    </section>
+
+    @if (cokGunluMu && saatlik.Count > 0)
+    {
+        <section class="pano-kart">
+            <div class="kart-baslik">
+                <h2>Saatlik yoğunluk</h2>
+                <span>dönem boyunca saat saat sipariş · en yoğun @string.Join(" ve ", yogunSaatler.OrderBy(s => s).Select(s => $"{s:00}:00"))</span>
+            </div>
+            <div class="saat-grafik kisa">
+                @foreach (var saat in saatlik)
+                {
+                    <div class="saat-sutun">
+                        <span class="sayi">@(saat.Adet > 0 ? saat.Adet.ToString() : "")</span>
+                        <div class="cubuk @(yogunSaatler.Contains(saat.Saat) ? "yogun" : "")" style="height:@(saat.Adet * 100 / enCokSaat)%"></div>
+                        <span class="saat">@saat.Saat</span>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    @* ---------- Bütün adisyonlar ---------- *@
+    <section class="pano-kart">
+        <div class="kart-baslik">
+            <h2>Adisyonlar <small class="adet-rozet">@Model.Kayitlar.Count</small></h2>
+            <form method="get" class="liste-suzgec">
+                <input type="hidden" name="donem" value="@filtre.Donem" />
+                <input type="hidden" name="tarih" value="@filtre.SecilenTarih.ToString("yyyy-MM-dd")" />
+                <select name="durum" onchange="this.form.submit()">
+                    <option value="">Tüm durumlar</option>
+                    @foreach (var durum in Enum.GetValues<AdisyonDurumu>())
+                    {
+                        <option value="@durum" selected="@(filtre.Durum == durum)">@DurumYazisi.Yaz(durum)</option>
+                    }
+                </select>
+                <select name="kaynak" onchange="this.form.submit()">
+                    <option value="">Tüm kaynaklar</option>
+                    @foreach (var kaynak in Kaynaklar.Hepsi)
+                    {
+                        <option value="@kaynak" selected="@(filtre.Kaynak == kaynak)">@kaynak</option>
+                    }
+                </select>
+                <select name="odemeTuruId" onchange="this.form.submit()">
+                    <option value="">Tüm ödemeler</option>
+                    @foreach (var odeme in Model.OdemeTurleri)
+                    {
+                        <option value="@odeme.Id" selected="@(filtre.OdemeTuruId == odeme.Id)">@odeme.Ad</option>
+                    }
+                </select>
+                @if (suzgecVar)
+                {
+                    <a href="@Adres(suzgecleriTut: false)">temizle</a>
+                }
+            </form>
+        </div>
+
+        @if (Model.Kayitlar.Count == 0)
+        {
+            <p class="pano-bos">@(suzgecVar ? "Bu süzgeçle adisyon yok." : "Bu dönemde adisyon yok.")</p>
+        }
+        else
+        {
+            <div class="tablo-kaydir">
+                <table class="son-siparisler tam">
+                    <thead>
+                        <tr>
+                            <th class="g-no">No</th>
+                            @if (cokGunluMu) { <th class="g-gun">Gün</th> }
+                            <th class="g-saat">Saat</th>
+                            <th>Adisyon</th>
+                            <th class="g-kaynak">Kaynak</th>
+                            <th class="g-odeme">Ödeme</th>
+                            <th class="sag g-urun">Ürün</th>
+                            <th class="sag g-tutar">Tutar</th>
+                            <th class="sag g-durum">Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kayit in Model.Kayitlar)
+                        {
+                            var detayAdresi = Url.Action("Detay", new { id = kayit.Id });
+                            <tr class="tiklanir @(kayit.Durum is AdisyonDurumu.Iptal or AdisyonDurumu.Iade ? "soluk" : "")" onclick="location.href='@detayAdresi'">
+                                <td class="no"><a href="@detayAdresi">#@kayit.Id</a></td>
+                                @if (cokGunluMu) { <td>@kayit.Acilis.ToString("d MMM", turkce)</td> }
+                                <td>@kayit.Acilis.ToString("HH:mm")@(kayit.Kapanis is DateTime kapanis ? $"–{kapanis:HH:mm}" : "")</td>
+                                <td>@kayit.Baslik</td>
+                                <td><span class="nokta kaynak-@kayit.Kaynak.ToLowerInvariant()"></span>@kayit.Kaynak</td>
+                                <td>@(kayit.OdemeTuru ?? (Kaynaklar.PlatformMu(kayit.Kaynak) ? "Online" : "—"))</td>
+                                <td class="sag">@kayit.UrunAdedi</td>
+                                <td class="sag tutar @(kayit.Durum is AdisyonDurumu.Iptal or AdisyonDurumu.Iade ? "ustu-cizili" : "")">@Para(kayit.Toplam)</td>
+                                <td class="sag"><span class="durum-hap @kayit.Durum.ToString().ToLowerInvariant()">@DurumYazisi.Yaz(kayit.Durum)</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                    @if (suzgecVar)
+                    {
+                        <tfoot>
+                            <tr>
+                                <td colspan="@(cokGunluMu ? 7 : 6)">Süzülen adisyonlardan ödenenlerin toplamı</td>
+                                <td class="sag tutar">@Para(suzulmusToplam)</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+            </div>
+        }
+    </section>
+
+    @if (Model.Silinenler.Count > 0)
+    {
+        <section class="pano-kart">
+            <div class="kart-baslik">
+                <h2>Adisyondan silinen ürünler</h2>
+                <span>@ozet.SilinenUrunAdedi ürün · @Para(ozet.SilinenTutar)</span>
+            </div>
+            <div class="tablo-kaydir">
+                <table class="son-siparisler tam">
+                    <thead>
+                        <tr><th class="g-saat">Saat</th><th>Adisyon</th><th>Ürün</th><th class="sag g-urun">Adet</th><th class="sag g-tutar">Tutar</th><th class="g-kaynak">Kim</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var iz in Model.Silinenler)
+                        {
+                            <tr>
+                                <td>@(cokGunluMu ? iz.Saat.ToString("d MMM HH:mm", turkce) : iz.Saat.ToString("HH:mm"))</td>
+                                <td>
+                                    @if (iz.AdisyonDuruyorMu)
+                                    {
+                                        <a asp-action="Detay" asp-route-id="@iz.SiparisId">@iz.AdisyonBasligi #@iz.SiparisId</a>
+                                    }
+                                    else
+                                    {
+                                        <span title="Son ürün de silindiği için adisyon kalmadı">@iz.AdisyonBasligi (boşaltıldı)</span>
+                                    }
+                                </td>
+                                <td>@iz.UrunAdi</td>
+                                <td class="sag">@iz.Adet</td>
+                                <td class="sag">@Para(iz.Tutar)</td>
+                                <td>@iz.Kullanici</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</div>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Örnek görsel: yumurtalı tost -->
+  <defs>
+    <radialGradient id="zemin" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#fffbe8"/><stop offset="1" stop-color="#f7d79a"/>
+    </radialGradient>
+    <linearGradient id="ekmek" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2b25c"/><stop offset="1" stop-color="#c9772c"/>
+    </linearGradient>
+    <radialGradient id="sari" cx="40%" cy="35%" r="60%">
+      <stop offset="0" stop-color="#ffd54a"/><stop offset="1" stop-color="#f29a0e"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zemin)"/>
+  <ellipse cx="200" cy="232" rx="160" ry="34" fill="#fff"/>
+  <ellipse cx="200" cy="230" rx="140" ry="26" fill="#f3f0f7"/>
+  <!-- ekmek dilimi -->
+  <rect x="90" y="70" width="220" height="160" rx="34" fill="#a65d1f"/>
+  <rect x="100" y="80" width="200" height="140" rx="28" fill="url(#ekmek)"/>
+  <g stroke="#8a4512" stroke-width="6" stroke-linecap="round" opacity=".45">
+    <path d="M120 110 L280 110"/><path d="M120 190 L280 190"/>
+  </g>
+  <!-- yumurta -->
+  <path d="M140 150 C130 110 175 95 205 105 C240 92 280 115 268 150 C285 180 245 205 210 195 C175 210 130 190 140 150 Z" fill="#fffdf6"/>
+  <circle cx="205" cy="150" r="30" fill="url(#sari)"/>
+  <ellipse cx="196" cy="140" rx="9" ry="6" fill="#fff" opacity=".6"/>
+  <!-- maydanoz -->
+  <g fill="#3fa34d"><circle cx="165" cy="125" r="4"/><circle cx="250" cy="175" r="4"/><circle cx="240" cy="120" r="3"/></g>
+</svg>

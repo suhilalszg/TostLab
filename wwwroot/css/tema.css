@@ -1,4 +1,4 @@
-/* TOST LAB teması: renkler ve yazı tipleri tek yerde.
+/* TOST LAB teması (siyah + sarı): renkler ve yazı tipleri tek yerde.
    Bir rengi değiştirmek için sadece buradaki değişkeni değiştirmek yeterli. */
 
 /* Cascadia Code: Visual Studio'nun kod yazı tipi. Projeye gömülü, internetsiz de çalışır. */
@@ -18,91 +18,55 @@
     unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+/* Inter: arayüz yazı tipi (sayılar eşit genişlikte: tabular-nums). Projeye gömülü, internetsiz çalışır. */
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/inter-latin.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/inter-latin-ext.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
-    /* Palet: koyu mor + pembe geçiş (satış ekranıyla aynı) */
-    --antrasit: #1D1430;        /* Koyu mor-siyah: yazılar */
-    --antrasit-acik: #2E1065;   /* Koyu mor: sol menü */
-    --kum: #CDBFE6;             /* Lavanta: pasif menü yazıları */
-    --tereyagi: #EBDDFF;        /* Açık lavanta: butonlar, seçili menü, öne çıkan kutu */
-    --tereyagi-koyu: #DCC4FF;   /* Butonun üzerine gelince */
-    --krem: #F7F3FC;            /* Çok açık lavanta: sayfa zemini */
-    --fis-krem: #F2EBFB;        /* Fiş kağıdı */
-    --sari: #F472B6;            /* TOST LAB pembesi: logo */
+    /* Palet: TOST LAB siyah + sarı */
+    --antrasit: #141414;        /* Neredeyse siyah: yazılar, koyu düğmeler */
+    --antrasit-acik: #141414;   /* Sol menü */
+    --kum: #8C8A85;             /* Sol menüde pasif yazılar */
+    --tereyagi: #F2C230;        /* TOST LAB sarısı: seçili menü, vurgular */
+    --tereyagi-koyu: #E0B020;   /* Sarının üzerine gelince */
+    --krem: #F3F2EE;            /* Sayfa zemini (kırık beyaz) */
+    --fis-krem: #FAF8F2;        /* Fiş kağıdı */
+    --sari: #F2C230;            /* Logo */
+    --sari-koyu: #9A7400;       /* Beyaz zeminde okunur sarı (yazılar) */
     --beyaz: #ffffff;
 
-    /* Mor-pembe vurgular (satış ekranı, fotoğraf kutuları, öne çıkan düğmeler) */
-    --mor: #7C3AED;
-    --pembe: #DB2777;
-    --mor-acik: #EDE4FF;
-    --pembe-acik: #FCE7F3;
-    --mor-cizgi: #C4B5FD;
-    --gradyan: linear-gradient(135deg, #5B21B6 0%, #A21CAF 55%, #EC4899 100%);
-    --menu-gradyan: linear-gradient(180deg, #2E1065 0%, #4C1D95 55%, #831843 100%);
-
-    /* Durum renkleri (palete uyumlu) */
-    --kirmizi: #a8323f;
-    --kirmizi-zemin: #f6dcdc;
-    --yesil: #2f7d5b;
-    --yesil-zemin: #dcefe3;
+    /* Durum renkleri */
+    --kirmizi: #D64545;
+    --kirmizi-zemin: #FBE4E4;
+    --yesil: #2F8F5B;
+    --yesil-zemin: #DFF2E6;
 
     /* Görevlerine göre adlar: sayfalar bunları kullanır */
     --zemin: var(--krem);
     --kart: var(--beyaz);
     --yazi: var(--antrasit);
-    --soluk-yazi: #857C99;
-    --cizgi: #E9E1F5;
+    --soluk-yazi: #8C8A85;
+    --cizgi: #E7E5DF;
     --ana-renk: var(--antrasit);
     --menu: var(--antrasit-acik);
     --fis: var(--fis-krem);
 
-    --yazi-tipi: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
-    --fis-yazi-tipi: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
-    --kose: 10px;
+    --yazi-tipi: "Inter", "Segoe UI", system-ui, sans-serif;
+    --fis-yazi-tipi: "Cascadia Code", "Cascadia Mono", Consolas, monospace;   /* fiş görünümü */
+    --kose: 12px;
 }
 
-/* ---------- Koyu tema ----------
-   Bilgisayar koyu moddaysa kendiliğinden açılır; sol menüdeki ☾/☀ düğmesi elle değiştirir.
-   Sadece "görev" renkleri değişir, sayfalar aynı değişkenleri kullanmaya devam eder. */
-@media (prefers-color-scheme: dark) {
-    :root:not([data-tema="acik"]) {
-        --zemin: #0F0819;
-        --kart: #1A0F2E;
-        --beyaz: #22143A;
-        --krem: #160C26;
-        --fis: #170D29;
-        --fis-krem: #170D29;
-        --yazi: #F1EAFE;
-        --soluk-yazi: #A498BC;
-        --cizgi: #2C1E45;
-        --kum: #6B5A8C;
-        --menu: #0B0514;
-        --mor-acik: #2A1748;
-        --pembe-acik: #3A1430;
-        --mor-cizgi: #4C3575;
-        --menu-gradyan: linear-gradient(180deg, #1A0633 0%, #2E1065 60%, #500724 100%);
-        --yesil-zemin: #16301F;
-        --kirmizi-zemin: #3A1C21;
-        color-scheme: dark;
-    }
-}
-
-:root[data-tema="koyu"] {
-    --zemin: #0F0819;
-    --kart: #1A0F2E;
-    --beyaz: #22143A;
-    --krem: #160C26;
-    --fis: #170D29;
-    --fis-krem: #170D29;
-    --yazi: #F1EAFE;
-    --soluk-yazi: #A498BC;
-    --cizgi: #2C1E45;
-    --kum: #6B5A8C;
-    --menu: #0B0514;
-    --mor-acik: #2A1748;
-    --pembe-acik: #3A1430;
-    --mor-cizgi: #4C3575;
-    --menu-gradyan: linear-gradient(180deg, #1A0633 0%, #2E1065 60%, #500724 100%);
-    --yesil-zemin: #16301F;
-    --kirmizi-zemin: #3A1C21;
-    color-scheme: dark;
-}
+/* Koyu tema kaldırıldı (2026-11-16): program her zaman açık renkte çalışır. */

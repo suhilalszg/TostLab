@@ -53,7 +53,7 @@ public static class RaporEpostasi
         }
         html.Append("</table>");
 
-        Kirilim(html, "Ödeme türüne göre", rapor.OdemeKirilimi);
+        Kirilim(html, "Ödeme", rapor.OdemeKirilimi);
         Kirilim(html, "Kaynağa göre", rapor.KaynakKirilimi);
 
         // Gün gün

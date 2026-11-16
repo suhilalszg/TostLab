@@ -4,7 +4,7 @@ Küçük bir tost & burger dükkanı (TOST LAB / ZIP BURGER) için yazılmış *
 Dükkan siparişleri kağıt adisyonla tutuyordu; gün sonunda kaç sipariş geldiği, ne kadar iptal olduğu,
 paranın nakit/kart/yemek kartı/platform olarak nasıl dağıldığı elle hesaplanıyordu.
 Bu uygulama dükkanın bilgisayarında çalışır: siparişi masaya ya da pakete girer, ödemeyi alır,
-gün sonunda raporu hazırlar ve WhatsApp'a gönderilecek metni çıkarır.
+gün sonunda raporu hazırlar, ay sonunda özetini e-postayla gönderir.
 
 ## Özellikler
 
@@ -12,8 +12,8 @@ gün sonunda raporu hazırlar ve WhatsApp'a gönderilecek metni çıkarır.
 |---|---|---|
 | **Satış** | Mor-pembe dokunmatik POS ekranı. Masa planı (boş / dolu, garson adı, tutar, geçen süre), solda açık adisyonlar ve toplamı, sağda süzgeçler ve yeni paket / platform siparişi. Satışta fotoğraflı ürün kartları ve dikey kategori çubuğu. İşlemler: **İkram** (ücretsiz, adet adet), **İade** (bugün ödenmiş adisyon, nedenli), **Böl** (seçilen ürünleri ayrı öde), **İskonto** (% ya da ₺), **Taşı** (boş masaya taşı ya da dolu masayla birleştir), **İptal** (nedenli). Üst çubukta internet / sunucu durumu ve kullanıcı. | Herkes |
 | **Bugün** | Günün özeti: ciro, ortalama adisyon, ödeme türüne ve kaynağa göre dağılım, en çok satan ürünler, saatlere göre yoğunluk. | Yönetici her şeyi, çalışan sadece adetleri |
-| **Kayıtlar** | Geçmiş adisyonlar: gün / durum / kaynak / ödeme türüne göre süzme, fiş görünümünde detay (ÖDENDİ / İPTAL damgası), adisyondan silinen ürünlerin izi. | Yönetici |
-| **Gün sonu** | Seçilen günün raporu ve aylık özet; platform komisyonu düşülmüş net kazanç; WhatsApp'ta açılacak hazır metin, yazdırma. | Yönetici |
+| **Adisyon** | Sonuç paneli: gün / hafta / ay seçilir; net kazanç, ciro, komisyon, iskonto, iptal; günlük ciro ve saatlik grafikler; ödeme, kaynak, kategori kırılımı; en çok satanlar; bütün adisyonlar (durum / kaynak / ödeme süzgeci) ve fiş görünümünde detay; silinen ürün izi. | Yönetici |
+| **Gün sonu** | Seçilen günün raporu (ödeme, kasadaki nakit, kaynak, kontrol listesi) ve aylık rapor; ay sonu özeti e-postayla gider. | Yönetici |
 | **Menü** | Ürün ekle / düzenle / satışa aç-kapat, listede hızlı fiyat girişi, ürün fotoğrafı yükleme (JPG / PNG / WEBP, en fazla 3 MB). | Yönetici |
 | **Ayarlar** | Masalar, ödeme türleri (Nakit, Kart, Multinet, Pluxee, Edenred, Setcard, Metropol…), platform komisyon oranları. | Yönetici |
 | **Kullanıcılar** | Yönetici ve çalışan hesapları. | Yönetici |
@@ -33,8 +33,7 @@ Açık ve koyu tema vardır; dış kaynağa ihtiyaç duymaz (yazı tipi ve küt�
 Controllers/   İnce: isteği alır, servise verir, sonucu sayfaya / JSON'a çevirir
 Services/      İş kuralları burada
   AdisyonServisi   adisyon açma, ürün ekleme, adet, ödeme, iptal (yazan tek yer)
-  RaporServisi     Kayıtlar, Bugün, Gün sonu, Aylık hesapları (sadece okur)
-  RaporMetni       raporu WhatsApp düz metnine çevirir
+  RaporServisi     Adisyon paneli, Bugün, Gün sonu, Aylık hesapları (sadece okur)
   RaporEpostasi    aylık raporu HTML e-postaya çevirir
   RaporGondermeServisi + AySonuZamanlayici
                    ay bitince geçen ayın raporunu e-postayla gönderir (arka plan servisi)
@@ -50,7 +49,7 @@ Migrations/    Veritabanı şemasının adım adım geçmişi
   Fiyat ya da oran sonradan değişse de eski raporlar aynı kalır. Siparişi olan masa / ödeme türü / ürün silinemez, sadece kapatılır.
 - **İz bırakılır.** İptal / iade edilen adisyonun nedeni, saati ve kimin ettiği; ikramı kimin yaptığı; adisyonu kimin açtığı (garson); açık adisyondan silinen her ürün (kim, ne zaman, kaç tane) kaydedilir.
 - **Fotoğraflar diskte.** Menü'den yüklenen fotoğraflar `urun-foto/` klasörüne yazılır (git'e girmez), `/urun-foto/...` adresinden sunulur. Dosyanın gerçekten resim olduğu ilk baytlarından kontrol edilir.
-- **Çalışan para görmez.** Bugün sayfasında ciro ve tutarlar sunucuda hiç çizilmez; Kayıtlar ve Gün sonu sadece yöneticiye açıktır.
+- **Çalışan para görmez.** Bugün sayfasında ciro ve tutarlar sunucuda hiç çizilmez; Adisyon paneli ve Gün sonu sadece yöneticiye açıktır.
 - **Gün = adisyonun açıldığı takvim günü** (dükkan gece 12'de kapanıyor).
 
 ## Çalıştırma
@@ -94,7 +93,7 @@ Yeni migration uygulama açılırken kendiliğinden uygulanır.
 - [x] Veri modeli, veritabanı, giriş ve roller
 - [x] Menü, masalar, ödeme türleri
 - [x] Satış ekranı (masa planı, paket ve platform siparişleri, iptal)
-- [x] Kayıtlar, Bugün, Gün sonu ve aylık özet, platform komisyonu
+- [x] Adisyon paneli, Bugün, Gün sonu ve aylık özet, platform komisyonu
 - [x] Ay sonunda aylık raporun kendiliğinden e-postayla gönderilmesi
 - [x] İndirim (yüzde ya da tutar, kim yaptı kaydedilir; platform siparişinde yok)
 - [x] Yeni tasarım (mor-pembe POS), ürün fotoğrafları, ikram / iade / böl / taşı, garson adı

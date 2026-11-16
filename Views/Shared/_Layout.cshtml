@@ -17,16 +17,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - TOST LAB</title>
-    @* Tema, sayfa çizilmeden önce seçilsin (yoksa bir an beyaz yanıp söner) *@
-    <script>
-        // Kayıtlı seçim yoksa bilgisayarın temasına uy
-        (function () {
-            let tema = null;
-            try { tema = localStorage.getItem('tema'); } catch (e) { }
-            if (!tema) tema = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'koyu' : 'acik';
-            document.documentElement.dataset.tema = tema;
-        })();
-    </script>
+    @* Koyu tema yok: program her zaman açık renkte (bilgisayar koyu moddaysa da) *@
+    <script>document.documentElement.dataset.tema = 'acik';</script>
     @if (!bootstrapYok)
     {
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -47,7 +39,7 @@
                 <a asp-controller="Home" asp-action="Index" class="@(aktifSayfa == "Home" ? "secili" : "")">Bugün</a>
                 @if (yoneticiMi)
                 {
-                    <a asp-controller="Kayitlar" asp-action="Index" class="@(aktifSayfa == "Kayitlar" ? "secili" : "")">Kayıtlar</a>
+                    <a asp-controller="Adisyon" asp-action="Index" class="@(aktifSayfa == "Adisyon" ? "secili" : "")">Adisyon</a>
                     <a asp-controller="GunSonu" asp-action="Index" class="@(aktifSayfa == "GunSonu" ? "secili" : "")">Gün sonu</a>
                     <a asp-controller="Urunler" asp-action="Index" class="@(aktifSayfa == "Urunler" ? "secili" : "")">Menü</a>
                     <a asp-controller="Ayarlar" asp-action="Index" class="@(aktifSayfa == "Ayarlar" ? "secili" : "")">Ayarlar</a>
@@ -56,7 +48,6 @@
             </nav>
 
             <div class="alt">
-                <button type="button" class="tema-dugme" id="tema-dugme" title="Koyu / açık tema" aria-label="Koyu veya açık tema"></button>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <form asp-controller="Giris" asp-action="Cikis" method="post" class="cikis-formu">
@@ -69,7 +60,7 @@
         }
 
         <main class="icerik @(tamEkran ? "tam-ekran" : "")">
-            @if (!tamEkran)
+            @if (!tamEkran && !(ViewData["UstBarYok"] as bool? ?? false))
             {
                 <div class="ust-bar">
                     <h1>@ViewData["Title"]</h1>

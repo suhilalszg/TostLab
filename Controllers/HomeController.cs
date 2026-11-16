@@ -15,9 +15,10 @@ public class HomeController : Controller
         this.raporServisi = raporServisi;
     }
 
-    // Bugün: herkes açar. Para bilgisi (ciro, ödeme türleri) sadece yöneticiye çizilir; bkz. Views/Home/Index
-    public async Task<IActionResult> Index() =>
-        View(await raporServisi.GunRaporuAsync(DateTime.Today));
+    // Bugün (pano): herkes açar. Para bilgisi sadece yöneticiye çizilir; bkz. Views/Home/Index
+    // ?aralik=dun / ?aralik=hafta ile dün ya da bu hafta görülür.
+    public async Task<IActionResult> Index(PanoAraligi aralik = PanoAraligi.Bugun) =>
+        View(await raporServisi.PanoAsync(aralik));
 
     public IActionResult Privacy()
     {

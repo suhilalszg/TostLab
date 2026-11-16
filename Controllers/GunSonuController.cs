@@ -6,7 +6,7 @@ using TostLab.Services;
 namespace TostLab.Controllers;
 
 // Gün sonu ve aylık özet. Sadece yönetici.
-// Hesaplar RaporServisi'nde (Bugün sayfasıyla aynı GunRaporuAsync), metin RaporMetni'nde.
+// Hesaplar RaporServisi'nde. Rapor dışarıya sadece ay sonu e-postasıyla gider (RaporGondermeServisi).
 [Authorize(Roles = Roller.Yonetici)]
 public class GunSonuController : Controller
 {
@@ -24,7 +24,6 @@ public class GunSonuController : Controller
     public async Task<IActionResult> Index(DateTime? gun)
     {
         var rapor = await raporServisi.GunRaporuAsync((gun ?? DateTime.Today).Date);
-        ViewData["WhatsappMetni"] = RaporMetni.GunSonu(rapor);
         return View(rapor);
     }
 
@@ -40,7 +39,6 @@ public class GunSonuController : Controller
         }
 
         var rapor = await raporServisi.AyRaporuAsync(secilenYil, secilenAy);
-        ViewData["WhatsappMetni"] = RaporMetni.Aylik(rapor);
         ViewData["EpostaHazirMi"] = raporGondermeServisi.EpostaHazirMi;
         ViewData["SonGonderim"] = await raporGondermeServisi.SonGonderimAsync(secilenYil, secilenAy);
         ViewData["Mesaj"] = TempData["Mesaj"];

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Örnek görsel: atıştırmalık (patates kızartması) -->
+  <defs>
+    <radialGradient id="zemin" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#fffbe6"/><stop offset="1" stop-color="#f6d68a"/>
+    </radialGradient>
+    <linearGradient id="kutu" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6d28d9"/><stop offset="1" stop-color="#db2777"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zemin)"/>
+  <ellipse cx="200" cy="268" rx="100" ry="14" fill="#000" opacity=".13"/>
+  <g stroke="#d99a1e" stroke-width="2">
+    <rect x="140" y="55" width="17" height="130" rx="4" fill="#ffd54a" transform="rotate(-16 148 120)"/>
+    <rect x="165" y="40" width="17" height="140" rx="4" fill="#ffcf3a" transform="rotate(-7 173 110)"/>
+    <rect x="192" y="35" width="17" height="145" rx="4" fill="#ffd54a"/>
+    <rect x="218" y="42" width="17" height="140" rx="4" fill="#ffc928" transform="rotate(7 226 112)"/>
+    <rect x="243" y="55" width="17" height="130" rx="4" fill="#ffd54a" transform="rotate(15 251 120)"/>
+  </g>
+  <!-- kutu -->
+  <path d="M125 135 L275 135 L258 265 L142 265 Z" fill="url(#kutu)"/>
+  <path d="M125 135 C160 160 240 160 275 135" fill="#7c3aed"/>
+  <text x="200" y="222" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-weight="900" font-size="20" fill="#fff" letter-spacing="3">TOST LAB</text>
+</svg>

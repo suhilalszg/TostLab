@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Örnek görsel: sos kaseleri -->
+  <defs>
+    <radialGradient id="zemin" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#f8f4ff"/><stop offset="1" stop-color="#d9c8f5"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zemin)"/>
+  <g>
+    <ellipse cx="120" cy="215" rx="70" ry="16" fill="#000" opacity=".12"/>
+    <path d="M55 170 L185 170 C180 215 160 225 120 225 C80 225 60 215 55 170 Z" fill="#fff"/>
+    <ellipse cx="120" cy="170" rx="65" ry="18" fill="#d63031"/>
+    <ellipse cx="105" cy="165" rx="18" ry="5" fill="#fff" opacity=".35"/>
+  </g>
+  <g>
+    <ellipse cx="280" cy="215" rx="70" ry="16" fill="#000" opacity=".12"/>
+    <path d="M215 170 L345 170 C340 215 320 225 280 225 C240 225 220 215 215 170 Z" fill="#fff"/>
+    <ellipse cx="280" cy="170" rx="65" ry="18" fill="#ffd54a"/>
+    <ellipse cx="265" cy="165" rx="18" ry="5" fill="#fff" opacity=".45"/>
+  </g>
+  <g>
+    <ellipse cx="200" cy="140" rx="55" ry="13" fill="#000" opacity=".1"/>
+    <path d="M148 100 L252 100 C248 135 232 142 200 142 C168 142 152 135 148 100 Z" fill="#fff"/>
+    <ellipse cx="200" cy="100" rx="52" ry="14" fill="#f5efe0"/>
+    <g fill="#3fa34d"><circle cx="190" cy="98" r="3"/><circle cx="210" cy="102" r="3"/><circle cx="200" cy="95" r="2.5"/></g>
+  </g>
+</svg>

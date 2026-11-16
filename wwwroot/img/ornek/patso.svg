@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Örnek görsel: patso (ekmek arası patates) -->
+  <defs>
+    <radialGradient id="zemin" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#fff8e1"/><stop offset="1" stop-color="#f3cf8a"/>
+    </radialGradient>
+    <linearGradient id="ekmek" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f1c07a"/><stop offset="1" stop-color="#cf8a3f"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zemin)"/>
+  <ellipse cx="200" cy="245" rx="150" ry="20" fill="#000" opacity=".12"/>
+  <!-- patatesler -->
+  <g stroke="#d99a1e" stroke-width="2">
+    <rect x="120" y="70" width="16" height="110" rx="4" fill="#ffd54a" transform="rotate(-14 128 125)"/>
+    <rect x="150" y="60" width="16" height="120" rx="4" fill="#ffcf3a" transform="rotate(-6 158 120)"/>
+    <rect x="180" y="55" width="16" height="125" rx="4" fill="#ffd54a"/>
+    <rect x="210" y="58" width="16" height="122" rx="4" fill="#ffc928" transform="rotate(5 218 120)"/>
+    <rect x="240" y="65" width="16" height="115" rx="4" fill="#ffd54a" transform="rotate(12 248 122)"/>
+    <rect x="265" y="80" width="16" height="100" rx="4" fill="#ffcf3a" transform="rotate(18 273 130)"/>
+  </g>
+  <!-- ketçap -->
+  <path d="M150 150 C170 140 190 160 210 148 C230 138 250 158 265 150" stroke="#d63031" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <!-- ekmek -->
+  <path d="M70 170 C70 150 330 150 330 170 L318 228 C300 250 100 250 82 228 Z" fill="#b8702a"/>
+  <path d="M80 172 C82 160 318 160 320 172 L309 224 C292 242 108 242 91 224 Z" fill="url(#ekmek)"/>
+  <g fill="#fff3d6" opacity=".7"><ellipse cx="140" cy="200" rx="5" ry="2.5"/><ellipse cx="200" cy="208" rx="5" ry="2.5"/><ellipse cx="258" cy="198" rx="5" ry="2.5"/></g>
+</svg>

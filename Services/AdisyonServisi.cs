@@ -179,7 +179,7 @@ public class AdisyonServisi
 
     // İndirim: yüzde (1–100) ya da tutar (₺). Değer 0 indirimi kaldırır.
     // Platform siparişinde yok: fiyatı ve kampanyayı uygulama belirliyor.
-    // Kim yaptıysa kaydedilir (yönetici Kayıtlar'da görür).
+    // Kim yaptıysa kaydedilir (yönetici Adisyon panelinde görür).
     public async Task<AdisyonBilgisi> IndirimUygulaAsync(IndirimIstegi istek, int kullaniciId)
     {
         var adisyon = await AcikAdisyonuYukleAsync(istek.AdisyonId, zorunlu: true);
@@ -458,7 +458,7 @@ public class AdisyonServisi
         await veritabani.SaveChangesAsync();
     }
 
-    // İade: ödenmiş adisyonun parası geri verildi. Ciro ve ödeme dağılımından düşer, Kayıtlar'da "İade" görünür.
+    // İade: ödenmiş adisyonun parası geri verildi. Ciro ve ödeme dağılımından düşer, Adisyon panelinde "İade" görünür.
     public async Task IadeEtAsync(IadeIstegi istek, int kullaniciId)
     {
         string neden = NedenZorunlu(istek.Neden, "İade nedenini yaz.");

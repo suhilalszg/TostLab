@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Örnek görsel: burger -->
+  <defs>
+    <radialGradient id="zemin" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#ffeef4"/><stop offset="1" stop-color="#f5b9cf"/>
+    </radialGradient>
+    <linearGradient id="ust" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4b35c"/><stop offset="1" stop-color="#cc7a2a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zemin)"/>
+  <ellipse cx="200" cy="262" rx="140" ry="18" fill="#000" opacity=".13"/>
+  <!-- alt ekmek -->
+  <path d="M95 225 L305 225 C305 250 280 258 200 258 C120 258 95 250 95 225 Z" fill="#cc7a2a"/>
+  <!-- köfte -->
+  <rect x="88" y="190" width="224" height="38" rx="19" fill="#5b2c17"/>
+  <g fill="#3e1c0e" opacity=".6"><circle cx="130" cy="205" r="3"/><circle cx="190" cy="212" r="3"/><circle cx="250" cy="203" r="3"/><circle cx="285" cy="214" r="3"/></g>
+  <!-- çedar -->
+  <path d="M90 188 L310 188 L300 200 L270 214 L255 198 L215 210 L200 198 L160 214 L140 198 L100 205 Z" fill="#ffb627"/>
+  <!-- domates, marul -->
+  <rect x="100" y="172" width="200" height="18" rx="9" fill="#e74c3c"/>
+  <path d="M85 172 C105 158 125 178 145 164 C165 152 185 176 205 162 C225 150 245 176 265 162 C285 152 305 172 318 166 L318 176 L85 178 Z" fill="#4caf50"/>
+  <!-- üst ekmek -->
+  <path d="M85 168 C85 90 315 90 315 168 Z" fill="url(#ust)"/>
+  <ellipse cx="160" cy="118" rx="40" ry="14" fill="#fff" opacity=".18"/>
+  <g fill="#fff6dc"><ellipse cx="150" cy="130" rx="6" ry="3"/><ellipse cx="190" cy="115" rx="6" ry="3"/><ellipse cx="230" cy="128" rx="6" ry="3"/><ellipse cx="260" cy="145" rx="6" ry="3"/><ellipse cx="125" cy="150" rx="6" ry="3"/><ellipse cx="205" cy="145" rx="6" ry="3"/></g>
+</svg>

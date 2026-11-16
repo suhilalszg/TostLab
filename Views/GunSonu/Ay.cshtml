@@ -1,7 +1,7 @@
 @model AyRaporu
 @{
     var ayBasi = new DateTime(Model.Yil, Model.Ay, 1);
-    ViewData["Title"] = "Aylık özet · " + ayBasi.ToString("MMMM yyyy");
+    ViewData["Title"] = "Aylık rapor · " + ayBasi.ToString("MMMM yyyy");
     var ozet = Model.Toplam;
     var onceki = ayBasi.AddMonths(-1);
     var sonraki = ayBasi.AddMonths(1);
@@ -12,6 +12,7 @@
     <b>@ayBasi.ToString("MMMM yyyy")</b>
     <a class="btn btn-link" asp-action="Ay" asp-route-yil="@sonraki.Year" asp-route-ay="@sonraki.Month" title="Sonraki ay">›</a>
     <a class="btn btn-outline-secondary" asp-action="Index">Gün sonu</a>
+    <a class="btn btn-dark" asp-controller="Adisyon" asp-action="Index" asp-route-donem="Ay" asp-route-tarih="@ayBasi.ToString("yyyy-MM-dd")">Grafikler (Adisyon paneli)</a>
 </div>
 
 @{
@@ -82,10 +83,9 @@
         }
     </section>
     <section class="kart">
-        <h2>Ödeme türüne göre</h2>
+        <h2>Ödeme</h2>
         @await Html.PartialAsync("_Kirilim", (Model.OdemeKirilimi, ozet.Ciro, "adisyon"))
         <h2 class="mt-3">Kaynağa göre</h2>
         @await Html.PartialAsync("_Kirilim", (Model.KaynakKirilimi, ozet.Ciro, "adisyon"))
     </section>
-    @await Html.PartialAsync("_WhatsappKutusu", (string)ViewData["WhatsappMetni"]!)
 </div>

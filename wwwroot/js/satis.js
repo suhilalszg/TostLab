@@ -14,22 +14,23 @@ document.addEventListener('alpine:init', () => {
     const veri = JSON.parse(document.getElementById('satis-verisi').textContent);
     const anahtarDegeri = document.querySelector('input[name="__RequestVerificationToken"]').value;
     const paraBicimi = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const tamSayiBicimi = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
     const saatBicimi = new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
     // ---------- Renkler (Tailwind sınıfları) ----------
     const platformRenkleri = {
-        Masa: 'bg-gradient-to-br from-violet-600 to-pink-500',
-        Paket: 'bg-gradient-to-br from-violet-800 to-violet-600',
+        Masa: 'bg-[#141414]',
+        Paket: 'bg-slate-600',
         Yemeksepeti: 'bg-red-600',
         Getir: 'bg-purple-600',
         Trendyol: 'bg-orange-500',
         Migros: 'bg-amber-500'
     };
     const toastRenkleri = {
-        basari: 'bg-gradient-to-r from-violet-700 to-pink-600',
+        basari: 'bg-[#141414]',
         hata: 'bg-rose-600',
         uyari: 'bg-amber-500',
-        '': 'bg-[#2e1065]'
+        '': 'bg-[#141414]'
     };
     const pencereBasliklari = {
         odeme: 'Ödeme al',
@@ -60,6 +61,7 @@ document.addEventListener('alpine:init', () => {
         seciliKategori: null,
         arama: '',
         menuAcik: false,
+        seciliSatir: null,                 // adisyonda dokunulan satır: adet düğmeleri yalnız onda görünür
         pencere: null,                     // açık pencere: 'odeme' | 'iptal' | 'indirim' | 'ikram' | 'tasi' | 'bol' | 'iade'
         iptalNedeni: '',
         indirimFormu: { yuzdeMi: true, deger: '', neden: '' },
@@ -194,8 +196,51 @@ document.addEventListener('alpine:init', () => {
         platformDugmeRengi(kaynak) { return platformRenkleri[kaynak] ?? platformRenkleri.Paket; },
 
         // ---------- Biçimlendirme ----------
-        para(tutar) { return paraBicimi.format(tutar) + ' ₺'; },
+        // ₺370 / ₺643,50: tam sayıda kuruş yazılmaz (menü kartlarında sade dursun)
+        para(tutar) { return '₺' + (Number.isInteger(Math.round(tutar * 100) / 100) ? tamSayiBicimi : paraBicimi).format(tutar); },
         saat(tarih) { return saatBicimi.format(new Date(tarih)); },
+        // Ürünün görseli: önce dükkânın Menü'den yüklediği foto; yoksa hazır gerçek fotoğraf
+        // (wwwroot/img/urun, kaynakları KAYNAKLAR.md'de); o da yoksa çizim (wwwroot/img/ornek).
+        gorsel(urun) {
+            if (urun.foto) return urun.foto;
+            const kategori = urun.kategori.toLocaleLowerCase('tr-TR');
+            const ad = urun.ad.toLocaleLowerCase('tr-TR');
+            const foto = dosya => `/img/urun/${dosya}`;
+            const cizim = dosya => `/img/ornek/${dosya}.svg`;
+
+            if (kategori.includes('içecek')) {
+                if (ad.includes('zero')) return foto('kola-zero.jpg');
+                if (ad.includes('kola')) return foto('kola.jpg');
+                if (ad.includes('fanta')) return foto('fanta.jpg');
+                if (ad.includes('sprite')) return foto('sprite.jpg');
+                if (ad.includes('gazoz')) return foto('gazoz.jpg');
+                if (ad.includes('ayran')) return foto('ayran.jpg');
+                if (ad.includes('soda')) return foto('soda.jpg');
+                if (ad.includes('limonata')) return foto('limonata.jpg');
+                // Türkçe küçük harfte "Ice" → "ıce" olur: ikisini de tanı
+                if (ad.includes('ice tea') || ad.includes('ıce tea')) return foto('ice-tea.jpg');
+                if (ad.includes('enerji')) return foto('enerji.jpg');
+                if (ad === 'su' || ad.startsWith('su ')) return foto('su.png');
+                return cizim('icecek');
+            }
+            if (kategori.includes('smash')) return foto('smash-burger.jpg');
+            if (kategori.includes('burger')) return foto('classic-burger.jpg');
+            if (kategori.includes('atıştırmalık')) {
+                if (ad.includes('cheddar')) return foto('cheddarli-patates.jpg');
+                if (ad.includes('soğan')) return foto('sogan-halkasi.jpg');
+                if (ad.includes('tavuk')) return foto('citir-tavuk.jpg');
+                if (ad.includes('mozzarella')) return foto('mozzarella.jpg');
+                if (ad.includes('patates')) return foto('patates.jpg');
+                return cizim('patates');
+            }
+            if (kategori === 'sos') return cizim('sos');
+            if (kategori.includes('tatlı')) return foto('tatli.jpg');
+            if (kategori.includes('bazlama')) return foto('bazlama.jpg');
+            if (kategori.includes('patso')) return foto('patso.jpg');
+            if (kategori.includes('pattis')) return cizim('patso');
+            if (kategori.includes('yumurta') || ad.includes('yumurta')) return foto('yumurtali-tost.jpg');
+            return foto('tost.jpg');
+        },
         basHarf(ad) { return (ad ?? '?').trim().charAt(0).toLocaleUpperCase('tr-TR'); },
         // "İç 2" -> "İ2", "Getir 14:05" -> "G": soldaki listedeki küçük kare
         kisaAd(baslik) {
@@ -235,6 +280,7 @@ document.addEventListener('alpine:init', () => {
             this.adisyon = null;
             this.yerelSatirlar = [];
             this.pencere = null;
+            this.seciliSatir = null;
             this.arama = '';
             this.gorunum = 'satis';
 

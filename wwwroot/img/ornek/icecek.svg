@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Örnek görsel: içecek -->
+  <defs>
+    <radialGradient id="zemin" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#eef7ff"/><stop offset="1" stop-color="#b9d6f5"/>
+    </radialGradient>
+    <linearGradient id="sivi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a3b12"/><stop offset="1" stop-color="#2b1206"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zemin)"/>
+  <ellipse cx="200" cy="262" rx="70" ry="12" fill="#000" opacity=".13"/>
+  <!-- pipet -->
+  <rect x="214" y="20" width="12" height="120" rx="5" fill="#ec4899" transform="rotate(12 220 80)"/>
+  <!-- bardak -->
+  <path d="M138 70 L262 70 L246 258 L154 258 Z" fill="#fff" opacity=".55"/>
+  <path d="M145 100 L255 100 L242 252 L158 252 Z" fill="url(#sivi)"/>
+  <!-- buz -->
+  <g fill="#fff" opacity=".55"><rect x="165" y="110" width="30" height="26" rx="5" transform="rotate(-10 180 123)"/><rect x="205" y="118" width="28" height="24" rx="5" transform="rotate(12 219 130)"/></g>
+  <g fill="#fff" opacity=".7"><circle cx="180" cy="200" r="3"/><circle cx="215" cy="220" r="2.5"/><circle cx="200" cy="175" r="2"/><circle cx="225" cy="185" r="3"/></g>
+  <path d="M150 80 L160 245" stroke="#fff" stroke-width="6" opacity=".45" stroke-linecap="round"/>
+  <!-- limon -->
+  <circle cx="262" cy="78" r="26" fill="#ffd54a"/><circle cx="262" cy="78" r="20" fill="#fff3a6"/>
+  <g stroke="#ffd54a" stroke-width="2"><path d="M262 58 L262 98"/><path d="M242 78 L282 78"/><path d="M248 64 L276 92"/><path d="M276 64 L248 92"/></g>
+</svg>

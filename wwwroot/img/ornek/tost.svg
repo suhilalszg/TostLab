@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Örnek görsel: kaşarlı-sucuklu tost (gerçek fotoğraf yüklenince bunun yerine o görünür) -->
+  <defs>
+    <radialGradient id="zemin" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#fff4e6"/><stop offset="1" stop-color="#f6c9a8"/>
+    </radialGradient>
+    <linearGradient id="ekmek" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2b25c"/><stop offset="1" stop-color="#c9772c"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zemin)"/>
+  <ellipse cx="200" cy="248" rx="150" ry="22" fill="#000" opacity=".12"/>
+  <!-- tabak -->
+  <ellipse cx="200" cy="232" rx="160" ry="34" fill="#fff"/>
+  <ellipse cx="200" cy="230" rx="140" ry="26" fill="#f3f0f7"/>
+  <!-- arka üçgen -->
+  <path d="M95 225 L215 70 L250 225 Z" fill="#a65d1f"/>
+  <path d="M103 220 L213 82 L243 220 Z" fill="url(#ekmek)"/>
+  <!-- ön üçgen -->
+  <path d="M160 232 L305 95 L320 232 Z" fill="#a65d1f"/>
+  <path d="M168 227 L302 108 L313 227 Z" fill="url(#ekmek)"/>
+  <!-- ızgara izleri -->
+  <g stroke="#8a4512" stroke-width="7" stroke-linecap="round" opacity=".55">
+    <path d="M200 205 L262 150"/><path d="M228 215 L292 157"/><path d="M258 222 L304 180"/>
+    <path d="M135 205 L190 135"/><path d="M160 212 L208 150"/>
+  </g>
+  <!-- akan kaşar -->
+  <path d="M168 227 C178 236 186 252 196 246 C204 240 202 230 214 232 C226 234 228 252 242 248 C252 244 250 232 262 230 L313 227 Z" fill="#ffd23f"/>
+  <path d="M103 220 C110 228 120 238 128 232 C136 226 140 222 150 224 Z" fill="#ffd23f"/>
+  <!-- sucuk -->
+  <g fill="#c0392b" stroke="#8e2418" stroke-width="2">
+    <ellipse cx="222" cy="229" rx="13" ry="5"/><ellipse cx="282" cy="229" rx="13" ry="5"/>
+  </g>
+</svg>

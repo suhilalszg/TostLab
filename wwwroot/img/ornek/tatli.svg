@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Örnek görsel: tatlı tost (çikolata + muz) -->
+  <defs>
+    <radialGradient id="zemin" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#fff0f6"/><stop offset="1" stop-color="#f3b6d0"/>
+    </radialGradient>
+    <linearGradient id="ekmek" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2b25c"/><stop offset="1" stop-color="#c9772c"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zemin)"/>
+  <ellipse cx="200" cy="232" rx="160" ry="34" fill="#fff"/>
+  <ellipse cx="200" cy="230" rx="140" ry="26" fill="#f6eef3"/>
+  <path d="M110 225 L230 75 L265 225 Z" fill="#a65d1f"/>
+  <path d="M118 220 L228 87 L258 220 Z" fill="url(#ekmek)"/>
+  <path d="M170 232 L305 105 L318 232 Z" fill="#a65d1f"/>
+  <path d="M178 227 L302 117 L311 227 Z" fill="url(#ekmek)"/>
+  <!-- çikolata -->
+  <path d="M130 150 C160 140 175 165 200 150 C225 136 245 160 275 145 C290 138 300 150 300 150" stroke="#4a2511" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M178 227 C190 240 200 238 206 230 C214 240 230 242 240 230 C252 242 270 240 311 227 Z" fill="#4a2511"/>
+  <!-- muz dilimleri -->
+  <g fill="#fff3b0" stroke="#e8c95a" stroke-width="2"><circle cx="210" cy="232" r="9"/><circle cx="252" cy="234" r="9"/><circle cx="290" cy="231" r="9"/></g>
+  <!-- pudra şekeri -->
+  <g fill="#fff" opacity=".9"><circle cx="200" cy="120" r="2"/><circle cx="250" cy="175" r="2"/><circle cx="160" cy="185" r="2"/><circle cx="280" cy="190" r="2"/><circle cx="225" cy="140" r="1.5"/></g>
+</svg>
