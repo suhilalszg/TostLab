@@ -4,6 +4,8 @@
     string kullaniciAdi = User.Identity?.Name ?? "";
     string basHarf = kullaniciAdi.Length > 0 ? kullaniciAdi.Substring(0, 1).ToUpper() : "?";
     bool yoneticiMi = User.IsInRole(Roller.Yonetici);
+    // Satış ekranı gibi sayfalar başlık çubuğunu istemez: tüm yükseklik onlara kalsın
+    bool tamEkran = ViewData["TamEkran"] as bool? ?? false;
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -11,18 +13,22 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - TOST LAB</title>
-    <script type="importmap"></script>
+    @* Tema, sayfa çizilmeden önce seçilsin (yoksa bir an beyaz yanıp söner) *@
+    <script>
+        try { const tema = localStorage.getItem('tema'); if (tema) document.documentElement.dataset.tema = tema; } catch (e) { }
+    </script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/tema.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Stiller", required: false)
 </head>
 <body>
     <div class="panel">
         <aside class="yan-menu">
-            <a class="logo" asp-controller="Home" asp-action="Index">TOST LAB°</a>
+            <a class="logo" asp-controller="Satis" asp-action="Index">TOST LAB°</a>
 
             <nav>
-                <a asp-controller="Siparis" asp-action="Index" class="@(aktifSayfa == "Siparis" ? "secili" : "")">Sipariş</a>
+                <a asp-controller="Satis" asp-action="Index" class="@(aktifSayfa == "Satis" ? "secili" : "")">Satış</a>
                 <a asp-controller="Home" asp-action="Index" class="@(aktifSayfa == "Home" ? "secili" : "")">Bugün</a>
                 @if (yoneticiMi)
                 {
@@ -32,26 +38,32 @@
                 }
             </nav>
 
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <form class="alt" asp-controller="Giris" asp-action="Cikis" method="post">
-                    <div class="rozet" title="@kullaniciAdi">@basHarf</div>
-                    <button type="submit" class="cikis">Çıkış</button>
-                </form>
-            }
-        </aside>
-
-        <main class="icerik">
-            <div class="ust-bar">
-                <h1>@ViewData["Title"]</h1>
+            <div class="alt">
+                <button type="button" class="tema-dugme" id="tema-dugme" title="Koyu / açık tema" aria-label="Koyu veya açık tema"></button>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <div class="kim">
-                        <b>@kullaniciAdi</b> · @(yoneticiMi ? "Yönetici" : "Çalışan")<br />
-                        @DateTime.Now.ToString("d MMMM yyyy, dddd", new System.Globalization.CultureInfo("tr-TR"))
-                    </div>
+                    <form asp-controller="Giris" asp-action="Cikis" method="post" class="cikis-formu">
+                        <div class="rozet" title="@kullaniciAdi">@basHarf</div>
+                        <button type="submit" class="cikis">Çıkış</button>
+                    </form>
                 }
             </div>
+        </aside>
+
+        <main class="icerik @(tamEkran ? "tam-ekran" : "")">
+            @if (!tamEkran)
+            {
+                <div class="ust-bar">
+                    <h1>@ViewData["Title"]</h1>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="kim">
+                            <b>@kullaniciAdi</b> · @(yoneticiMi ? "Yönetici" : "Çalışan")<br />
+                            @DateTime.Now.ToString("d MMMM yyyy, dddd", new System.Globalization.CultureInfo("tr-TR"))
+                        </div>
+                    }
+                </div>
+            }
 
             @RenderBody()
         </main>

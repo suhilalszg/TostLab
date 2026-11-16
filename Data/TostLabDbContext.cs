@@ -46,6 +46,10 @@ public class TostLabDbContext : DbContext
             .WithMany(siparis => siparis.Satirlar)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Satış ekranı sık sık "açık adisyonları" sorar: bu sorgu hızlı olsun
+        modelBuilder.Entity<Siparis>()
+            .HasIndex(siparis => new { siparis.Durum, siparis.MasaId });
+
         // Aynı kullanıcı adı iki kez kullanılamasın
         modelBuilder.Entity<Kullanici>()
             .HasIndex(kullanici => kullanici.KullaniciAdi)

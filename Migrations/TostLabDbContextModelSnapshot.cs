@@ -161,16 +161,19 @@ namespace TostLab.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("IptalEdenKullaniciId")
+                    b.Property<int>("Durum")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IptalEdildiMi")
+                    b.Property<int?>("IptalEdenKullaniciId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IptalNedeni")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("IptalSaati")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("KapanisSaati")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Kaynak")
@@ -180,7 +183,7 @@ namespace TostLab.Migrations
                     b.Property<int?>("MasaId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("OdemeTuruId")
+                    b.Property<int?>("OdemeTuruId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Tarih")
@@ -196,6 +199,8 @@ namespace TostLab.Migrations
                     b.HasIndex("MasaId");
 
                     b.HasIndex("OdemeTuruId");
+
+                    b.HasIndex("Durum", "MasaId");
 
                     b.ToTable("Siparisler");
                 });
@@ -270,8 +275,7 @@ namespace TostLab.Migrations
                     b.HasOne("TostLab.Models.OdemeTuru", "OdemeTuru")
                         .WithMany()
                         .HasForeignKey("OdemeTuruId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("IptalEdenKullanici");
 

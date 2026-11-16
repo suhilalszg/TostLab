@@ -1,0 +1,185 @@
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Satış";
+    ViewData["TamEkran"] = true;
+
+    // Sunucudaki veriyi ekrana JSON olarak gömüyoruz: sayfa açılır açılmaz hazır, ekstra istek yok.
+    // JsonSerializer < > karakterlerini kaçırır, yani ürün adı ne olursa olsun güvenli.
+    var jsonAyari = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+    string baslangicVerisi = JsonSerializer.Serialize(new
+    {
+        urunler = ViewData["Urunler"],
+        odemeTurleri = ViewData["OdemeTurleri"],
+        ekran = ViewData["Ekran"]
+    }, jsonAyari);
+}
+
+@section Stiller {
+    <link rel="stylesheet" href="~/css/satis.css" asp-append-version="true" />
+}
+
+@Html.AntiForgeryToken()
+<script type="application/json" id="satis-verisi">@Html.Raw(baslangicVerisi)</script>
+
+<div class="pos" x-data="satisEkrani" x-cloak @@keydown.escape.window="geriDon()">
+
+    @* ===================== 1) MASA PLANI ===================== *@
+    <section class="plan" x-show="gorunum === 'plan'">
+        <header class="plan-ust">
+            <h1>Masalar</h1>
+            <div class="lejant">
+                <span><i class="nokta bos"></i>Boş</span>
+                <span><i class="nokta dolu"></i>Dolu</span>
+                <span><i class="nokta hesap"></i>Hesap istendi</span>
+            </div>
+        </header>
+
+        <div class="masa-izgara">
+            <template x-for="masa in ekran.masalar" :key="masa.id">
+                <button type="button" class="masa" :class="masa.durum" @@click="masaAc(masa)">
+                    <span class="masa-ad" x-text="masa.ad"></span>
+                    <template x-if="masa.durum === 'bos'">
+                        <span class="masa-alt">Boş</span>
+                    </template>
+                    <template x-if="masa.durum !== 'bos'">
+                        <span class="masa-alt">
+                            <b x-text="para(masa.toplam)"></b>
+                            <span x-text="gecenSure(masa.acilis)"></span>
+                        </span>
+                    </template>
+                </button>
+            </template>
+        </div>
+
+        <h2 class="plan-baslik">Paket ve online</h2>
+        <div class="paket-dugmeleri">
+            <template x-for="kaynak in paketKaynaklari" :key="kaynak">
+                <button type="button" class="paket-yeni" @@click="paketAc(kaynak)">
+                    <span>+</span> <span x-text="kaynak"></span>
+                </button>
+            </template>
+        </div>
+
+        <div class="masa-izgara" x-show="ekran.paketler.length">
+            <template x-for="paket in ekran.paketler" :key="paket.adisyonId">
+                <button type="button" class="masa" :class="paket.durum === 'hesap' ? 'hesap' : 'dolu'" @@click="adisyonAc(paket.adisyonId, paket.baslik, paket.kaynak)">
+                    <span class="masa-ad" x-text="paket.baslik"></span>
+                    <span class="masa-alt">
+                        <b x-text="para(paket.toplam)"></b>
+                        <span x-text="gecenSure(paket.acilis)"></span>
+                    </span>
+                </button>
+            </template>
+        </div>
+    </section>
+
+    @* ===================== 2) SATIŞ (tek ekran) ===================== *@
+    <section class="satis" x-show="gorunum === 'satis'">
+
+        @* Üst şerit: geri, hangi masa, masalar arası hızlı geçiş *@
+        <header class="satis-ust">
+            <button type="button" class="geri" @@click="geriDon()" title="Masalara dön (Esc)">← Masalar</button>
+            <div class="hizli-masalar">
+                <template x-for="masa in ekran.masalar" :key="masa.id">
+                    <button type="button" class="hizli-masa" :class="[masa.durum, secili.masaId === masa.id ? 'aktif' : '']"
+                            @@click="masaAc(masa)" x-text="masa.ad"></button>
+                </template>
+            </div>
+        </header>
+
+        <div class="satis-govde">
+            @* Kategoriler *@
+            <nav class="kategoriler">
+                <template x-for="kategori in kategoriler" :key="kategori">
+                    <button type="button" :class="{ secili: kategori === seciliKategori && !arama }"
+                            @@click="seciliKategori = kategori; arama = ''" x-text="kategori"></button>
+                </template>
+            </nav>
+
+            @* Ürünler *@
+            <div class="urunler">
+                <input type="search" class="urun-ara" placeholder="Ürün ara…" x-model="arama" x-ref="arama" autocomplete="off" />
+                <div class="urun-izgara">
+                    <template x-for="urun in gorunenUrunler" :key="urun.id">
+                        <button type="button" class="urun" :disabled="urun.fiyat <= 0" @@click="urunEkle(urun)">
+                            <span class="urun-ad" x-text="urun.ad"></span>
+                            <span class="urun-fiyat" x-text="urun.fiyat > 0 ? para(urun.fiyat) : 'fiyat yok'"></span>
+                            <span class="urun-rozet" x-show="adisyondakiAdet(urun.id)" x-text="adisyondakiAdet(urun.id)"></span>
+                        </button>
+                    </template>
+                </div>
+                <p class="bos-yazi" x-show="!gorunenUrunler.length">Ürün bulunamadı.</p>
+            </div>
+
+            @* Adisyon *@
+            <aside class="adisyon" :class="{ 'hesap-istendi': adisyon?.durum === 'hesap' }">
+                <div class="adisyon-ust">
+                    <div>
+                        <b class="adisyon-baslik" x-text="secili.baslik"></b>
+                        <span class="adisyon-alt" x-text="adisyon ? 'Açılış ' + saat(adisyon.acilis) : 'Yeni adisyon'"></span>
+                    </div>
+                    <span class="durum-hap" x-show="adisyon?.durum === 'hesap'">Hesap istendi</span>
+                </div>
+
+                <div class="satirlar">
+                    <template x-for="satir in satirlar" :key="satir.anahtar">
+                        <div class="satir" :class="{ bekliyor: !satir.id }">
+                            <span class="satir-ad" x-text="satir.ad"></span>
+                            <div class="adet">
+                                <button type="button" @@click="azalt(satir)" :disabled="!satir.id" aria-label="Azalt">−</button>
+                                <b x-text="satir.adet"></b>
+                                <button type="button" @@click="arttir(satir)" aria-label="Arttır">+</button>
+                            </div>
+                            <span class="satir-tutar" x-text="para(satir.adet * satir.birimFiyat)"></span>
+                            <button type="button" class="sil" @@click="sil(satir)" :disabled="!satir.id" title="Satırı sil" aria-label="Satırı sil">×</button>
+                        </div>
+                    </template>
+                    <p class="bos-yazi" x-show="!satirlar.length">Ürüne dokun, buraya eklensin.</p>
+                </div>
+
+                <div class="toplam">
+                    <span>Toplam</span>
+                    <b x-text="para(toplam)"></b>
+                </div>
+
+                @* Ödeme: türe dokunmak = ödendi (2 dokunuş) *@
+                <div class="odeme" x-show="odemeAcik" x-transition.opacity>
+                    <div class="odeme-baslik">
+                        <span>Ödeme türü</span>
+                        <button type="button" class="kapat" @@click="odemeAcik = false">Vazgeç</button>
+                    </div>
+                    <div class="odeme-izgara">
+                        <template x-for="odeme in odemeTurleri" :key="odeme.id">
+                            <button type="button" @@click="ode(odeme)" x-text="odeme.ad"></button>
+                        </template>
+                    </div>
+                </div>
+
+                @* İptal: neden zorunlu *@
+                <form class="iptal" x-show="iptalAcik" x-transition.opacity @@submit.prevent="iptalEt()">
+                    <label>İptal nedeni</label>
+                    <input type="text" x-model="iptalNedeni" x-ref="iptalNedeni" maxlength="200" placeholder="örn. müşteri vazgeçti" />
+                    <div class="iptal-dugmeler">
+                        <button type="button" @@click="iptalAcik = false">Vazgeç</button>
+                        <button type="submit" class="tehlike" :disabled="!iptalNedeni.trim()">Adisyonu iptal et</button>
+                    </div>
+                </form>
+
+                <div class="eylemler" x-show="!odemeAcik && !iptalAcik">
+                    <button type="button" class="hesap" :disabled="!adisyon" @@click="hesapIste()"
+                            x-text="adisyon?.durum === 'hesap' ? 'Hesabı geri al' : 'Hesap iste'"></button>
+                    <button type="button" class="ode" :disabled="!adisyon" @@click="odemeAcik = true">Öde</button>
+                    <button type="button" class="iptal-ac" :disabled="!adisyon" @@click="iptalAc()">Adisyonu iptal et</button>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    @* Kısa bildirim (sağ alt) *@
+    <div class="toast" :class="toast.tur" x-show="toast.yazi" x-transition x-text="toast.yazi"></div>
+</div>
+
+@section Scripts {
+    <script src="~/js/satis.js" asp-append-version="true"></script>
+    <script src="~/lib/alpinejs/alpine.min.js" defer></script>
+}

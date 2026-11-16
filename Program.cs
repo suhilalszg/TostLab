@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using TostLab.Data;
 using TostLab.Models;
+using TostLab.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 // Şifreleri hash'leyen hazır araç (ASP.NET Core Identity'den)
 builder.Services.AddSingleton<IPasswordHasher<Kullanici>, PasswordHasher<Kullanici>>();
+
+// Adisyon kuralları: her istekte veritabanıyla birlikte yeni bir tane oluşur (scoped)
+builder.Services.AddScoped<AdisyonServisi>();
 
 var app = builder.Build();
 

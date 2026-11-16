@@ -84,26 +84,3 @@ public class AyarlarSayfasi
     public List<Masa> Masalar { get; set; } = new();
     public List<OdemeTuru> OdemeTurleri { get; set; } = new();
 }
-
-// Sipariş ekranının ihtiyaç duyduğu her şey
-public class SiparisSayfasi
-{
-    public List<Urun> Urunler { get; set; } = new();          // sadece satıştakiler
-    public List<Masa> Masalar { get; set; } = new();          // sadece açık olanlar
-    public List<OdemeTuru> OdemeTurleri { get; set; } = new(); // sadece açık olanlar
-}
-
-// Tarayıcının "Siparişi kaydet" deyince gönderdiği bilgi (JSON)
-public class SiparisIstegi
-{
-    public string Kaynak { get; set; } = "";
-    public int? MasaId { get; set; }
-    public int OdemeTuruId { get; set; }
-    public List<SiparisIstegiSatiri> Satirlar { get; set; } = new();
-}
-
-public class SiparisIstegiSatiri
-{
-    public int UrunId { get; set; }
-    public int Adet { get; set; }
-}

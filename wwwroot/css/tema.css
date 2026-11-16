@@ -50,3 +50,42 @@
     --fis-yazi-tipi: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
     --kose: 10px;
 }
+
+/* ---------- Koyu tema ----------
+   Bilgisayar koyu moddaysa kendiliğinden açılır; sol menüdeki ☾/☀ düğmesi elle değiştirir.
+   Sadece "görev" renkleri değişir, sayfalar aynı değişkenleri kullanmaya devam eder. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-tema="acik"]) {
+        --zemin: #121212;
+        --kart: #1c1c1c;
+        --beyaz: #242424;
+        --krem: #191919;
+        --fis: #181818;
+        --fis-krem: #181818;
+        --yazi: #EEE7D9;
+        --soluk-yazi: #9A938A;
+        --cizgi: #2D2D2D;
+        --kum: #4A463F;
+        --menu: #0A0A0A;
+        --yesil-zemin: #16301F;
+        --kirmizi-zemin: #3A1C21;
+        color-scheme: dark;
+    }
+}
+
+:root[data-tema="koyu"] {
+    --zemin: #121212;
+    --kart: #1c1c1c;
+    --beyaz: #242424;
+    --krem: #191919;
+    --fis: #181818;
+    --fis-krem: #181818;
+    --yazi: #EEE7D9;
+    --soluk-yazi: #9A938A;
+    --cizgi: #2D2D2D;
+    --kum: #4A463F;
+    --menu: #0A0A0A;
+    --yesil-zemin: #16301F;
+    --kirmizi-zemin: #3A1C21;
+    color-scheme: dark;
+}
