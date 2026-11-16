@@ -35,10 +35,11 @@ public class AdisyonController : Controller
 [Authorize(Roles = Roller.Yonetici)]
 public class KayitlarController : Controller
 {
-    // /Kayitlar?gun=2026-11-16 -> /Adisyon?tarih=2026-11-16
+    // /Kayitlar?gun=2026-11-16&durum=Iptal -> /Adisyon?tarih=2026-11-16&durum=Iptal (süzgeçler de taşınır)
     [HttpGet]
-    public IActionResult Index(DateTime? gun) =>
-        RedirectToActionPermanent("Index", "Adisyon", new { tarih = gun?.ToString("yyyy-MM-dd") });
+    public IActionResult Index(DateTime? gun, AdisyonDurumu? durum, string? kaynak, int? odemeTuruId) =>
+        RedirectToActionPermanent("Index", "Adisyon",
+            new { tarih = gun?.ToString("yyyy-MM-dd"), durum, kaynak, odemeTuruId });
 
     [HttpGet]
     public IActionResult Detay(int id) => RedirectToActionPermanent("Detay", "Adisyon", new { id });

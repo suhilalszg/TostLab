@@ -197,7 +197,12 @@ document.addEventListener('alpine:init', () => {
 
         // ---------- Biçimlendirme ----------
         // ₺370 / ₺643,50: tam sayıda kuruş yazılmaz (menü kartlarında sade dursun)
-        para(tutar) { return '₺' + (Number.isInteger(Math.round(tutar * 100) / 100) ? tamSayiBicimi : paraBicimi).format(tutar); },
+        // Eksi tutarda işaret ₺'nin önüne gelir: −₺50
+        para(tutar) {
+            const mutlak = Math.abs(tutar);
+            const bicim = Number.isInteger(Math.round(mutlak * 100) / 100) ? tamSayiBicimi : paraBicimi;
+            return (tutar < 0 ? '−' : '') + '₺' + bicim.format(mutlak);
+        },
         saat(tarih) { return saatBicimi.format(new Date(tarih)); },
         // Ürünün görseli: önce dükkânın Menü'den yüklediği foto; yoksa hazır gerçek fotoğraf
         // (wwwroot/img/urun, kaynakları KAYNAKLAR.md'de); o da yoksa çizim (wwwroot/img/ornek).

@@ -29,17 +29,10 @@
         odemeTuruId = suzgecleriTut ? filtre.OdemeTuruId : null
     })!;
 
-    // Saatlik grafik: ilk ve son saat arası boşluklar 0
-    var saatlik = new List<SaatSatiri>();
-    if (rapor.Saatlik.Count > 0)
-    {
-        for (int saat = rapor.Saatlik.Min(s => s.Saat); saat <= rapor.Saatlik.Max(s => s.Saat); saat++)
-        {
-            saatlik.Add(new SaatSatiri(saat, rapor.Saatlik.FirstOrDefault(s => s.Saat == saat)?.Adet ?? 0));
-        }
-    }
-    int enCokSaat = saatlik.Count == 0 ? 1 : Math.Max(1, saatlik.Max(s => s.Adet));
-    var yogunSaatler = saatlik.Where(s => s.Adet > 0).OrderByDescending(s => s.Adet).ThenBy(s => s.Saat).Take(2).Select(s => s.Saat).ToList();
+    // Saatlik grafik (boş saatler 0, en yoğun iki saat): hesap GunRaporu'nda
+    var saatlik = rapor.SaatlikDolu;
+    int enCokSaat = rapor.EnCokSaatAdedi;
+    var yogunSaatler = rapor.YogunSaatler;
 
     decimal enYuksekGun = Model.Gunler.Count == 0 ? 1 : Math.Max(1, Model.Gunler.Max(g => g.Ciro));
     var enIyiGun = Model.Gunler.Where(g => g.Ciro > 0).OrderByDescending(g => g.Ciro).FirstOrDefault();
@@ -170,7 +163,7 @@
                     <h2>Saatlik sipariş</h2>
                     @if (yogunSaatler.Count > 0)
                     {
-                        <span>en yoğun @string.Join(" ve ", yogunSaatler.OrderBy(s => s).Select(s => $"{s:00}:00"))</span>
+                        <span>en yoğun @string.Join(" ve ", yogunSaatler.Select(s => $"{s:00}:00"))</span>
                     }
                 </div>
                 @if (saatlik.Count == 0)
@@ -250,7 +243,7 @@
         <section class="pano-kart">
             <div class="kart-baslik">
                 <h2>Saatlik yoğunluk</h2>
-                <span>dönem boyunca saat saat sipariş · en yoğun @string.Join(" ve ", yogunSaatler.OrderBy(s => s).Select(s => $"{s:00}:00"))</span>
+                <span>dönem boyunca saat saat sipariş · en yoğun @string.Join(" ve ", yogunSaatler.Select(s => $"{s:00}:00"))</span>
             </div>
             <div class="saat-grafik kisa">
                 @foreach (var saat in saatlik)

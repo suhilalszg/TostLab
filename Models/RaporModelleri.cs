@@ -17,11 +17,12 @@ public class PanelFiltresi
     public string? Kaynak { get; set; }
     public int? OdemeTuruId { get; set; }
 
-    public DateTime SecilenTarih => (Tarih ?? DateTime.Today).Date;
+    // Seçilmediyse ya da anlamsız bir tarihse (0001, 9999: ileri/geri hesapta taşar) bugün
+    public DateTime SecilenTarih => Tarih is DateTime tarih && tarih.Year is >= 2000 and <= 2100 ? tarih.Date : DateTime.Today;
 
     public DateTime Baslangic => Donem switch
     {
-        Donem.Hafta => SecilenTarih.AddDays(-(((int)SecilenTarih.DayOfWeek + 6) % 7)),   // pazartesi
+        Donem.Hafta => RaporHesabi.HaftaBasi(SecilenTarih),
         Donem.Ay => new DateTime(SecilenTarih.Year, SecilenTarih.Month, 1),
         _ => SecilenTarih
     };
@@ -51,8 +52,23 @@ public record AdisyonPaneli(
     List<SilinenBilgisi> Silinenler,
     List<OdemeTuru> OdemeTurleri)
 {
-    public decimal? DegisimYuzdesi => OncekiCiro == 0 ? null : (Rapor.Ozet.Ciro - OncekiCiro) * 100 / OncekiCiro;
-    public decimal KomisyonYuzdesi => PlatformCirosu == 0 ? 0 : Rapor.Ozet.Komisyon * 100 / PlatformCirosu;
+    public decimal? DegisimYuzdesi => RaporHesabi.DegisimYuzdesi(Rapor.Ozet.Ciro, OncekiCiro);
+    public decimal KomisyonYuzdesi => RaporHesabi.KomisyonYuzdesi(Rapor.Ozet.Komisyon, PlatformCirosu);
+}
+
+// Bugün ve Adisyon panelinin ortak hesapları (iki yerde ayrı ayrı yazılıp ayrışmasın)
+public static class RaporHesabi
+{
+    // Hafta pazartesi başlar
+    public static DateTime HaftaBasi(DateTime gun) => gun.Date.AddDays(-(((int)gun.DayOfWeek + 6) % 7));
+
+    // Ciro değişimi yüzdesi: önceki dönemde satış yoksa hesaplanamaz
+    public static decimal? DegisimYuzdesi(decimal ciro, decimal oncekiCiro) =>
+        oncekiCiro == 0 ? null : (ciro - oncekiCiro) * 100 / oncekiCiro;
+
+    // Komisyon, platform cirosunun yüzde kaçı
+    public static decimal KomisyonYuzdesi(decimal komisyon, decimal platformCirosu) =>
+        platformCirosu == 0 ? 0 : komisyon * 100 / platformCirosu;
 }
 
 // Günlük grafik çubuğu
@@ -136,6 +152,21 @@ public record GunRaporu(
 {
     // Ortalama adisyon tutarı (hiç ödeme yoksa 0)
     public decimal OrtalamaAdisyon => Ozet.OdenenSayisi == 0 ? 0 : Ozet.Ciro / Ozet.OdenenSayisi;
+
+    // Saatlik grafik için: ilk ve son sipariş saati arasındaki boş saatler de 0 olarak var
+    public List<SaatSatiri> SaatlikDolu { get; } = Saatlik.Count == 0
+        ? new List<SaatSatiri>()
+        : Enumerable.Range(Saatlik.Min(saat => saat.Saat), Saatlik.Max(saat => saat.Saat) - Saatlik.Min(saat => saat.Saat) + 1)
+            .Select(saat => new SaatSatiri(saat, Saatlik.FirstOrDefault(satir => satir.Saat == saat)?.Adet ?? 0))
+            .ToList();
+
+    // En yoğun iki saat (saat sırasıyla); grafikte sarı çizilir
+    public List<int> YogunSaatler { get; } = Saatlik.Where(saat => saat.Adet > 0)
+        .OrderByDescending(saat => saat.Adet).ThenBy(saat => saat.Saat).Take(2)
+        .Select(saat => saat.Saat).OrderBy(saat => saat).ToList();
+
+    // Grafikte çubuk boyu için en kalabalık saatin sipariş sayısı (en az 1: sıfıra bölme olmasın)
+    public int EnCokSaatAdedi => Saatlik.Count == 0 ? 1 : Math.Max(1, Saatlik.Max(saat => saat.Adet));
 }
 
 // Kırılımın bir satırı: "Nakit · 12 adisyon · 3.450 ₺" ya da "Sade · 18 adet · 1.800 ₺"
@@ -159,11 +190,8 @@ public record PanoRaporu(
     decimal PlatformCirosu,                // komisyon kesilen siparişlerin cirosu
     List<SonSiparis> SonSiparisler)
 {
-    // Ciro değişimi yüzdesi: önceki aralıkta satış yoksa hesaplanamaz
-    public decimal? DegisimYuzdesi => OncekiCiro == 0 ? null : (Rapor.Ozet.Ciro - OncekiCiro) * 100 / OncekiCiro;
-
-    // Komisyon, platform cirosunun yüzde kaçı
-    public decimal KomisyonYuzdesi => PlatformCirosu == 0 ? 0 : Rapor.Ozet.Komisyon * 100 / PlatformCirosu;
+    public decimal? DegisimYuzdesi => RaporHesabi.DegisimYuzdesi(Rapor.Ozet.Ciro, OncekiCiro);
+    public decimal KomisyonYuzdesi => RaporHesabi.KomisyonYuzdesi(Rapor.Ozet.Komisyon, PlatformCirosu);
 }
 
 // Son siparişler tablosunun bir satırı. Urunler: "2× Ayran, Kaşarlı Tost"

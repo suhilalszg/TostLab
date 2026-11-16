@@ -24,16 +24,12 @@ public class RaporServisi
         DateTime son = filtre.Bitis;
 
         // Rakamlar ve kırılımlar: dönemin tamamı (en çok satan 10 ürün)
-        var rapor = await AralikRaporuAsync(bas, son, enCokSatanSayisi: 10);
-        var adisyonlar = await GununAdisyonOzetleriAsync(bas, son);
+        var (rapor, adisyonlar) = await AralikRaporuVeAdisyonlarAsync(bas, son, enCokSatanSayisi: 10);
         var odenenler = adisyonlar.Where(adisyon => adisyon.Durum == AdisyonDurumu.Odendi).ToList();
 
-        // Bir önceki aynı uzunluktaki dönem (dün / geçen hafta / geçen ay)
+        // Bir önceki aynı uzunluktaki dönem (önceki gün / geçen hafta / geçen ay)
         DateTime oncekiBas = filtre.Donem == Donem.Ay ? bas.AddMonths(-1) : bas - (son - bas);
-        var oncekiToplamlar = await veritabani.Siparisler.AsNoTracking()
-            .Where(siparis => siparis.Durum == AdisyonDurumu.Odendi && siparis.Tarih >= oncekiBas && siparis.Tarih < bas)
-            .Select(siparis => siparis.Toplam)
-            .ToListAsync();
+        decimal oncekiCiro = await OncekiCiroAsync(bas, son, oncekiBas, bas);
 
         // Günlük çubuklar: dönemin her günü (satış olmayan gün 0)
         var gunler = new List<GunlukSatir>();
@@ -44,14 +40,23 @@ public class RaporServisi
                 gununkiler.Sum(adisyon => adisyon.Komisyon)));
         }
 
-        // Kategoriye göre satış (ikram satırları 0 ₺ sayılır)
+        // Kategoriye göre satış (ikram satırları 0 ₺ sayılır). Adisyon iskontosu satırlara tutarları oranında
+        // dağıtılır: böylece kategorilerin toplamı ciroya eşit olur.
         var kategoriSatirlari = await veritabani.SiparisSatirlari.AsNoTracking()
             .Where(satir => satir.Siparis.Durum == AdisyonDurumu.Odendi && satir.Siparis.Tarih >= bas && satir.Siparis.Tarih < son)
-            .Select(satir => new { satir.Urun.Kategori, satir.Adet, BirimFiyat = satir.IkramMi ? 0 : satir.BirimFiyat })
+            .Select(satir => new
+            {
+                satir.Urun.Kategori,
+                satir.Adet,
+                BirimFiyat = satir.IkramMi ? 0 : satir.BirimFiyat,
+                AdisyonToplami = satir.Siparis.Toplam,
+                satir.Siparis.IndirimTutari
+            })
             .ToListAsync();
         var kategoriKirilimi = kategoriSatirlari
             .GroupBy(satir => satir.Kategori)
-            .Select(grup => new KirilimSatiri(grup.Key, grup.Sum(satir => satir.Adet), grup.Sum(satir => satir.Adet * satir.BirimFiyat)))
+            .Select(grup => new KirilimSatiri(grup.Key, grup.Sum(satir => satir.Adet),
+                Math.Round(grup.Sum(satir => satir.Adet * satir.BirimFiyat * IskontoSonrasiOrani(satir.AdisyonToplami, satir.IndirimTutari)), 2)))
             .OrderByDescending(kirilim => kirilim.Tutar)
             .ToList();
 
@@ -59,7 +64,7 @@ public class RaporServisi
         var silinenler = await SilinenleriGetirAsync(iz => iz.Saat >= bas && iz.Saat < son);
         var odemeTurleri = await veritabani.OdemeTurleri.AsNoTracking().OrderBy(odeme => odeme.Id).ToListAsync();
 
-        return new AdisyonPaneli(filtre, rapor, oncekiToplamlar.Sum(),
+        return new AdisyonPaneli(filtre, rapor, oncekiCiro,
             odenenler.Where(adisyon => adisyon.KomisyonOrani > 0).Sum(adisyon => adisyon.Toplam),
             gunler, kategoriKirilimi, kayitlar, silinenler, odemeTurleri);
     }
@@ -175,24 +180,17 @@ public class RaporServisi
     public async Task<PanoRaporu> PanoAsync(PanoAraligi aralik)
     {
         DateTime bugun = DateTime.Today;
-        // Hafta pazartesi başlar
-        DateTime haftaBasi = bugun.AddDays(-(((int)bugun.DayOfWeek + 6) % 7));
         var (baslangic, bitis) = aralik switch
         {
             PanoAraligi.Dun => (bugun.AddDays(-1), bugun),
-            PanoAraligi.Hafta => (haftaBasi, bugun.AddDays(1)),
+            PanoAraligi.Hafta => (RaporHesabi.HaftaBasi(bugun), bugun.AddDays(1)),
             _ => (bugun, bugun.AddDays(1))
         };
 
         var rapor = await AralikRaporuAsync(baslangic, bitis);
 
         // Karşılaştırma: bir hafta önceki aynı aralık (aynı gün ya da geçen hafta)
-        DateTime oncekiBas = baslangic.AddDays(-7);
-        DateTime oncekiSon = bitis.AddDays(-7);
-        var oncekiToplamlar = await veritabani.Siparisler.AsNoTracking()
-            .Where(siparis => siparis.Durum == AdisyonDurumu.Odendi && siparis.Tarih >= oncekiBas && siparis.Tarih < oncekiSon)
-            .Select(siparis => siparis.Toplam)
-            .ToListAsync();
+        decimal oncekiCiro = await OncekiCiroAsync(baslangic, bitis, baslangic.AddDays(-7), bitis.AddDays(-7));
         var turkce = new System.Globalization.CultureInfo("tr-TR");
         string oncekiAdi = aralik == PanoAraligi.Hafta
             ? "geçen hafta"
@@ -230,7 +228,7 @@ public class RaporServisi
                 adisyon.Id,
                 adisyon.Tarih,
                 adisyon.Kaynak,
-                adisyon.MasaAdi ?? adisyon.Kaynak,
+                adisyon.MasaAdi ?? AdisyonServisi.PaketBasligi(adisyon.Kaynak, adisyon.Tarih),
                 string.Join(", ", sonSatirlar
                     .Where(satir => satir.SiparisId == adisyon.Id)
                     .Select(satir => satir.Adet > 1 ? $"{satir.Adet}× {satir.Ad}" : satir.Ad)),
@@ -238,13 +236,46 @@ public class RaporServisi
                 adisyon.Durum))
             .ToList();
 
-        return new PanoRaporu(aralik, baslangic, bitis, rapor, oncekiToplamlar.Sum(), oncekiAdi,
+        return new PanoRaporu(aralik, baslangic, bitis, rapor, oncekiCiro, oncekiAdi,
             adisyonlar.Count == 0 ? null : adisyonlar.Min(adisyon => adisyon.Tarih),
             platformCirosu, sonSiparisler);
     }
 
+    // Önceki dönemin cirosu. Şu anki dönem henüz bitmediyse (bugün, bu hafta, bu ay) önceki dönem de
+    // aynı noktaya kadar sayılır: öğlen bugünü geçen haftanın bütün günüyle kıyaslamak yanıltır.
+    private async Task<decimal> OncekiCiroAsync(DateTime bas, DateTime son, DateTime oncekiBas, DateTime oncekiSon)
+    {
+        DateTime simdi = DateTime.Now;
+        if (simdi < son)
+        {
+            DateTime ayniNokta = oncekiBas + (simdi - bas);
+            if (ayniNokta < oncekiSon)
+            {
+                oncekiSon = ayniNokta;
+            }
+        }
+
+        var toplamlar = await veritabani.Siparisler.AsNoTracking()
+            .Where(siparis => siparis.Durum == AdisyonDurumu.Odendi && siparis.Tarih >= oncekiBas && siparis.Tarih < oncekiSon)
+            .Select(siparis => siparis.Toplam)
+            .ToListAsync();
+        return toplamlar.Sum();
+    }
+
+    // İskonto sonrası kalan pay: 100 ₺'lik adisyona 10 ₺ iskonto -> her satır 0,9 ile çarpılır
+    private static decimal IskontoSonrasiOrani(decimal adisyonToplami, decimal indirimTutari)
+    {
+        decimal araToplam = adisyonToplami + indirimTutari;
+        return araToplam == 0 ? 0 : adisyonToplami / araToplam;
+    }
+
     // Bir zaman aralığının raporu (bir gün ya da bir hafta)
-    private async Task<GunRaporu> AralikRaporuAsync(DateTime gunBasi, DateTime gunSonu, int enCokSatanSayisi = 5)
+    private async Task<GunRaporu> AralikRaporuAsync(DateTime gunBasi, DateTime gunSonu, int enCokSatanSayisi = 5) =>
+        (await AralikRaporuVeAdisyonlarAsync(gunBasi, gunSonu, enCokSatanSayisi)).Rapor;
+
+    // Rapor + aralığın adisyon özetleri: Adisyon paneli aynı listeyi günlük grafikte de kullanır (ikinci sorgu olmasın)
+    private async Task<(GunRaporu Rapor, List<AdisyonOzeti> Adisyonlar)> AralikRaporuVeAdisyonlarAsync(
+        DateTime gunBasi, DateTime gunSonu, int enCokSatanSayisi)
     {
         var gununHepsi = await GununAdisyonOzetleriAsync(gunBasi, gunSonu);
         var silinenler = await SilinenleriGetirAsync(iz => iz.Saat >= gunBasi && iz.Saat < gunSonu);
@@ -271,8 +302,9 @@ public class RaporServisi
             .OrderBy(saat => saat.Saat)
             .ToList();
 
-        return new GunRaporu(gunBasi, OzetHesapla(gununHepsi, silinenler, await IkramlariGetirAsync(gunBasi, gunSonu)),
+        var rapor = new GunRaporu(gunBasi, OzetHesapla(gununHepsi, silinenler, await IkramlariGetirAsync(gunBasi, gunSonu)),
             OdemeKirilimi(odenenler), KaynakKirilimi(odenenler), enCokSatanlar, saatlik);
+        return (rapor, gununHepsi);
     }
 
     // ===================== AY RAPORU (her ay sonu özet) =====================

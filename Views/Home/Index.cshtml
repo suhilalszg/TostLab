@@ -19,19 +19,10 @@
         tarihYazisi += $" · ilk sipariş {ilk:HH:mm}";
     }
 
-    // Saatlik grafik: ilk ve son sipariş saati arasındaki boş saatler de 0 olarak görünsün
-    var saatlik = new List<SaatSatiri>();
-    if (rapor.Saatlik.Count > 0)
-    {
-        for (int saat = rapor.Saatlik.Min(s => s.Saat); saat <= rapor.Saatlik.Max(s => s.Saat); saat++)
-        {
-            saatlik.Add(new SaatSatiri(saat, rapor.Saatlik.FirstOrDefault(s => s.Saat == saat)?.Adet ?? 0));
-        }
-    }
-    int enCokAdet = saatlik.Count == 0 ? 1 : Math.Max(1, saatlik.Max(s => s.Adet));
-    // En yoğun iki saat sarı çizilir
-    var yogunSaatler = saatlik.Where(s => s.Adet > 0).OrderByDescending(s => s.Adet).ThenBy(s => s.Saat).Take(2)
-        .Select(s => s.Saat).OrderBy(s => s).ToList();
+    // Saatlik grafik (boş saatler 0, en yoğun iki saat sarı): hesap GunRaporu'nda
+    var saatlik = rapor.SaatlikDolu;
+    int enCokAdet = rapor.EnCokSaatAdedi;
+    var yogunSaatler = rapor.YogunSaatler;
 
     decimal enBuyukKaynak = rapor.KaynakKirilimi.Count == 0 ? 1 : Math.Max(1, rapor.KaynakKirilimi.Max(k => k.Tutar));
 
