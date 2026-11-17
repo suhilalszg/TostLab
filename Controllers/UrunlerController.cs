@@ -116,7 +116,8 @@ public class UrunlerController : Controller
             Fiyat = urun.Fiyat,
             Kategori = urun.Kategori,
             Icindekiler = urun.Icindekiler,
-            SatistaMi = urun.SatistaMi
+            SatistaMi = urun.SatistaMi,
+            Maliyet = urun.Maliyet
         };
         return View("Form", form);
     }
@@ -268,5 +269,6 @@ public class UrunlerController : Controller
         urun.Kategori = form.Kategori.Trim();
         urun.Icindekiler = string.IsNullOrWhiteSpace(form.Icindekiler) ? null : form.Icindekiler.Trim();
         urun.SatistaMi = form.SatistaMi;
+        urun.Maliyet = form.Maliyet;
     }
 }

@@ -7,61 +7,7 @@
 
 <div class="detay-izgara">
     <div class="fis kayit-fis">
-        @if (Model.Durum != AdisyonDurumu.Acik)
-        {
-            <div class="damga damga-@Model.Durum.ToString().ToLowerInvariant()">@DurumYazisi.Yaz(Model.Durum).ToUpper()</div>
-        }
-
-        <div class="fis-baslik">
-            <b>TOST LAB</b>
-            <span>Adisyon #@Model.Id · @Model.Baslik</span>
-            <span>@Model.Acilis.ToString("d MMMM yyyy HH:mm")@(Model.Kapanis is DateTime kapanis ? $" – {kapanis:HH:mm}" : "")</span>
-        </div>
-
-        @foreach (var satir in Model.Satirlar)
-        {
-            <div class="fis-satir">
-                <span>@satir.Adet × @satir.Ad@(satir.IkramMi ? " (ikram)" : "")</span>
-                <span>@(satir.IkramMi ? "İKRAM" : satir.Tutar.ToString("N2"))</span>
-            </div>
-        }
-
-        @if (Model.IndirimTutari > 0)
-        {
-            <div class="fis-satir ara">
-                <span>Ara toplam</span>
-                <span>@Model.AraToplam.ToString("N2")</span>
-            </div>
-            <div class="fis-satir">
-                <span>İndirim @Model.IndirimAciklamasi</span>
-                <span>−@Model.IndirimTutari.ToString("N2")</span>
-            </div>
-        }
-
-        <div class="fis-satir toplam">
-            <span>TOPLAM</span>
-            <span>@Model.Toplam.ToString("N2") ₺</span>
-        </div>
-
-        <div class="fis-alt">
-            <span>Kaynak: @Model.Kaynak</span>
-            @if (Model.OdemeTuru != null)
-            {
-                <span>Ödeme: @Model.OdemeTuru</span>
-            }
-            else if (Kaynaklar.PlatformMu(Model.Kaynak) && Model.Durum == AdisyonDurumu.Odendi)
-            {
-                <span>Ödeme: Online (@Model.Kaynak)</span>
-            }
-            @if (Model.IndirimYapan != null)
-            {
-                <span>İndirimi yapan: @Model.IndirimYapan</span>
-            }
-            @if (Model.KisiSayisi is int kisi)
-            {
-                <span>Kişi: @kisi</span>
-            }
-        </div>
+        <partial name="_Fis" model="FisCiktisi.Detaydan(Model)" />
     </div>
 
     <div>

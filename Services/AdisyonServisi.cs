@@ -415,6 +415,7 @@ public class AdisyonServisi
         ToplamiHesapla(odenen);
         ToplamiHesapla(kaynak);
         veritabani.Siparisler.Add(odenen);
+        await FisEkleAsync(odenen, kaynak.Masa, kaynak.AcanKullanici);
         await veritabani.SaveChangesAsync();
         return Bilgiye(kaynak);
     }
@@ -443,7 +444,19 @@ public class AdisyonServisi
         ToplamiHesapla(adisyon);
         adisyon.Durum = AdisyonDurumu.Odendi;
         adisyon.KapanisSaati = DateTime.Now;
+        await FisEkleAsync(adisyon, adisyon.Masa, adisyon.AcanKullanici);
         await veritabani.SaveChangesAsync();
+    }
+
+    // Ödenen adisyonun fişi aynı kayıtla (aynı SaveChanges) yazılır: ödeme var da fiş yok durumu olmaz
+    private async Task FisEkleAsync(Siparis odenen, Masa? masa, Kullanici? acan)
+    {
+        string? odemeTuruAdi = odenen.OdemeTuruId is int odemeTuruId
+            ? await veritabani.OdemeTurleri.Where(tur => tur.Id == odemeTuruId).Select(tur => tur.Ad).FirstOrDefaultAsync()
+            : null;
+        veritabani.FisKayitlari.Add(FisServisi.Olustur(odenen,
+            masa?.Ad ?? PaketBasligi(odenen.Kaynak, odenen.Tarih),
+            odemeTuruAdi, acan?.KullaniciAdi, odenen.KapanisSaati ?? DateTime.Now));
     }
 
     public async Task IptalEtAsync(IptalIstegi istek, int kullaniciId)

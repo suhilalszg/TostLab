@@ -1,6 +1,6 @@
 namespace TostLab.Models;
 
-// Adisyon paneli, Bugün ve Gün sonu sayfalarının veri şekilleri.
+// Adisyon paneli ve aylık e-postanın veri şekilleri.
 // Sadece okumak için: veritabanı sınıflarını (Siparis) sayfaya doğrudan vermiyoruz,
 // sayfanın ihtiyacı olan alanları taşıyan küçük kayıtlar (DTO) veriyoruz.
 
@@ -40,23 +40,92 @@ public class PanelFiltresi
     public DateTime SonrakiTarih => Bitis;
 }
 
-// Adisyon paneli: dönemin bütün rakamları, grafikleri ve adisyon listesi
+// Adisyon paneli: gün sonu + aylık rapor tek sayfada. Bölümler yöneticinin bakma sırasıyla:
+// 1) finans ve kasa, 2) fire / iptal / ikram, 3) operasyon, 4) kârlılık ve büyüme, en sonda bütün adisyonlar.
 public record AdisyonPaneli(
     PanelFiltresi Filtre,
-    GunRaporu Rapor,                       // özet, ödeme / kaynak kırılımı, en çok satanlar, saatlik
-    decimal OncekiCiro,                    // bir önceki dönemin cirosu (0 = satış yok)
-    decimal PlatformCirosu,
-    List<GunlukSatir> Gunler,              // dönemin her günü (hafta / ay grafiği)
-    List<KirilimSatiri> KategoriKirilimi,
-    List<KayitSatiri> Kayitlar,            // süzgeçten geçen adisyonlar
+    GunRaporu Rapor,                       // özet, ödeme / kaynak kırılımı, saatlik
+    // 1) Finans ve kasa
+    KasaDurumu Kasa,
+    // 2) Fire, iptal, ikram
+    List<KayitSatiri> Iptaller,
     List<SilinenBilgisi> Silinenler,
+    List<IkramUrunu> Ikramlar,
+    List<IndirimSatiri> Indirimler,
+    List<KayitSatiri> AcikAdisyonlar,
+    // 3) Operasyon
+    MasaDevri MasaDevri,
+    List<UrunPerformansi> Urunler,         // satışta olan ya da dönemde satılan her ürün
+    // 4) Kârlılık ve büyüme
+    Kiyas OncekiDonem,
+    Kiyas GecenYil,
+    List<KasaHareketi> Giderler,
+    int[][] IsiHaritasi,                   // [haftanın günü 0=pzt][saat 0-23] adisyon sayısı
+    List<KategoriDilimi> KategoriYigini,
+    HedefDurumu Hedef,
+    // Liste
+    List<GunlukSatir> Gunler,
+    List<KayitSatiri> Kayitlar,            // süzgeçten geçen adisyonlar
     List<OdemeTuru> OdemeTurleri)
 {
-    public decimal? DegisimYuzdesi => RaporHesabi.DegisimYuzdesi(Rapor.Ozet.Ciro, OncekiCiro);
+    public decimal PlatformCirosu => Rapor.KaynakKirilimi.Where(kaynak => kaynak.Komisyon > 0).Sum(kaynak => kaynak.Tutar);
     public decimal KomisyonYuzdesi => RaporHesabi.KomisyonYuzdesi(Rapor.Ozet.Komisyon, PlatformCirosu);
+
+    // Brüt satış: indirim, ikram ve iadeden önceki tutar. Net ciro = kasaya giren (Ozet.Ciro).
+    public decimal BrutSatis => Rapor.Ozet.Ciro + Rapor.Ozet.IndirimToplami + Rapor.Ozet.IkramTutari + Rapor.Ozet.IadeTutari;
+
+    public decimal GiderToplami => Giderler.Sum(gider => gider.Tutar);
+    // Komisyon ve giderler düştükten sonra kalan
+    public decimal GiderSonrasi => Rapor.Ozet.NetKazanc - GiderToplami;
 }
 
-// Bugün ve Adisyon panelinin ortak hesapları (iki yerde ayrı ayrı yazılıp ayrışmasın)
+
+// Kasa: her gün için sayım (girildiyse) ve sistemdeki nakit
+public record KasaGunu(DateTime Gun, decimal NakitSatis, decimal Gider, decimal? AcilisNakdi, decimal? SayilanNakit)
+{
+    public decimal? SistemdekiNakit => AcilisNakdi is decimal acilis ? acilis + NakitSatis - Gider : null;
+    // Eksi: kasa açığı, artı: kasa fazlası
+    public decimal? Fark => SayilanNakit is decimal sayilan && SistemdekiNakit is decimal sistem ? sayilan - sistem : null;
+}
+
+public record KasaDurumu(List<KasaGunu> Gunler)
+{
+    public decimal NakitSatis => Gunler.Sum(gun => gun.NakitSatis);
+    public decimal? ToplamFark => Gunler.Any(gun => gun.Fark != null) ? Gunler.Sum(gun => gun.Fark ?? 0) : null;
+    public int SayimliGun => Gunler.Count(gun => gun.Fark != null);
+}
+
+public record IkramUrunu(string Ad, int Adet, decimal Tutar, decimal Maliyet);
+
+public record IndirimSatiri(int Id, string Baslik, DateTime Saat, decimal AraToplam, decimal Tutar, string? Neden, string? Yapan)
+{
+    public decimal Oran => AraToplam == 0 ? 0 : Tutar * 100 / AraToplam;
+}
+
+// Masa devri: masa adisyonlarının ortalama süresi ve masa başına günlük devir
+public record MasaDevri(int AdisyonSayisi, double OrtalamaDakika, decimal GunlukDevir, List<MasaSatiri> Masalar);
+public record MasaSatiri(string Ad, int Adisyon, double OrtalamaDakika);
+
+// Bir ürünün dönem performansı. Ciro: indirim payı düşülmüş tutar (ikramlar hariç).
+public record UrunPerformansi(int UrunId, string Ad, string Kategori, int Adet, decimal Ciro, decimal BirimMaliyet, bool SatistaMi);
+
+// Önceki dönemle kıyas: ciro ve müşteri (kişi sayısı girilmediyse adisyon başına 1 kişi)
+public record Kiyas(string Ad, decimal Ciro, int Musteri, decimal KiyasCiro, int KiyasMusteri)
+{
+    public decimal? CiroYuzdesi => RaporHesabi.DegisimYuzdesi(Ciro, KiyasCiro);
+    public decimal? MusteriYuzdesi => KiyasMusteri == 0 ? null : (Musteri - KiyasMusteri) * 100m / KiyasMusteri;
+}
+
+
+// Kategori yığını: bir gün içinde kategorilerin cirosu
+public record KategoriDilimi(DateTime Gun, Dictionary<string, decimal> Kategoriler);
+
+public record HedefDurumu(int Yil, int Ay, decimal? Hedef, decimal Gerceklesen)
+{
+    public decimal? Oran => Hedef is decimal hedef && hedef > 0 ? Gerceklesen * 100 / hedef : null;
+}
+
+// Rapor hesaplarının ortak parçaları
 public static class RaporHesabi
 {
     // Hafta pazartesi başlar
@@ -141,7 +210,7 @@ public record AdisyonDetayi(
     public decimal AraToplam => Toplam + IndirimTutari;
 }
 
-// Bir günün raporu: Bugün sayfası (ve 10. adımda Gün sonu) bunu gösterir
+// Bir aralığın raporu: Adisyon paneli bunu kullanır
 public record GunRaporu(
     DateTime Gun,
     GunOzeti Ozet,
@@ -174,28 +243,6 @@ public record GunRaporu(
 public record KirilimSatiri(string Ad, int Adet, decimal Tutar, decimal Komisyon = 0);
 
 public record SaatSatiri(int Saat, int Adet);
-
-// Bugün sayfasının (pano) aralığı: adres çubuğunda ?aralik=dun / ?aralik=hafta
-public enum PanoAraligi { Bugun, Dun, Hafta }
-
-// Pano: seçilen aralığın raporu + karşılaştırma + son siparişler
-public record PanoRaporu(
-    PanoAraligi Aralik,
-    DateTime Baslangic,
-    DateTime Bitis,                        // dahil değil
-    GunRaporu Rapor,
-    decimal OncekiCiro,                    // karşılaştırılan aralığın cirosu (0 = o aralıkta satış yok)
-    string OncekiAdi,                      // "geçen cumartesi" / "geçen hafta"
-    DateTime? IlkSiparis,                  // aralığın ilk adisyonunun açılış saati
-    decimal PlatformCirosu,                // komisyon kesilen siparişlerin cirosu
-    List<SonSiparis> SonSiparisler)
-{
-    public decimal? DegisimYuzdesi => RaporHesabi.DegisimYuzdesi(Rapor.Ozet.Ciro, OncekiCiro);
-    public decimal KomisyonYuzdesi => RaporHesabi.KomisyonYuzdesi(Rapor.Ozet.Komisyon, PlatformCirosu);
-}
-
-// Son siparişler tablosunun bir satırı. Urunler: "2× Ayran, Kaşarlı Tost"
-public record SonSiparis(int Id, DateTime Saat, string Kaynak, string Baslik, string Urunler, decimal Toplam, AdisyonDurumu Durum);
 
 // Aylık özet: her gün bir satır + ayın toplamı
 public record AyRaporu(

@@ -52,8 +52,10 @@ builder.Services.AddSingleton<IPasswordHasher<Kullanici>, PasswordHasher<Kullani
 
 // Adisyon kuralları: her istekte veritabanıyla birlikte yeni bir tane oluşur (scoped)
 builder.Services.AddScoped<AdisyonServisi>();
-// Raporlar (Kayıtlar, Bugün, Gün sonu): sadece okur
+// Raporlar (Adisyon paneli, aylık e-posta): sadece okur
 builder.Services.AddScoped<RaporServisi>();
+// Fiş kayıtları: ödenen adisyonların fişleri (Fişler ekranı)
+builder.Services.AddScoped<FisServisi>();
 // Aylık rapor e-postası: hazırla + gönder + kaydet; ay bitince arka planda zamanlayıcı tetikler
 builder.Services.AddScoped<EpostaServisi>();
 builder.Services.AddScoped<RaporGondermeServisi>();
@@ -69,6 +71,7 @@ using (var kapsam = app.Services.CreateScope())
     var veritabani = kapsam.ServiceProvider.GetRequiredService<TostLabDbContext>();
     veritabani.Database.Migrate();
     BaslangicMenusu.BossaYukle(veritabani);   // ürün yoksa abinin menüsünü yükle
+    FisServisi.EksikFisleriOlustur(veritabani);  // fiş kaydından önce ödenmiş adisyonların fişleri (bir kez)
 }
 
 // Türkçe biçim: fiyat "92,50" diye yazılır, tarih "13 Kasım" diye görünür

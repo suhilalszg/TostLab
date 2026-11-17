@@ -57,6 +57,6 @@ public class KurulumController : Controller
         await veritabani.SaveChangesAsync();
 
         await OturumServisi.OturumAcAsync(HttpContext, yonetici);
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Satis");
     }
 }

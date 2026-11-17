@@ -17,6 +17,121 @@ namespace TostLab.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.15");
 
+            modelBuilder.Entity("TostLab.Models.AylikHedef", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Ay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Tutar")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Yil")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Yil", "Ay")
+                        .IsUnique();
+
+                    b.ToTable("AylikHedefler");
+                });
+
+            modelBuilder.Entity("TostLab.Models.FisKaydi", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("AraToplam")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Baslik")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IndirimAciklamasi")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("IndirimTutari")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kasiyer")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kaynak")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("KisiSayisi")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OdemeTuru")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("SilenKullaniciId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("SilinmeSaati")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SiparisId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Tarih")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Toplam")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SilenKullaniciId");
+
+                    b.HasIndex("SiparisId")
+                        .IsUnique();
+
+                    b.HasIndex("Tarih");
+
+                    b.ToTable("FisKayitlari");
+                });
+
+            modelBuilder.Entity("TostLab.Models.FisSatiri", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Adet")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("BirimFiyat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FisKaydiId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IkramMi")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Tutar")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UrunAdi")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FisKaydiId");
+
+                    b.ToTable("FisSatirlari");
+                });
+
             modelBuilder.Entity("TostLab.Models.GonderilenRapor", b =>
                 {
                     b.Property<int>("Id")
@@ -44,6 +159,68 @@ namespace TostLab.Migrations
                     b.HasIndex("Yil", "Ay");
 
                     b.ToTable("GonderilenRaporlar");
+                });
+
+            modelBuilder.Entity("TostLab.Models.KasaHareketi", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Aciklama")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("KullaniciId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Tarih")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Tur")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Tutar")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KullaniciId");
+
+                    b.HasIndex("Tarih");
+
+                    b.ToTable("KasaHareketleri");
+                });
+
+            modelBuilder.Entity("TostLab.Models.KasaSayimi", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("AcilisNakdi")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Gun")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("KullaniciId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Saat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("SayilanNakit")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Gun")
+                        .IsUnique();
+
+                    b.HasIndex("KullaniciId");
+
+                    b.ToTable("KasaSayimlari");
                 });
 
             modelBuilder.Entity("TostLab.Models.Kullanici", b =>
@@ -180,6 +357,12 @@ namespace TostLab.Migrations
                         {
                             Id = 7,
                             Ad = "Metropol",
+                            AktifMi = true
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Ad = "Açık hesap",
                             AktifMi = true
                         });
                 });
@@ -423,12 +606,66 @@ namespace TostLab.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal>("Maliyet")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("SatistaMi")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.ToTable("Urunler");
+                });
+
+            modelBuilder.Entity("TostLab.Models.FisKaydi", b =>
+                {
+                    b.HasOne("TostLab.Models.Kullanici", "SilenKullanici")
+                        .WithMany()
+                        .HasForeignKey("SilenKullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TostLab.Models.Siparis", "Siparis")
+                        .WithMany()
+                        .HasForeignKey("SiparisId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SilenKullanici");
+
+                    b.Navigation("Siparis");
+                });
+
+            modelBuilder.Entity("TostLab.Models.FisSatiri", b =>
+                {
+                    b.HasOne("TostLab.Models.FisKaydi", "FisKaydi")
+                        .WithMany("Satirlar")
+                        .HasForeignKey("FisKaydiId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FisKaydi");
+                });
+
+            modelBuilder.Entity("TostLab.Models.KasaHareketi", b =>
+                {
+                    b.HasOne("TostLab.Models.Kullanici", "Kullanici")
+                        .WithMany()
+                        .HasForeignKey("KullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Kullanici");
+                });
+
+            modelBuilder.Entity("TostLab.Models.KasaSayimi", b =>
+                {
+                    b.HasOne("TostLab.Models.Kullanici", "Kullanici")
+                        .WithMany()
+                        .HasForeignKey("KullaniciId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Kullanici");
                 });
 
             modelBuilder.Entity("TostLab.Models.SilinenSatir", b =>
@@ -511,6 +748,11 @@ namespace TostLab.Migrations
                     b.Navigation("Siparis");
 
                     b.Navigation("Urun");
+                });
+
+            modelBuilder.Entity("TostLab.Models.FisKaydi", b =>
+                {
+                    b.Navigation("Satirlar");
                 });
 
             modelBuilder.Entity("TostLab.Models.Siparis", b =>

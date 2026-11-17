@@ -19,6 +19,11 @@ public class TostLabDbContext : DbContext
     public DbSet<SilinenSatir> SilinenSatirlar => Set<SilinenSatir>();
     public DbSet<PlatformKomisyonu> PlatformKomisyonlari => Set<PlatformKomisyonu>();
     public DbSet<GonderilenRapor> GonderilenRaporlar => Set<GonderilenRapor>();
+    public DbSet<KasaHareketi> KasaHareketleri => Set<KasaHareketi>();
+    public DbSet<KasaSayimi> KasaSayimlari => Set<KasaSayimi>();
+    public DbSet<AylikHedef> AylikHedefler => Set<AylikHedef>();
+    public DbSet<FisKaydi> FisKayitlari => Set<FisKaydi>();
+    public DbSet<FisSatiri> FisSatirlari => Set<FisSatiri>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -119,6 +124,38 @@ public class TostLabDbContext : DbContext
             new OdemeTuru { Id = 4, Ad = "Pluxee (Sodexo)" },
             new OdemeTuru { Id = 5, Ad = "Edenred (Ticket)" },
             new OdemeTuru { Id = 6, Ad = "Setcard" },
-            new OdemeTuru { Id = 7, Ad = "Metropol" });
+            new OdemeTuru { Id = 7, Ad = "Metropol" },
+            new OdemeTuru { Id = 8, Ad = "Açık hesap" });   // veresiye: para sonra alınacak
+
+        // Kasa kayıtlarını giren kullanıcı silinemesin; tarihle süzülürler
+        modelBuilder.Entity<KasaHareketi>()
+            .HasOne(hareket => hareket.Kullanici)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<KasaHareketi>().HasIndex(hareket => hareket.Tarih);
+
+        modelBuilder.Entity<KasaSayimi>()
+            .HasOne(sayim => sayim.Kullanici)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<KasaSayimi>().HasIndex(sayim => sayim.Gun).IsUnique();   // günde bir sayım
+
+        modelBuilder.Entity<AylikHedef>().HasIndex(hedef => new { hedef.Yil, hedef.Ay }).IsUnique();
+
+        // Fiş kayıtları: her adisyonun en fazla bir fişi; fişin adisyonu silinemez, satırları fişle gider
+        modelBuilder.Entity<FisKaydi>()
+            .HasOne(fis => fis.Siparis)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<FisKaydi>()
+            .HasOne(fis => fis.SilenKullanici)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<FisKaydi>().HasIndex(fis => fis.SiparisId).IsUnique();
+        modelBuilder.Entity<FisKaydi>().HasIndex(fis => fis.Tarih);
+        modelBuilder.Entity<FisSatiri>()
+            .HasOne(satir => satir.FisKaydi)
+            .WithMany(fis => fis.Satirlar)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

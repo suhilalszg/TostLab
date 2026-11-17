@@ -1,0 +1,138 @@
+@model FisListesi
+@{
+    ViewData["Title"] = "Fişler";
+    ViewData["UstBarYok"] = true;
+
+    var filtre = Model.Filtre;
+    var turkce = new System.Globalization.CultureInfo("tr-TR");
+    bool ayMi = filtre.Donem == FisDonemi.Ay;
+    string donemYazisi = ayMi ? filtre.Baslangic.ToString("MMMM yyyy", turkce) : filtre.Baslangic.ToString("d MMMM yyyy, dddd", turkce);
+    string? mesaj = TempData["Mesaj"] as string;
+
+    string Adres(FisDonemi? donem = null, DateTime? tarih = null, bool odemeyiTut = true, int sayfa = 1) => Url.Action("Index", new
+    {
+        donem = donem ?? filtre.Donem,
+        tarih = (tarih ?? filtre.SecilenTarih).ToString("yyyy-MM-dd"),
+        odeme = odemeyiTut ? filtre.Odeme : null,
+        sayfa = sayfa > 1 ? sayfa : (int?)null
+    })!;
+
+    // Ay seçici: her tarayıcıda çalışsın diye liste (input type=month Firefox / Safari'de yok). Son 24 ay + seçili ay.
+    var aylar = Enumerable.Range(0, 24).Select(geri => new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-geri)).ToList();
+    if (!aylar.Contains(filtre.Baslangic)) aylar.Add(filtre.Baslangic);
+
+    // Aylık görünümde fişler güne göre gruplanır (gün başlığındaki sayı bütün günü kapsar, sadece bu sayfayı değil)
+    var gunler = Model.Sayfadakiler.GroupBy(fis => fis.Fis.Tarih.Date).ToList();
+}
+
+@section Stiller {
+    <link rel="stylesheet" href="~/css/pano.css" asp-append-version="true" />
+}
+
+<div class="pano">
+    <header class="pano-ust">
+        <div>
+            <h1>FİŞLER</h1>
+            <span class="pano-tarih">@donemYazisi</span>
+        </div>
+        <div class="pano-sag">
+            <nav class="aralik-secici">
+                <a href="@Adres(FisDonemi.Gun)" class="@(!ayMi ? "secili" : "")">Günlük</a>
+                <a href="@Adres(FisDonemi.Ay)" class="@(ayMi ? "secili" : "")">Aylık</a>
+            </nav>
+            <form method="get" class="tarih-secici">
+                <a href="@Adres(tarih: filtre.OncekiTarih)" title="Önceki">‹</a>
+                <input type="hidden" name="donem" value="@filtre.Donem" />
+                @if (ayMi)
+                {
+                    <select name="tarih" onchange="this.form.submit()">
+                        @foreach (var ay in aylar.OrderByDescending(ay => ay))
+                        {
+                            <option value="@ay.ToString("yyyy-MM-dd")" selected="@(ay == filtre.Baslangic)">@ay.ToString("MMMM yyyy", turkce)</option>
+                        }
+                    </select>
+                }
+                else
+                {
+                    <input type="date" name="tarih" value="@filtre.SecilenTarih.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+                }
+                <a href="@Adres(tarih: filtre.SonrakiTarih)" title="Sonraki">›</a>
+            </form>
+        </div>
+    </header>
+
+    @if (mesaj != null)
+    {
+        <p class="pano-bilgi">@mesaj</p>
+    }
+
+    <section class="fis-ozet">
+        <div><span class="etiket">Fiş</span><b>@Model.Hepsi.Count</b></div>
+        <form method="get" class="liste-suzgec">
+            <input type="hidden" name="donem" value="@filtre.Donem" />
+            <input type="hidden" name="tarih" value="@filtre.SecilenTarih.ToString("yyyy-MM-dd")" />
+            <select name="odeme" onchange="this.form.submit()">
+                <option value="">Tüm ödemeler</option>
+                @foreach (var odeme in Model.OdemeTurleri)
+                {
+                    <option value="@odeme" selected="@(filtre.Odeme == odeme)">@odeme</option>
+                }
+            </select>
+            @if (!string.IsNullOrEmpty(filtre.Odeme))
+            {
+                <a href="@Adres(odemeyiTut: false)">temizle</a>
+            }
+        </form>
+    </section>
+
+    @if (Model.Hepsi.Count == 0)
+    {
+        <p class="pano-bos">@(string.IsNullOrEmpty(filtre.Odeme) ? (ayMi ? "Bu ay fiş yok." : "Bu gün fiş yok.") : "Bu süzgeçle fiş yok.")</p>
+    }
+
+    @foreach (var gun in gunler)
+    {
+        if (ayMi)
+        {
+            <h2 class="fis-gun">
+                <a href="@Adres(FisDonemi.Gun, gun.Key)">@gun.Key.ToString("d MMMM, dddd", turkce)</a>
+                <small>@Model.GunFisSayisi(gun.Key) fiş</small>
+            </h2>
+        }
+        <div class="fis-izgara">
+            @foreach (var gorunum in gun)
+            {
+                var fis = gorunum.Fis;
+                <article class="fis kayit-fis">
+                    <partial name="_Fis" model="FisCiktisi.Kayittan(fis, gorunum.IadeMi)" />
+                    <div class="fis-islemler">
+                        <a asp-controller="Adisyon" asp-action="Detay" asp-route-id="@fis.SiparisId">Adisyon #@fis.SiparisId</a>
+                        <form asp-action="Sil" method="post" onsubmit="return confirm('Fiş #@fis.Id kayıtlardan silinsin mi? Satış ve raporlar etkilenmez.')">
+                            <input type="hidden" name="id" value="@fis.Id" />
+                            <input type="hidden" name="donem" value="@filtre.Donem" />
+                            <input type="hidden" name="tarih" value="@filtre.SecilenTarih.ToString("yyyy-MM-dd")" />
+                            <input type="hidden" name="odeme" value="@filtre.Odeme" />
+                            <input type="hidden" name="sayfa" value="@Model.Sayfa" />
+                            <button type="submit" class="fis-sil">Fişi sil</button>
+                        </form>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+
+    @if (Model.SayfaSayisi > 1)
+    {
+        <nav class="fis-sayfalar">
+            @if (Model.Sayfa > 1)
+            {
+                <a class="aralik-buton" href="@Adres(sayfa: Model.Sayfa - 1)">‹ Önceki</a>
+            }
+            <span>Sayfa @Model.Sayfa / @Model.SayfaSayisi</span>
+            @if (Model.Sayfa < Model.SayfaSayisi)
+            {
+                <a class="aralik-buton" href="@Adres(sayfa: Model.Sayfa + 1)">Sonraki ›</a>
+            }
+        </nav>
+    }
+</div>

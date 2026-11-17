@@ -65,7 +65,7 @@ public class GirisController : Controller
         {
             return LocalRedirect(donusAdresi);
         }
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Satis");
     }
 
     [HttpPost]

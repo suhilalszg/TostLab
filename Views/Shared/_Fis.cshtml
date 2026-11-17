@@ -1,0 +1,35 @@
+@model FisCiktisi
+@* Fişin içi: Fişler ekranı ve adisyon detayı ortak kullanır. Dış kutu (.fis .kayit-fis) çağıranda. *@
+@if (Model.Damga is AdisyonDurumu damga)
+{
+    <div class="damga damga-@damga.ToString().ToLowerInvariant()">@DurumYazisi.Yaz(damga).ToUpper()</div>
+}
+
+<div class="fis-baslik">
+    <b>TOST LAB</b>
+    <span>@Model.Numara</span>
+    <span>@Model.Zaman</span>
+</div>
+
+@foreach (var satir in Model.Satirlar)
+{
+    <div class="fis-satir">
+        <span>@satir.Adet × @satir.Ad@(satir.IkramMi ? " (ikram)" : "")</span>
+        <span>@(satir.IkramMi ? "İKRAM" : satir.Tutar.ToString("N2"))</span>
+    </div>
+}
+
+@if (Model.IndirimTutari > 0)
+{
+    <div class="fis-satir ara"><span>Ara toplam</span><span>@Model.AraToplam.ToString("N2")</span></div>
+    <div class="fis-satir"><span>İndirim @Model.IndirimAciklamasi</span><span>−@Model.IndirimTutari.ToString("N2")</span></div>
+}
+
+<div class="fis-satir toplam"><span>TOPLAM</span><span>@Model.Toplam.ToString("N2") ₺</span></div>
+
+<div class="fis-alt">
+    @foreach (var yazi in Model.AltSatirlar)
+    {
+        <span>@yazi</span>
+    }
+</div>

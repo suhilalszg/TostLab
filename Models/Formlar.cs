@@ -63,6 +63,10 @@ public class UrunFormu
 
     [Display(Name = "Satışta")]
     public bool SatistaMi { get; set; } = true;
+
+    [Range(0, 100000, ErrorMessage = "Maliyet 0 ile 100.000 ₺ arasında olmalı.")]
+    [Display(Name = "Maliyet (₺, bir adet)")]
+    public decimal Maliyet { get; set; }
 }
 
 // Menü sayfasının ekrana gönderdiği her şey tek pakette

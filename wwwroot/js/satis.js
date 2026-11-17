@@ -237,7 +237,7 @@ document.addEventListener('alpine:init', () => {
                 if (ad.includes('gazoz')) return foto('icecek-gazoz.webp');
                 if (ad.includes('ayran')) return foto('ayran.jpg');
                 if (ad.includes('soda')) return foto('icecek-soda.png');
-                if (ad.includes('limonata')) return foto('limonata.jpg');
+                if (ad.includes('limonata')) return foto('icecek-limonata.png');
                 // Türkçe küçük harfte "Ice" → "ıce" olur: ikisini de tanı
                 if (ad.includes('ice tea') || ad.includes('ıce tea')) return foto('icecek-ice-tea.png');
                 if (ad.includes('enerji')) return foto('icecek-enerji.png');

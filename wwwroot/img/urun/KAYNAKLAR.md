@@ -11,7 +11,6 @@ Dükkânın kendi fotoğrafı Menü sayfasından yüklenirse bu hazır görselin
 | cheddarli-patates.jpg | [Cheese Fries.jpg](https://commons.wikimedia.org/wiki/File:Cheese_Fries.jpg) | David Goehring | CC BY 2.0 |
 | citir-tavuk.jpg | [Crispy Chicken Strips - FotoosVanRobin.jpg](https://commons.wikimedia.org/wiki/File:Crispy_Chicken_Strips_-_FotoosVanRobin.jpg) | FotoosVanRobin | CC BY-SA 2.0 |
 | classic-burger.jpg | [Cheeseburger.jpg](https://commons.wikimedia.org/wiki/File:Cheeseburger.jpg) | Renee Comet | Public domain |
-| limonata.jpg | [Lemonade pitcher and glass.jpg](https://commons.wikimedia.org/wiki/File:Lemonade_pitcher_and_glass.jpg) | Grandmaster Huon | CC0 |
 | mozzarella.jpg | [Mozzarella sticks from Wawa (2023-04-10)](https://commons.wikimedia.org/wiki/File:2023-04-10_17_20_52_Mozzarella_sticks_from_Wawa_in_Westampton_Township,_Burlington_County,_New_Jersey.jpg) | Famartin | CC BY-SA 4.0 |
 | patates.jpg | [Plate of chips at the Chalet Cafe](https://commons.wikimedia.org/wiki/File:Plate_of_chips_at_the_Chalet_Cafe,_Cowfold,_West_Sussex,_England.jpg) | Acabashi | CC BY-SA 4.0 |
 | patso.jpg | [Patso.jpg](https://commons.wikimedia.org/wiki/File:Patso.jpg) | Gerode_ | CC BY-SA 2.0 |
@@ -54,3 +53,4 @@ Aşağıdakileri dükkân (17 Kasım 2026) satış ekranında kullanılmak üzer
 | icecek-su.png | Su |
 | icecek-ice-tea.png | Ice Tea |
 | icecek-enerji.png | Enerji İçeceği |
+| icecek-limonata.png | Limonata |

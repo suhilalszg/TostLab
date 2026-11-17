@@ -36,11 +36,10 @@
 
             <nav>
                 <a asp-controller="Satis" asp-action="Index" class="@(aktifSayfa == "Satis" ? "secili" : "")">Satış</a>
-                <a asp-controller="Home" asp-action="Index" class="@(aktifSayfa == "Home" ? "secili" : "")">Bugün</a>
                 @if (yoneticiMi)
                 {
                     <a asp-controller="Adisyon" asp-action="Index" class="@(aktifSayfa == "Adisyon" ? "secili" : "")">Adisyon</a>
-                    <a asp-controller="GunSonu" asp-action="Index" class="@(aktifSayfa == "GunSonu" ? "secili" : "")">Gün sonu</a>
+                    <a asp-controller="Fisler" asp-action="Index" class="@(aktifSayfa == "Fisler" ? "secili" : "")">Fişler</a>
                     <a asp-controller="Urunler" asp-action="Index" class="@(aktifSayfa == "Urunler" ? "secili" : "")">Menü</a>
                     <a asp-controller="Ayarlar" asp-action="Index" class="@(aktifSayfa == "Ayarlar" ? "secili" : "")">Ayarlar</a>
                     <a asp-controller="Kullanicilar" asp-action="Index" class="@(aktifSayfa == "Kullanicilar" ? "secili" : "")">Kullanıcılar</a>
