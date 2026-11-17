@@ -536,8 +536,8 @@ a.urun-bilgi:hover b { text-decoration: underline; }
 
 /* Telefon genişliğinde menü üste geçer */
 @media (max-width: 700px) {
-    .panel { grid-template-columns: 1fr; }
-    .yan-menu { flex-direction: row; height: auto; position: static; width: auto; overflow: visible; padding: 10px 16px; gap: 18px; }
+    .panel { grid-template-columns: minmax(0, 1fr); }
+    .yan-menu { flex-direction: row; height: auto; position: static; width: auto; overflow-x: auto; padding: 10px 16px; gap: 18px; }
     .panel:not(.menusuz) > .icerik { grid-column: 1; }
     .yan-menu .logo, .yan-menu nav a { writing-mode: horizontal-tb; transform: none; }
     .yan-menu .logo { margin: 0; font-size: 18px; white-space: nowrap; padding: 0; }

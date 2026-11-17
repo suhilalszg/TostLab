@@ -29,31 +29,47 @@ public static class Grafik
     private static string S(double sayi) => sayi.ToString("0.##", Nokta);
     private static string E(string yazi) => HtmlEncoder.Default.Encode(yazi);
 
-    // ---------- Halka (donut): ödeme yöntemleri, satış kanalları ----------
-    public static IHtmlContent Halka(IReadOnlyList<(string Ad, decimal Deger)> dilimler, string ortaYazi, string ortaAlt)
+    // ---------- Günlük ciro çizgisi (hafta / ay): bugüne kadarki günler ----------
+    // Tek seri: lejant yok, başlık adını söyler. Her günün üstünde görünmez bir şerit: fareyle gelince gün ve ciro.
+    public static IHtmlContent TrendCizgisi(IReadOnlyList<GunlukSatir> gunler)
     {
-        const double merkez = 80, yaricap = 62, kalinlik = 22;
-        decimal toplam = dilimler.Sum(dilim => dilim.Deger);
-        var svg = new StringBuilder($"<svg class=\"grafik halka\" viewBox=\"0 0 160 160\" role=\"img\" aria-label=\"{E(ortaAlt)}\">");
-        svg.Append($"<circle cx=\"{merkez}\" cy=\"{merkez}\" r=\"{yaricap}\" fill=\"none\" stroke=\"{Cizgi}\" stroke-width=\"{kalinlik}\"/>");
-        if (toplam > 0)
+        var noktalar = gunler.Where(gun => gun.Gun <= DateTime.Today).ToList();
+        if (noktalar.Count < 2)
         {
-            double cevre = 2 * Math.PI * yaricap;
-            double baslangic = 0;
-            for (int sira = 0; sira < dilimler.Count; sira++)
-            {
-                double pay = (double)(dilimler[sira].Deger / toplam);
-                if (pay <= 0) continue;
-                // 2px zemin boşluğu: dilimler birbirine yapışmasın
-                double uzunluk = Math.Max(pay * cevre - (dilimler.Count > 1 ? 2 : 0), 0.5);
-                svg.Append($"<circle cx=\"{merkez}\" cy=\"{merkez}\" r=\"{yaricap}\" fill=\"none\" stroke=\"{Renk(sira)}\" stroke-width=\"{kalinlik}\" " +
-                           $"stroke-dasharray=\"{S(uzunluk)} {S(cevre)}\" stroke-dashoffset=\"{S(-baslangic)}\" transform=\"rotate(-90 {merkez} {merkez})\">" +
-                           $"<title>{E(dilimler[sira].Ad)}: {Para(dilimler[sira].Deger)} (%{(pay * 100).ToString("0", Turkce)})</title></circle>");
-                baslangic += pay * cevre;
-            }
+            return HtmlString.Empty;
         }
-        svg.Append($"<text x=\"80\" y=\"78\" text-anchor=\"middle\" font-size=\"17\" font-weight=\"800\" fill=\"{Yazi}\">{E(ortaYazi)}</text>");
-        svg.Append($"<text x=\"80\" y=\"96\" text-anchor=\"middle\" font-size=\"10\" fill=\"{SoluKYazi}\">{E(ortaAlt)}</text>");
+
+        const double genislik = 640, yukseklik = 120, solBosluk = 4, sagBosluk = 4, ustBosluk = 18, altBosluk = 20;
+        decimal enYuksek = Math.Max(1, noktalar.Max(gun => gun.Ciro));
+        double adim = (genislik - solBosluk - sagBosluk) / (noktalar.Count - 1);
+        double X(int sira) => solBosluk + sira * adim;
+        double Y(decimal ciro) => ustBosluk + (yukseklik - ustBosluk - altBosluk) * (1 - (double)(ciro / enYuksek));
+
+        string cizgi = string.Join(" ", noktalar.Select((gun, sira) => $"{S(X(sira))},{S(Y(gun.Ciro))}"));
+        double taban = yukseklik - altBosluk;
+        var svg = new StringBuilder($"<svg class=\"grafik trend\" viewBox=\"0 0 {S(genislik)} {S(yukseklik)}\" role=\"img\" aria-label=\"Günlük net ciro\">");
+        svg.Append($"<line class=\"taban\" x1=\"0\" y1=\"{S(taban)}\" x2=\"{S(genislik)}\" y2=\"{S(taban)}\" stroke=\"{Cizgi}\"/>");
+        svg.Append($"<polygon class=\"alan\" points=\"{S(X(0))},{S(taban)} {cizgi} {S(X(noktalar.Count - 1))},{S(taban)}\"/>");
+        svg.Append($"<polyline class=\"seri\" points=\"{cizgi}\" fill=\"none\" stroke-width=\"2\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/>");
+
+        // Son gün: işaret + değer; en yüksek gün: değer (ikisi aynıysa bir kez)
+        int son = noktalar.Count - 1;
+        int tepe = noktalar.FindIndex(gun => gun.Ciro == noktalar.Max(enIyi => enIyi.Ciro));
+        svg.Append($"<circle class=\"isaret\" cx=\"{S(X(son))}\" cy=\"{S(Y(noktalar[son].Ciro))}\" r=\"4\"/>");
+        foreach (int sira in new[] { tepe, son }.Distinct())
+        {
+            string hiza = sira == son ? "end" : sira == 0 ? "start" : "middle";
+            svg.Append($"<text x=\"{S(X(sira))}\" y=\"{S(Y(noktalar[sira].Ciro) - 8)}\" text-anchor=\"{hiza}\" font-size=\"11\" font-weight=\"700\" fill=\"{Yazi}\">{Para(noktalar[sira].Ciro)}</text>");
+        }
+        svg.Append($"<text x=\"{S(X(0))}\" y=\"{S(yukseklik - 4)}\" font-size=\"10.5\" fill=\"{SoluKYazi}\">{noktalar[0].Gun.ToString("d MMM", Turkce)}</text>");
+        svg.Append($"<text x=\"{S(X(son))}\" y=\"{S(yukseklik - 4)}\" text-anchor=\"end\" font-size=\"10.5\" fill=\"{SoluKYazi}\">{noktalar[son].Gun.ToString("d MMM", Turkce)}</text>");
+
+        for (int sira = 0; sira < noktalar.Count; sira++)
+        {
+            double sol = Math.Max(0, X(sira) - adim / 2);
+            svg.Append($"<rect class=\"isabet\" x=\"{S(sol)}\" y=\"0\" width=\"{S(Math.Min(adim, genislik - sol))}\" height=\"{S(taban)}\" fill=\"transparent\">" +
+                       $"<title>{noktalar[sira].Gun.ToString("d MMMM ddd", Turkce)}: {Para(noktalar[sira].Ciro)} · {noktalar[sira].Adet} adisyon</title></rect>");
+        }
         svg.Append("</svg>");
         return new HtmlString(svg.ToString());
     }

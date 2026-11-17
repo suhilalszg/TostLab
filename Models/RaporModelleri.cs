@@ -109,11 +109,19 @@ public record MasaSatiri(string Ad, int Adisyon, double OrtalamaDakika);
 // Bir ürünün dönem performansı. Ciro: indirim payı düşülmüş tutar (ikramlar hariç).
 public record UrunPerformansi(int UrunId, string Ad, string Kategori, int Adet, decimal Ciro, decimal BirimMaliyet, bool SatistaMi);
 
-// Önceki dönemle kıyas: ciro ve müşteri (kişi sayısı girilmediyse adisyon başına 1 kişi)
-public record Kiyas(string Ad, decimal Ciro, int Musteri, decimal KiyasCiro, int KiyasMusteri)
+// Önceki dönemle kıyas: ciro, net kazanç, adisyon ve müşteri (kişi sayısı girilmediyse adisyon başına 1 kişi)
+public record Kiyas(string Ad, decimal Ciro, int Musteri, decimal KiyasCiro, int KiyasMusteri,
+    int Adisyon, int KiyasAdisyon, decimal NetKazanc, decimal KiyasNetKazanc)
 {
     public decimal? CiroYuzdesi => RaporHesabi.DegisimYuzdesi(Ciro, KiyasCiro);
     public decimal? MusteriYuzdesi => KiyasMusteri == 0 ? null : (Musteri - KiyasMusteri) * 100m / KiyasMusteri;
+    public decimal? AdisyonYuzdesi => KiyasAdisyon == 0 ? null : (Adisyon - KiyasAdisyon) * 100m / KiyasAdisyon;
+    public decimal? NetKazancYuzdesi => RaporHesabi.DegisimYuzdesi(NetKazanc, KiyasNetKazanc);
+
+    // Ortalama sepet = net ciro / adisyon
+    public decimal? SepetYuzdesi => Adisyon == 0 || KiyasAdisyon == 0
+        ? null
+        : RaporHesabi.DegisimYuzdesi(Ciro / Adisyon, KiyasCiro / KiyasAdisyon);
 }
 
 

@@ -91,8 +91,8 @@ public class RaporServisi
         var gecenYilOdenenler = await OdenenToplamlarAsync(bas.AddYears(-1), son.AddYears(-1));
         int musteri = odenenler.Sum(adisyon => adisyon.KisiSayisi ?? 1);
         string oncekiAdi = filtre.Donem switch { Donem.Hafta => "Geçen hafta", Donem.Ay => "Geçen ay", _ => "Önceki gün" };
-        var oncekiKiyas = KiyasYap(oncekiAdi, rapor.Ozet.Ciro, musteri, oncekiOdenenler, bas, son, oncekiBas, bas);
-        var gecenYilKiyas = KiyasYap("Geçen yıl aynı dönem", rapor.Ozet.Ciro, musteri, gecenYilOdenenler,
+        var oncekiKiyas = KiyasYap(oncekiAdi, rapor.Ozet, musteri, oncekiOdenenler, bas, son, oncekiBas, bas);
+        var gecenYilKiyas = KiyasYap("Geçen yıl aynı dönem", rapor.Ozet, musteri, gecenYilOdenenler,
             bas, son, bas.AddYears(-1), son.AddYears(-1));
 
         // Isı haritası: haftanın günü x saat, iptaller hariç adisyon sayısı
@@ -227,24 +227,27 @@ public class RaporServisi
             .ToList();
     }
 
-    private record OdenenToplam(DateTime Tarih, decimal Toplam, int Kisi);
+    private record OdenenToplam(DateTime Tarih, decimal Toplam, int Kisi, decimal Komisyon);
 
     private async Task<List<OdenenToplam>> OdenenToplamlarAsync(DateTime bas, DateTime son)
     {
         var ham = await veritabani.Siparisler.AsNoTracking()
             .Where(siparis => siparis.Durum == AdisyonDurumu.Odendi && siparis.Tarih >= bas && siparis.Tarih < son)
-            .Select(siparis => new { siparis.Tarih, siparis.Toplam, siparis.KisiSayisi })
+            .Select(siparis => new { siparis.Tarih, siparis.Toplam, siparis.KisiSayisi, siparis.KomisyonOrani })
             .ToListAsync();
-        return ham.Select(siparis => new OdenenToplam(siparis.Tarih, siparis.Toplam, siparis.KisiSayisi ?? 1)).ToList();
+        return ham.Select(siparis => new OdenenToplam(siparis.Tarih, siparis.Toplam, siparis.KisiSayisi ?? 1,
+            Math.Round(siparis.Toplam * siparis.KomisyonOrani / 100, 2))).ToList();
     }
 
     // Kıyas dönemi, şu anki dönem bitmediyse aynı noktaya kadar sayılır (OncekiCiroAsync ile aynı kural)
-    private static Kiyas KiyasYap(string ad, decimal ciro, int musteri, List<OdenenToplam> kiyasOdenenler,
+    private static Kiyas KiyasYap(string ad, GunOzeti ozet, int musteri, List<OdenenToplam> kiyasOdenenler,
         DateTime bas, DateTime son, DateTime kiyasBas, DateTime kiyasSon)
     {
         DateTime sinir = KiyasSiniri(bas, son, kiyasBas, kiyasSon);
         var sayilanlar = kiyasOdenenler.Where(adisyon => adisyon.Tarih < sinir).ToList();
-        return new Kiyas(ad, ciro, musteri, sayilanlar.Sum(adisyon => adisyon.Toplam), sayilanlar.Sum(adisyon => adisyon.Kisi));
+        decimal kiyasCiro = sayilanlar.Sum(adisyon => adisyon.Toplam);
+        return new Kiyas(ad, ozet.Ciro, musteri, kiyasCiro, sayilanlar.Sum(adisyon => adisyon.Kisi),
+            ozet.OdenenSayisi, sayilanlar.Count, ozet.NetKazanc, kiyasCiro - sayilanlar.Sum(adisyon => adisyon.Komisyon));
     }
 
     private static DateTime KiyasSiniri(DateTime bas, DateTime son, DateTime kiyasBas, DateTime kiyasSon)
