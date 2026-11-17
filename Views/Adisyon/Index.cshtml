@@ -31,14 +31,8 @@
         odemeTuruId = suzgecleriTut ? filtre.OdemeTuruId : null
     })!;
 
-    // Saatlik grafik (gün dönemi): hesap GunRaporu'nda
-    var saatlik = rapor.SaatlikDolu;
-    int enCokSaat = rapor.EnCokSaatAdedi;
-    var yogunSaatler = rapor.YogunSaatler;
-
-    // Ürünler: en çok / en az satan 5, en çok ciro / adet 10
+    // Ürünler: en az satan 5, en çok ciro / adet 10
     var satilanlar = Model.Urunler.Where(urun => urun.Adet > 0).ToList();
-    var enCokSatan5 = satilanlar.OrderByDescending(urun => urun.Adet).ThenByDescending(urun => urun.Ciro).Take(5).ToList();
     var enAzSatan5 = Model.Urunler.Where(urun => urun.SatistaMi).OrderBy(urun => urun.Adet).ThenBy(urun => urun.Ciro).Take(5).ToList();
     var ciroIlk10 = satilanlar.OrderByDescending(urun => urun.Ciro).Take(10).ToList();
     var adetIlk10 = satilanlar.OrderByDescending(urun => urun.Adet).Take(10).ToList();
@@ -166,7 +160,7 @@
         <div class="pano-kutu one-cikan">
             <span class="etiket">Net ciro</span>
             <b>@Para(ozet.Ciro)</b>
-            <small><span class="@DegisimSinifi(Model.OncekiDonem.CiroYuzdesi)">@Degisim(Model.OncekiDonem.CiroYuzdesi)</span> @Model.OncekiDonem.Ad.ToLower(turkce)</small>
+            <small>kasaya giren</small>
         </div>
         <div class="pano-kutu">
             <span class="etiket">Net kazanç</span>
@@ -191,22 +185,6 @@
     </section>
 
     <section class="pano-izgara ikili">
-        @* Brütten nete: kasaya giren tutara nasıl inildi *@
-        <div class="pano-kart">
-            <div class="kart-baslik"><h2>Brüt → net</h2><span>kasaya giren</span></div>
-            <div class="kontrol-listesi basamak">
-                <div><span>Brüt satış</span><b>@Para(Model.BrutSatis)</b></div>
-                <div class="eksi-satir"><span>İskonto</span><b>−@Para(ozet.IndirimToplami)</b></div>
-                <div class="eksi-satir"><span>İkram</span><b>−@Para(ozet.IkramTutari)</b></div>
-                <div class="eksi-satir"><span>İade</span><b>−@Para(ozet.IadeTutari)</b></div>
-                <div class="ara-toplam"><span>Net ciro</span><b>@Para(ozet.Ciro)</b></div>
-                <div class="eksi-satir"><span>Platform komisyonu</span><b>−@Para(ozet.Komisyon)</b></div>
-                <div class="ara-toplam"><span>Net kazanç</span><b>@Para(ozet.NetKazanc)</b></div>
-                <div class="eksi-satir"><span>Kasa çıkışları (gider)</span><b>−@Para(Model.GiderToplami)</b></div>
-                <div class="ara-toplam son"><span>Kalan</span><b>@Para(Model.GiderSonrasi)</b></div>
-            </div>
-        </div>
-
         <div class="pano-kart">
             <div class="kart-baslik"><h2>Ödeme yöntemi</h2><span>@rapor.OdemeKirilimi.Sum(odeme => odeme.Adet) adisyon</span></div>
             @if (odemeDilimleri.Count == 0)
@@ -221,13 +199,10 @@
                 </div>
             }
         </div>
-    </section>
-
-    @* Kasa açığı / fazlası *@
-    <section class="pano-kart">
+        <div class="pano-kart kasa-karti">
         <div class="kart-baslik">
             <h2>Kasa sayımı</h2>
-            <span>sistemdeki nakit = açılış + nakit satış − kasa çıkışı</span>
+            <span>açık / fazla</span>
         </div>
         @if (!cokGunluMu)
         {
@@ -284,6 +259,7 @@
                 </div>
             }
         }
+        </div>
     </section>
 
     @* ================= 2) FİRE, İPTAL VE İKRAM ================= *@
@@ -427,7 +403,7 @@
     <div class="bolum bolum-operasyon">
     <h2 class="bolum-baslik"><span>3</span> Operasyon</h2>
 
-    <section class="pano-kutular">
+    <section class="pano-kutular dortlu">
         <div class="pano-kutu">
             <span class="etiket">Adisyon</span>
             <b>@ozet.OdenenSayisi</b>
@@ -448,41 +424,9 @@
             <b>@Model.MasaDevri.GunlukDevir.ToString("0.#", turkce)</b>
             <small>masa başına günde</small>
         </div>
-        <div class="pano-kutu">
-            <span class="etiket">Müşteri</span>
-            <b>@Model.OncekiDonem.Musteri</b>
-            <small>kişi sayısı girilmeyen adisyon 1 kişi</small>
-        </div>
     </section>
 
-    <section class="pano-izgara ust">
-        <div class="pano-kart">
-            <div class="kart-baslik">
-                <h2>Saatlik sipariş</h2>
-                @if (yogunSaatler.Count > 0)
-                {
-                    <span>en yoğun @string.Join(" ve ", yogunSaatler.Select(s => $"{s:00}:00"))</span>
-                }
-            </div>
-            @if (saatlik.Count == 0)
-            {
-                <p class="pano-bos">Bu dönemde sipariş yok.</p>
-            }
-            else
-            {
-                <div class="saat-grafik">
-                    @foreach (var saat in saatlik)
-                    {
-                        <div class="saat-sutun" title="@saat.Saat:00 · @saat.Adet adisyon">
-                            <span class="sayi">@(saat.Adet > 0 ? saat.Adet.ToString() : "")</span>
-                            <div class="cubuk @(yogunSaatler.Contains(saat.Saat) ? "yogun" : "")" style="height:@(saat.Adet * 100 / enCokSaat)%"></div>
-                            <span class="saat">@saat.Saat</span>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-
+    <section class="pano-izgara ikili">
         <div class="pano-kart">
             <div class="kart-baslik"><h2>Masa devri</h2><span>adisyon · ort. süre</span></div>
             @if (Model.MasaDevri.Masalar.Count == 0)
@@ -501,25 +445,6 @@
                 </table>
             }
         </div>
-    </section>
-
-    <section class="pano-izgara ikili">
-        <div class="pano-kart">
-            <div class="kart-baslik"><h2>En çok satan 5</h2><span>adet · ciro</span></div>
-            @if (enCokSatan5.Count == 0)
-            {
-                <p class="pano-bos">Henüz satış yok.</p>
-            }
-            else
-            {
-                <ol class="cok-satan-liste">
-                    @for (int sira = 0; sira < enCokSatan5.Count; sira++)
-                    {
-                        <li><span class="sira">@((sira + 1).ToString("00"))</span><span class="ad">@enCokSatan5[sira].Ad</span><b>@enCokSatan5[sira].Adet</b><span class="tutar">@Para(enCokSatan5[sira].Ciro)</span></li>
-                    }
-                </ol>
-            }
-        </div>
         <div class="pano-kart">
             <div class="kart-baslik"><h2>En az satan 5</h2><span>satıştaki ürünlerden</span></div>
             @if (enAzSatan5.Count == 0)
@@ -536,7 +461,9 @@
                 </ol>
             }
         </div>
+    </section>
 
+    <section class="pano-izgara ikili">
         @* Yatay çubuk: en çok ciro getiren 10 ürün ve en çok adet satan 10 ürün *@
         <div class="pano-kart">
             <div class="kart-baslik"><h2>En çok ciro getiren 10</h2><span>₺</span></div>

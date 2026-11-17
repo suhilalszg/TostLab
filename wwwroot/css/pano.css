@@ -333,3 +333,7 @@
 @media (max-width: 640px) { .fis-ozet .liste-suzgec { margin-left: 0; } }
 .tarih-secici select { border: 0; background: transparent; font: inherit; font-size: 13px; color: var(--yazi); outline: none; cursor: pointer; }
 .fis-sayfalar { display: flex; justify-content: center; align-items: center; gap: 14px; font-size: 13px; color: var(--soluk-yazi); }
+.pano-kutular.dortlu { grid-template-columns: repeat(4, 1fr); }
+.kasa-karti .kasa-duzeni { grid-template-columns: 1fr; gap: 12px; }
+.kasa-karti .satir-form label { flex: 1 1 140px; }
+.kasa-karti .satir-form input { width: 100%; }
