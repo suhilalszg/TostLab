@@ -213,19 +213,35 @@ document.addEventListener('alpine:init', () => {
             const foto = dosya => `/img/urun/${dosya}`;
             const cizim = dosya => `/img/ornek/${dosya}.svg`;
 
+            // Dükkânın kendi menü görselinden kesilen fotoğraflar (ürün adıyla birebir)
+            const menudenFoto = {
+                'original smash menü': 'menu-original-smash.jpg',
+                'classic zip menü': 'menu-classic-zip.jpg',
+                'big zip menü': 'menu-big-zip.jpg',
+                'crispy chicken menü': 'menu-crispy-chicken.jpg',
+                'ayvalık tost': 'tost-ayvalik.jpg',
+                'kumru tost': 'tost-kumru.jpg',
+                'patso': 'tost-patso.jpg',
+                'sanayi tost': 'tost-sanayi.jpg',
+                'karışık bazlama': 'bazlama-karisik.jpg',
+                'karışık tost': 'tost-karisik.jpg',
+                'kavurma kaşarlı tost': 'tost-kavurma-kasarli.jpg'
+            };
+            if (menudenFoto[ad]) return foto(menudenFoto[ad]);
+
             if (kategori.includes('içecek')) {
-                if (ad.includes('zero')) return foto('kola-zero.jpg');
-                if (ad.includes('kola')) return foto('kola.jpg');
-                if (ad.includes('fanta')) return foto('fanta.jpg');
-                if (ad.includes('sprite')) return foto('sprite.jpg');
-                if (ad.includes('gazoz')) return foto('gazoz.jpg');
+                if (ad.includes('zero')) return foto('icecek-kola-zero.png');
+                if (ad.includes('kola')) return foto('icecek-kola.webp');
+                if (ad.includes('fanta')) return foto('icecek-fanta.png');
+                if (ad.includes('sprite')) return foto('icecek-sprite.png');
+                if (ad.includes('gazoz')) return foto('icecek-gazoz.webp');
                 if (ad.includes('ayran')) return foto('ayran.jpg');
-                if (ad.includes('soda')) return foto('soda.jpg');
+                if (ad.includes('soda')) return foto('icecek-soda.png');
                 if (ad.includes('limonata')) return foto('limonata.jpg');
                 // Türkçe küçük harfte "Ice" → "ıce" olur: ikisini de tanı
-                if (ad.includes('ice tea') || ad.includes('ıce tea')) return foto('ice-tea.jpg');
-                if (ad.includes('enerji')) return foto('enerji.jpg');
-                if (ad === 'su' || ad.startsWith('su ')) return foto('su.png');
+                if (ad.includes('ice tea') || ad.includes('ıce tea')) return foto('icecek-ice-tea.png');
+                if (ad.includes('enerji')) return foto('icecek-enerji.png');
+                if (ad === 'su' || ad.startsWith('su ')) return foto('icecek-su.png');
                 return cizim('icecek');
             }
             if (kategori.includes('smash')) return foto('smash-burger.jpg');

@@ -322,7 +322,9 @@
                                 class="relative text-left rounded-xl bg-white p-2 shadow-[0_2px_10px_rgba(60,20,110,.08)] hover:shadow-[0_8px_24px_rgba(60,20,110,.16)] flex flex-col cursor-pointer select-none active:scale-95 transition-all duration-200 disabled:cursor-not-allowed disabled:active:scale-100"
                                 :class="adisyondakiAdet(urun.id) ? 'ring-2 ring-[#F2C230]' : ''">
                             <div class="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-slate-100">
-                                <img :src="gorsel(urun)" alt="" loading="lazy" class="h-full w-full object-cover" />
+                                @* İçecek fotoğrafları uzun şişe/kutu: kesilmesin diye beyaz zeminde bütün görünür *@
+                                <img :src="gorsel(urun)" alt="" loading="lazy" class="h-full w-full"
+                                     :class="gorsel(urun).includes('/icecek-') ? 'object-contain bg-white p-1' : 'object-cover'" />
                                 <div x-show="urun.fiyat <= 0" class="absolute inset-0 grid place-items-center bg-black/70 text-white text-center text-sm font-bold leading-tight">Fiyat<br />girilmedi</div>
                             </div>
                             <span class="mt-2 px-1 text-[13px] font-semibold text-slate-800 leading-snug min-h-[2.4em]" x-text="urun.ad"></span>
