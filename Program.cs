@@ -63,6 +63,9 @@ builder.Services.AddHostedService<AySonuZamanlayici>();
 // Ürün fotoğrafları: Menü'den yüklenir, diskte durur
 builder.Services.AddSingleton<UrunFotograflari>();
 
+// PDF rapor kütüphanesi: yıllık cirosu 1 milyon doları geçmeyen işletmeye ücretsiz (Community lisansı)
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var app = builder.Build();
 
 // Program açılırken veritabanı yoksa oluştur, yeni migration varsa uygula

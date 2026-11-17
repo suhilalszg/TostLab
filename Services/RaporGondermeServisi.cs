@@ -65,7 +65,8 @@ public class RaporGondermeServisi
     private async Task GonderVeKaydetAsync(AyRaporu aylik, bool elleMi)
     {
         // Önce gönder, sonra kaydet: gönderilemezse kayıt da olmaz, zamanlayıcı yarım saat sonra tekrar dener
-        await epostaServisi.GonderAsync(RaporEpostasi.Konu(aylik), RaporEpostasi.Aylik(aylik));
+        await epostaServisi.GonderAsync(RaporEpostasi.Konu(aylik), RaporEpostasi.Aylik(aylik),
+            RaporPdf.DosyaAdi(aylik), RaporPdf.Olustur(aylik));
 
         veritabani.GonderilenRaporlar.Add(new GonderilenRapor
         {

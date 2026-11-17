@@ -42,7 +42,8 @@ public class EpostaServisi
     public bool HazirMi => ayarlar.HazirMi;
     public string Alici => ayarlar.DenemeMi ? "deneme klasörü" : ayarlar.Alici;
 
-    public async Task GonderAsync(string konu, string htmlGovde)
+    // ekAdi + ekIcerigi verilirse dosya (ör. PDF rapor) e-postaya eklenir
+    public async Task GonderAsync(string konu, string htmlGovde, string? ekAdi = null, byte[]? ekIcerigi = null)
     {
         if (!ayarlar.HazirMi)
         {
@@ -60,6 +61,11 @@ public class EpostaServisi
             SubjectEncoding = Encoding.UTF8,
             BodyEncoding = Encoding.UTF8
         };
+        if (ekAdi != null && ekIcerigi != null)
+        {
+            // MailMessage kapanınca ek ve akışı da kapanır
+            mesaj.Attachments.Add(new Attachment(new MemoryStream(ekIcerigi), ekAdi, "application/pdf"));
+        }
 
         using var istemci = new SmtpClient();
         if (ayarlar.DenemeMi)
